@@ -53,8 +53,7 @@ export function create(ctx) {
   const bHero = result({ label: 'Locked profit', hero: true });
   const bStakeA = result({ label: 'Put on side A' });
   const bStakeB = result({ label: 'Put on side B' });
-  const bReturn = result({ label: 'Return either way' });
-  const bSum = result({ label: 'Combined implied' });
+  const bSum = result({ label: 'Combined implied', cls: 'res-line' });
   const bA = oddsField({ label: 'Side A odds', value: state.B.a, onChange: (v) => { state.B.a = v; render(); persist(); } });
   const bB = oddsField({ label: 'Side B odds', value: state.B.b, placeholder: '120', onChange: (v) => { state.B.b = v; render(); persist(); } });
   const bTotal = stakeField({ label: 'Total to put in', value: state.B.total, ctx, placeholder: '1000', onChange: (v) => { state.B.total = v; render(); persist(); } });
@@ -63,11 +62,11 @@ export function create(ctx) {
     h('div', { class: 'card card-hero' },
       bHero.root,
       h('div', { class: 'res-row' }, bStakeA.root, bStakeB.root),
-      h('div', { class: 'res-row' }, bReturn.root, bSum.root)
+      bSum.root
     ),
     h('div', { class: 'card card-inputs' },
-      h('div', { class: 'row-2' }, bA.root, bB.root),
-      bTotal.root
+      bTotal.root,
+      h('div', { class: 'row-2' }, bA.root, bB.root)
     )
   );
 
@@ -115,13 +114,17 @@ export function create(ctx) {
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
       bHero.setLabel('Locked profit');
       bHero.set('—', null, 'Enter both prices');
-      bStakeA.set('—'); bStakeB.set('—'); bReturn.set('—'); bSum.set('—');
+      bStakeA.setLabel('Put on side A'); bStakeB.setLabel('Put on side B');
+      bStakeA.set('—'); bStakeB.set('—'); bSum.set('—');
       bSum.setLabel('Combined implied');
       return;
     }
     const r = arb(a, b, Number.isFinite(total) && total > 0 ? total : 0);
     bSum.setLabel('Combined implied');
-    bSum.set(fmtProb(r.sum, 'pct', 2), fmtProb(r.sum, 'pct', 2), r.exists ? 'under 100%: arb' : 'over 100%: no arb', r.exists ? 'pos' : 'neg');
+    let sumText = fmtProb(r.sum, 'pct', 2);
+    if (r.exists && sumText === '100.00%') sumText = fmtProb(r.sum, 'pct', 3);   // never show "100.00%" next to "arb"
+    bSum.setLabel(r.exists ? 'Combined implied \u00B7 under 100%, arb' : 'Combined implied \u00B7 100% or more, no arb');
+    bSum.set(sumText, sumText, '', r.exists ? 'pos' : 'neg');
     bStakeA.setLabel('Put on ' + fmtOdds(a));
     bStakeB.setLabel('Put on ' + fmtOdds(b));
     if (!(total > 0)) {
@@ -129,17 +132,15 @@ export function create(ctx) {
       bHero.set(fmtPctSigned(r.roi, 2), fmtPctSigned(r.roi, 2), 'enter a total for dollars', r.exists ? 'pos' : 'neg');
       bStakeA.set(fmtProb(r.shareA, 'pct', 1), fmtProb(r.shareA, 'pct', 1), 'of total');
       bStakeB.set(fmtProb(r.shareB, 'pct', 1), fmtProb(r.shareB, 'pct', 1), 'of total');
-      bReturn.set('—');
       return;
     }
     // Round side A to the cent and give the remainder to side B so the two always add up to the total.
     const sA = Math.round(r.stakeA * 100) / 100;
     const sB = Math.round((total - sA) * 100) / 100;
     bHero.setLabel(r.exists ? 'Locked profit' : 'Locked loss');
-    setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total), unitsFirst: false });
-    setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) });
-    setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) });
-    setMoney(bReturn, r.returnTotal, unit, { tone: '' });
+    setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total) + ' \u00B7 returns ' + fmtMoney(r.returnTotal) + ' either way' });
+    setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total' });
+    setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total' });
   }
 
   function render() {

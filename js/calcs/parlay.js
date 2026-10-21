@@ -21,7 +21,7 @@ export function create(ctx) {
   const payRes = result({ label: 'Fair payout' });
   const offRes = result({ label: 'Payout at book’s odds' });
   const edgeRes = result({ label: 'Edge at book’s price' });
-  const offeredRow = h('div', { class: 'res-row' }, offRes.root, edgeRes.root);
+  const offeredRow = h('div', { class: 'res-row res-row-after' }, offRes.root, edgeRes.root);
 
   const stakeF = stakeField({ label: 'Stake', value: state.stake, ctx, onChange: (v) => { state.stake = v; render(); persist(); } });
   // The book's price lives with its comparison, inside the answer card, so the answer stays on screen while typing it.
@@ -67,8 +67,8 @@ export function create(ctx) {
     h('div', { class: 'card card-hero' },
       hero.root,
       h('div', { class: 'res-row' }, probRes.root, payRes.root),
-      offeredRow,
-      h('div', { class: 'card-foot' }, offeredF.root)
+      h('div', { class: 'card-foot' }, offeredF.root),
+      offeredRow
     ),
     h('div', { class: 'card card-inputs' },
       legsEl,

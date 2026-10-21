@@ -24,11 +24,11 @@ export function create(ctx) {
   const oddsF = oddsField({ label: 'American odds', value: state.odds, onChange: (v) => { state.odds = v; render(); persist(); } });
 
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
+    modeSeg.root,
     h('div', { class: 'card card-hero' },
       hero.root,
       h('div', { class: 'res-row' }, totalRes.root, impliedRes.root)
     ),
-    modeSeg.root,
     h('div', { class: 'card card-inputs' }, amountF.root, oddsF.root)
   );
 
@@ -51,12 +51,12 @@ export function create(ctx) {
     if (state.mode === 'risk') {
       const r = payoutFromRisk(amount, am);
       hero.setLabel('Profit');
-      setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', sub: 'risking ' + fmtMoney(amount) + ' at ' + fmtOdds(am), unitsFirst: false });
+      setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', sub: 'risking ' + fmtMoney(amount) + ' at ' + fmtOdds(am) });
       setMoney(totalRes, r.total, unit, { tone: '' });
     } else {
       const r = payoutFromWin(amount, am);
       hero.setLabel('Risk needed');
-      setMoney(hero, r.stake, unit, { tone: '', sub: 'to win ' + fmtMoney(amount) + ' at ' + fmtOdds(am), unitsFirst: false });
+      setMoney(hero, r.stake, unit, { tone: '', sub: 'to win ' + fmtMoney(amount) + ' at ' + fmtOdds(am) });
       setMoney(totalRes, r.total, unit, { tone: '' });
     }
   }

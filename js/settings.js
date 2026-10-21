@@ -78,11 +78,29 @@ export function createSettings(ctx) {
       doneBottom
     )
   );
-  // Swipe down on the header to dismiss.
+  // Swipe down on the header to dismiss; the sheet follows the finger.
   let dragY = null;
-  head.addEventListener('pointerdown', (e) => { dragY = e.clientY; });
-  head.addEventListener('pointerup', (e) => { if (dragY != null && e.clientY - dragY > 60) close(); dragY = null; });
-  head.addEventListener('pointercancel', () => { dragY = null; });
+  head.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    dragY = e.clientY;
+    try { head.setPointerCapture(e.pointerId); } catch {}
+    panel.classList.add('is-dragging');
+  });
+  head.addEventListener('pointermove', (e) => {
+    if (dragY == null) return;
+    const dy = Math.max(0, e.clientY - dragY);
+    panel.style.transform = 'translateY(' + dy + 'px)';
+  });
+  const endDrag = (e) => {
+    if (dragY == null) return;
+    const dy = e.clientY - dragY;
+    dragY = null;
+    panel.classList.remove('is-dragging');
+    panel.style.transform = '';
+    if (dy > 70) close();
+  };
+  head.addEventListener('pointerup', endDrag);
+  head.addEventListener('pointercancel', endDrag);
   const backdrop = h('div', { class: 'sheet-backdrop', onclick: close });
   const root = h('div', { class: 'sheet', hidden: true }, backdrop, panel);
 
@@ -111,23 +129,29 @@ export function createSettings(ctx) {
 
   let lastFocus = null;
   function open(focus) {
+    openState = true;
     lastFocus = document.activeElement;
     render();
     root.hidden = false;
+    panel.querySelector('.sheet-body').scrollTop = 0;
     document.body.classList.add('sheet-open');
     requestAnimationFrame(() => {
       root.classList.add('is-open');
       if (focus === 'unit') setTimeout(() => unitF.focus(), 260);
     });
   }
+  let openState = false;
   function close() {
+    if (!openState) return;
+    openState = false;
     root.classList.remove('is-open');
     document.body.classList.remove('sheet-open');
     try { document.activeElement?.blur?.(); } catch {}
     setTimeout(() => { root.hidden = true; }, 240);
     lastFocus = null;
+    ctx.afterSettingsClose?.();
   }
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !root.hidden) close(); });
 
-  return { root, open, close, render };
+  return { root, open, close, render, isOpen: () => openState };
 }

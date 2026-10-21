@@ -34,7 +34,7 @@ Then open http://localhost:8765 in a browser. The math tests are at http://local
 
 Hosted on Cloudflare Pages, connected to this GitHub repository. Every push to `main` deploys automatically. Cloudflare serves the folder as-is, so the build command is empty and the output directory is `/`.
 
-When you change any file that the service worker caches, bump the `VERSION` string at the top of `sw.js` so installed phones pick up the new version on their next open.
+Installed phones refresh their cached copy in the background and show the new version on the next open. Bump the `VERSION` string at the top of `sw.js` only when you want to force a clean cache (for example after removing a file).
 
 ## Math reference
 

@@ -40,8 +40,11 @@ self.addEventListener('activate', (event) => {
 });
 
 function revalidate(req, cacheKey) {
-  return fetch(req).then((res) => {
-    if (res && res.ok) caches.open(VERSION).then((cache) => cache.put(cacheKey, res.clone()));
+  return fetch(req).then(async (res) => {
+    if (res && res.ok) {
+      const cache = await caches.open(VERSION);
+      await cache.put(cacheKey, res.clone());
+    }
     return res;
   });
 }
@@ -54,20 +57,18 @@ self.addEventListener('fetch', (event) => {
 
   // App shell navigation: serve the cached page at once, refresh it quietly for next time.
   if (req.mode === 'navigate') {
+    const fresh = revalidate(new Request('/index.html', { cache: 'no-cache' }), '/index.html').catch(() => null);
+    event.waitUntil(fresh);
     event.respondWith(
-      caches.match('/index.html').then((hit) => {
-        const fresh = revalidate(new Request('/index.html', { cache: 'no-cache' }), '/index.html').catch(() => null);
-        return hit || fresh.then((r) => r || Response.error());
-      })
+      caches.match('/index.html').then((hit) => hit || fresh.then((r) => r || Response.error()))
     );
     return;
   }
 
   // Everything else: cached copy first, network refresh in the background.
+  const fresh = revalidate(req, req).catch(() => null);
+  event.waitUntil(fresh);
   event.respondWith(
-    caches.match(req).then((hit) => {
-      const fresh = revalidate(req, req).catch(() => null);
-      return hit || fresh.then((r) => r || Response.error());
-    })
+    caches.match(req).then((hit) => hit || fresh.then((r) => r || Response.error()))
   );
 });

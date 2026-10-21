@@ -34,7 +34,7 @@ export function create(ctx) {
 
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     h('div', { class: 'card card-hero' },
-      h('div', { class: 'card-head card-head-end' }, modeSeg.root),
+      h('div', { class: 'card-head' }, h('span', { class: 'caption', text: 'Odds \u21C4 probability' }), modeSeg.root),
       hero.root,
       resRow
     ),
@@ -69,7 +69,7 @@ export function create(ctx) {
         const txt = fmtOdds(am, { ascii: true });            // maps -100 to +100 like the hero
         oddsF.set({ sign: txt.startsWith('-') ? '-' : '+', v: txt.slice(1) });
       } else {
-        oddsF.set({ sign: oddsF.get().sign, v: '' });
+        oddsF.set({ sign: '-', v: '' });
       }
       oddsF.setComputed(Number.isFinite(am));
       oddsF.setPlaceholder(Number.isFinite(am) ? '' : '\u2014');
@@ -91,7 +91,7 @@ export function create(ctx) {
       feeRes.setLabel('After ' + ctx.feeLabel() + ' fee');
       if (Number.isFinite(p)) {
         const eff = effectivePrice(p, rate);
-        feeRes.set(fmtProb(eff.price, mode), fmtProb(eff.price, mode), fmtOdds(probToAmerican(eff.price)) + ' · fee ' + fmtCentsExact(eff.fee));
+        feeRes.set(fmtProb(eff.price, mode, 2), fmtProb(eff.price, mode, 2), fmtOdds(probToAmerican(eff.price)) + ' · fee ' + fmtCentsExact(eff.fee));
       } else {
         feeRes.set('—');
       }

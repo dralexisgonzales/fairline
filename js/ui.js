@@ -170,6 +170,7 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
 
   let pendingUnits = false;
   function setMode(mode) {
+    if (mode === '$') pendingUnits = false;
     if (state.mode === mode) return;
     const unit = ctx.unitSize();
     if (mode === 'u' && !(unit > 0)) {
@@ -199,8 +200,11 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
 
   function paint() {
     const unit = ctx.unitSize();
-    if (pendingUnits && unit > 0 && state.mode === '$') { pendingUnits = false; setMode('u'); return; }
-    if (unit > 0) pendingUnits = false;
+    // Finish a pending switch to units only once Settings has closed, so the stake converts at the final unit size.
+    if (pendingUnits && !ctx.settingsOpen()) {
+      pendingUnits = false;
+      if (unit > 0 && state.mode === '$') { setMode('u'); return; }
+    }
     btn$.classList.toggle('is-on', state.mode === '$');
     btnU.classList.toggle('is-on', state.mode === 'u');
     btn$.setAttribute('aria-pressed', state.mode === '$');

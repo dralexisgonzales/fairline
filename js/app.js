@@ -35,6 +35,8 @@ const ctx = {
   feeRate,
   feeLabel,
   openSettings: (focus) => sheet.open(focus),
+  settingsOpen: () => sheet.isOpen(),
+  afterSettingsClose: () => renderAll(),
   update(patch) {
     Object.assign(settings, patch);
     store.saveSettings(settings);
@@ -73,9 +75,37 @@ function switchTo(id) {
   });
   store.save('tab', id);
   window.scrollTo(0, 0);
+  heroOffscreen = false;
+  updateMini();
 }
 
-function renderAll() { calcs.forEach((c) => c.render()); }
+function renderAll() { calcs.forEach((c) => c.render()); updateMini(); }
+
+// ----- Compact answer strip: keeps the answer visible once the answer card scrolls away -----
+const miniLabel = h('span', { class: 'mini-label' });
+const miniValue = h('span', { class: 'mini-value' });
+const miniBtn = h('button', { type: 'button', class: 'mini-btn', 'aria-label': 'Scroll back to the answer', onclick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) }, miniLabel, miniValue);
+const mini = h('div', { class: 'mini', 'aria-hidden': 'true' }, miniBtn);
+document.body.append(mini);
+let heroOffscreen = false;
+function activeHero() {
+  const c = calcs.find((x) => x.id === active);
+  return c ? c.root.querySelector('.card-hero .res-hero') : null;
+}
+function updateMini() {
+  const hero = activeHero();
+  if (!hero) return;
+  miniLabel.textContent = hero.querySelector('.res-label')?.textContent || '';
+  miniValue.textContent = hero.querySelector('.res-value')?.textContent || '';
+  const on = heroOffscreen && miniValue.textContent !== '—';
+  mini.classList.toggle('is-on', on);
+  mini.setAttribute('aria-hidden', String(!on));
+}
+const heroWatch = new IntersectionObserver((entries) => {
+  entries.forEach((en) => { if (en.target === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); } });
+}, { rootMargin: '-56px 0px 0px 0px', threshold: 0 });
+calcs.forEach((c) => { const el = c.root.querySelector('.card-hero .res-hero'); if (el) heroWatch.observe(el); });
+new MutationObserver(() => updateMini()).observe(main, { childList: true, characterData: true, subtree: true });
 
 // ----- Theme -----
 const media = window.matchMedia('(prefers-color-scheme: dark)');
