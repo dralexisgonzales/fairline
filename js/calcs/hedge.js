@@ -120,9 +120,9 @@ export function create(ctx) {
       return;
     }
     const r = arb(a, b, Number.isFinite(total) && total > 0 ? total : 0);
-    bSum.setLabel('Combined implied');
     let sumText = fmtProb(r.sum, 'pct', 2);
     if (r.exists && sumText === '100.00%') sumText = fmtProb(r.sum, 'pct', 3);   // never show "100.00%" next to "arb"
+    if (r.exists && /^100\.0+%$/.test(sumText)) sumText = '<100%';
     bSum.setLabel(r.exists ? 'Implied total \u00B7 arb' : 'Implied total \u00B7 no arb');
     bSum.set(sumText, sumText, '', r.exists ? 'pos' : 'neg');
     bStakeA.setLabel('Put on ' + fmtOdds(a));

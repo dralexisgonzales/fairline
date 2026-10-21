@@ -76,6 +76,7 @@ function switchTo(id) {
   store.save('tab', id);
   window.scrollTo(0, 0);
   heroOffscreen = false;
+  lastHero = null;
   updateMini();
 }
 
@@ -91,6 +92,8 @@ const miniBtn = h('button', { type: 'button', class: 'mini-btn', 'aria-label': '
 const mini = h('div', { class: 'mini', 'aria-hidden': 'true' }, miniBtn);
 document.body.append(mini);
 let heroOffscreen = false;
+let lastHero = null;
+const heroGone = (el) => { const r = el.getBoundingClientRect(); return r.top < 64 || r.bottom > window.innerHeight; };
 function activeHero() {
   const c = calcs.find((x) => x.id === active);
   if (!c) return null;
@@ -99,17 +102,30 @@ function activeHero() {
 }
 function updateMini() {
   const hero = activeHero();
-  if (!hero) { mini.classList.remove('is-on'); mini.setAttribute('aria-hidden', 'true'); miniBtn.tabIndex = -1; return; }
+  if (!hero) { lastHero = null; mini.classList.remove('is-on'); mini.setAttribute('aria-hidden', 'true'); miniBtn.tabIndex = -1; return; }
+  // When the visible hero changes (tab or mode switch), read its position directly instead of waiting for an observer event.
+  if (hero !== lastHero) { lastHero = hero; heroOffscreen = heroGone(hero); }
+  const card = hero.closest('.card-hero');
   miniLabel.textContent = hero.querySelector('.res-label')?.textContent || '';
   miniValue.textContent = hero.querySelector('.res-value')?.textContent || '';
-  // Second chip: the main money tile of the answer card (payout, locked profit, stake split), if any.
-  const tiles = [...(hero.closest('.card-hero')?.querySelectorAll('.res-row .res:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
+  // Second chip: the main money tile of the answer card (payout, locked profit, stake split),
+  // or the other side on Fair line.
+  const tiles = [...(card?.querySelectorAll('.res-row .res:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
   const money = tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
+  const eyebrows = card ? [...card.querySelectorAll('.eyebrow')] : [];
+  const heroes = card ? [...card.querySelectorAll('.res-hero')] : [];
   if (money) {
     miniLabel2.textContent = money.querySelector('.res-label')?.textContent || '';
     miniValue2.textContent = money.querySelector('.res-value')?.textContent || '';
     miniSecond.hidden = false;
-    miniLabel.hidden = true;                 // the headline value reads on its own; keep the strip short
+    // Odds and percentages read on their own; a dollar headline keeps its label.
+    miniLabel.hidden = !/\$/.test(miniValue.textContent);
+  } else if (eyebrows.length === 2 && heroes.length === 2) {
+    miniLabel.textContent = eyebrows[0].textContent;
+    miniLabel2.textContent = eyebrows[1].textContent;
+    miniValue2.textContent = heroes[1].querySelector('.res-value')?.textContent || '';
+    miniSecond.hidden = miniValue2.textContent === '—';
+    miniLabel.hidden = false;
   } else {
     miniSecond.hidden = true;
     miniLabel.hidden = false;
@@ -123,11 +139,7 @@ const heroWatch = new IntersectionObserver((entries) => {
   entries.forEach((en) => { if (en.target === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); } });
 }, { rootMargin: '-64px 0px 0px 0px', threshold: 1 });
 calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(el)));
-new MutationObserver((muts) => {
-  // A pane being shown or hidden changes which hero is active; re-evaluate from scratch.
-  if (muts.some((m) => m.type === 'attributes')) heroOffscreen = false;
-  updateMini();
-}).observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => updateMini()).observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
 // ----- Theme -----
 const media = window.matchMedia('(prefers-color-scheme: dark)');
