@@ -75,7 +75,7 @@ export function oddsField({ label, value, onChange, placeholder = '110' }) {
   const input = h('input', {
     type: 'text', inputmode: 'numeric', pattern: '[0-9]*', placeholder,
     autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false',
-    enterkeyhint: 'done', 'aria-label': label + ' American odds',
+    enterkeyhint: 'done', 'aria-label': /odds/i.test(label) ? label : label + ' American odds',
   });
   input.value = state.v;
   input.addEventListener('input', () => {
@@ -121,7 +121,7 @@ export function oddsField({ label, value, onChange, placeholder = '110' }) {
     paint();
   }
   function setComputed(on) { root.classList.toggle('is-computed', !!on); }
-  function setLabel(t) { labelEl.textContent = t; input.setAttribute('aria-label', t + ' American odds'); }
+  function setLabel(t) { labelEl.textContent = t; input.setAttribute('aria-label', /odds/i.test(t) ? t : t + ' American odds'); }
   function setPlaceholder(t) { input.placeholder = t; }
   paint();
   return { root, get, set, setComputed, setLabel, setPlaceholder, input, focus: () => input.focus() };

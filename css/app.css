@@ -328,6 +328,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .mini-second .mini-label { overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
 .mini-btn > .mini-label { max-width: 140px; flex: 0 1 auto; min-width: 0; }
 .mini-btn > .mini-value { flex: none; }
+.mini-value.is-long { font-size: 14px; }
 
 /* Toast: sits above the tab bar so it never covers the numbers being read */
 #toast {

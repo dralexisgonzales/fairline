@@ -147,7 +147,8 @@ function updateMini() {
   mini.classList.toggle('is-on', on);
   mini.setAttribute('aria-hidden', String(!on));
   miniBtn.tabIndex = on ? 0 : -1;
-  // A label shows whole or not at all: after layout, drop any label that would be cut.
+  // Very long figures shrink; a label shows whole or not at all (checked after layout).
+  [miniValue, miniValue2].forEach((el) => el.classList.toggle('is-long', el.textContent.length >= 14));
   if (on) requestAnimationFrame(() => {
     [miniLabel, miniLabel2].forEach((el) => { if (!el.hidden && el.scrollWidth > el.clientWidth + 1) el.hidden = true; });
   });
