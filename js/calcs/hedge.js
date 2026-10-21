@@ -23,8 +23,8 @@ export function create(ctx) {
   });
 
   // ----- Mode A: hedge an open bet -----
-  const aHero = result({ label: 'Bet to lock profit', hero: true });
-  const aLocked = result({ label: 'Locked profit' });
+  const aHero = result({ label: 'Bet to lock profit', hero: true, mini: 'Bet' });
+  const aLocked = result({ label: 'Locked profit', mini: 'Locked' });
   const aBreak = result({ label: 'Bet to break even' });
   const aStake = stakeField({ label: 'Original stake', value: state.A.stake, ctx, onChange: (v) => { state.A.stake = v; render(); persist(); } });
   const aOrig = oddsField({ label: 'Original odds', value: state.A.orig, placeholder: '200', onChange: (v) => { state.A.orig = v; render(); persist(); } });
@@ -50,7 +50,7 @@ export function create(ctx) {
   );
 
   // ----- Mode B: arbitrage -----
-  const bHero = result({ label: 'Locked profit', hero: true });
+  const bHero = result({ label: 'Locked profit', hero: true, mini: 'Profit' });
   const bStakeA = result({ label: 'Put on side A' });
   const bStakeB = result({ label: 'Put on side B' });
   const bSum = result({ label: 'Implied total', cls: 'res-line' });
@@ -115,6 +115,7 @@ export function create(ctx) {
       bHero.setLabel('Locked profit');
       bHero.set('—', null, 'Enter both prices');
       bStakeA.setLabel('Put on side A'); bStakeB.setLabel('Put on side B');
+      delete bStakeA.root.dataset.miniText;
       bStakeA.set('—'); bStakeB.set('—'); bSum.set('—');
       bSum.setLabel('Implied total');
       return;
@@ -132,15 +133,17 @@ export function create(ctx) {
       bHero.set(fmtPctSigned(r.roi, 2), fmtPctSigned(r.roi, 2), 'enter a total for dollars', r.exists ? 'pos' : 'neg');
       bStakeA.set(fmtProb(r.shareA, 'pct', 1), fmtProb(r.shareA, 'pct', 1), 'of total');
       bStakeB.set(fmtProb(r.shareB, 'pct', 1), fmtProb(r.shareB, 'pct', 1), 'of total');
+      delete bStakeA.root.dataset.miniText;
       return;
     }
     // Round side A to the cent and give the remainder to side B so the two always add up to the total.
     const sA = Math.round(r.stakeA * 100) / 100;
     const sB = Math.round((total - sA) * 100) / 100;
-    bHero.setLabel(r.exists ? 'Locked profit' : 'Locked loss');
+    bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Locked profit' : 'Locked loss');
     setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total) + ' \u00B7 returns ' + fmtMoney(r.returnTotal) + ' either way' });
     setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total' });
     setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total' });
+    bStakeA.root.dataset.miniText = 'A ' + fmtMoney(sA) + ' \u00B7 B ' + fmtMoney(sB);
   }
 
   function render() {

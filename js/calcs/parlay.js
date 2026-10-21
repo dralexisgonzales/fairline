@@ -18,7 +18,7 @@ export function create(ctx) {
 
   const hero = result({ label: 'Fair parlay odds', hero: true });
   const probRes = result({ label: 'Fair probability' });
-  const payRes = result({ label: 'Fair payout' });
+  const payRes = result({ label: 'Fair payout', mini: 'Payout' });
   const offRes = result({ label: 'Book payout' });
   const edgeRes = result({ label: 'Edge at book’s price' });
   const offeredRow = h('div', { class: 'res-row res-row-after' }, offRes.root, edgeRes.root);
@@ -103,7 +103,7 @@ export function create(ctx) {
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), fmtDecimal(r.decimal) + ' decimal');
     probRes.set(fmtProb(r.prob, mode));
     if (Number.isFinite(stake)) {
-      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'profit · returns ' + fmtMoney(r.fairTotal) });
+      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'returns ' + fmtMoney(r.fairTotal) });
     } else {
       payRes.set('—', null, 'enter a stake');
     }
@@ -113,7 +113,7 @@ export function create(ctx) {
     const e = r.offered.edge;
     const tone = e > 1e-9 ? 'pos' : e < -1e-9 ? 'neg' : '';
     if (Number.isFinite(stake)) {
-      setMoney(offRes, r.offered.profit, unit, { signed: true, tone: '', sub: 'profit · returns ' + fmtMoney(r.offered.total) });
+      setMoney(offRes, r.offered.profit, unit, { signed: true, tone: '', sub: 'returns ' + fmtMoney(r.offered.total) });
       const gap = r.offered.payoutGap;
       const gapText = Math.abs(gap) < 0.005 ? 'matches fair' : fmtMoney(gap, { signed: true }) + ' vs fair';
       edgeRes.set(fmtPctSigned(e, 1), fmtPctSigned(e, 1), gapText, tone);

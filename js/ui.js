@@ -292,13 +292,14 @@ export function segmented({ options, value, onChange, cls = '', label = '' }) {
 }
 
 // ---------- Result tile: tap to copy ----------
-export function result({ label, hero = false, cls = '' }) {
+export function result({ label, hero = false, cls = '', mini = '' }) {
   const labelEl = h('span', { class: 'res-label', text: label });
   const valueEl = h('span', { class: 'res-value', text: '—' });
   const subEl = h('span', { class: 'res-sub', hidden: true });
   const root = h('button', { type: 'button', class: 'res ' + (hero ? 'res-hero ' : '') + cls, 'aria-label': label + ', tap to copy' },
     labelEl, valueEl, subEl
   );
+  if (mini) root.dataset.mini = mini;      // short label for the compact answer strip
   let copy = null;
   let currentLabel = label;
   let flashTimer = null;
@@ -327,7 +328,7 @@ export function result({ label, hero = false, cls = '' }) {
     root.setAttribute('aria-label', t + ', tap to copy');
   }
   set('—');
-  return { root, set, setLabel, hide: (on) => { root.hidden = !!on; } };
+  return { root, set, setLabel, setMini: (t) => { root.dataset.mini = t; }, hide: (on) => { root.hidden = !!on; } };
 }
 
 // Money result with units in the sub line.

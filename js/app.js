@@ -93,7 +93,10 @@ const mini = h('div', { class: 'mini', 'aria-hidden': 'true' }, miniBtn);
 document.body.append(mini);
 let heroOffscreen = false;
 let lastHero = null;
-const heroGone = (el) => { const r = el.getBoundingClientRect(); return r.top < 64 || r.bottom > window.innerHeight; };
+const heroValue = (el) => el.querySelector('.res-value') || el;
+// The strip appears once the big number itself is fully hidden, so it never covers the value it repeats.
+const heroGone = (el) => { const r = heroValue(el).getBoundingClientRect(); return r.bottom < 64 || r.top > window.innerHeight; };
+const shortLabel = (el) => el?.dataset.mini ?? (el?.querySelector('.res-label')?.textContent || '');
 function activeHero() {
   const c = calcs.find((x) => x.id === active);
   if (!c) return null;
@@ -106,21 +109,23 @@ function updateMini() {
   // When the visible hero changes (tab or mode switch), read its position directly instead of waiting for an observer event.
   if (hero !== lastHero) { lastHero = hero; heroOffscreen = heroGone(hero); }
   const card = hero.closest('.card-hero');
-  miniLabel.textContent = hero.querySelector('.res-label')?.textContent || '';
+  miniLabel.textContent = shortLabel(hero);
   miniValue.textContent = hero.querySelector('.res-value')?.textContent || '';
   // Second chip: the main money tile of the answer card (payout, locked profit, stake split),
   // or the other side on Fair line.
   const tiles = [...(card?.querySelectorAll('.res-row .res:not(.is-empty), .res-line:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
-  // A summary line (arbitrage's implied total) wins; otherwise the first dollar tile.
-  const money = tiles.find((t) => t.classList.contains('res-line')) || tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
+  // A tile that provides its own strip text wins; otherwise the first dollar tile.
+  const custom = tiles.find((t) => t.dataset.miniText);
+  const money = custom || tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
   const eyebrows = card ? [...card.querySelectorAll('.eyebrow')] : [];
   const heroes = card ? [...card.querySelectorAll('.res-hero')] : [];
   if (money) {
-    miniLabel2.textContent = money.querySelector('.res-label')?.textContent || '';
-    miniValue2.textContent = money.querySelector('.res-value')?.textContent || '';
+    miniLabel2.textContent = custom ? '' : shortLabel(money);
+    miniLabel2.hidden = !miniLabel2.textContent;
+    miniValue2.textContent = custom ? custom.dataset.miniText : (money.querySelector('.res-value')?.textContent || '');
     miniSecond.hidden = false;
-    // Odds and percentages read on their own; a dollar headline keeps its label.
-    miniLabel.hidden = !/\$/.test(miniValue.textContent);
+    // Odds and percentages read on their own; a dollar headline keeps its (short) label.
+    miniLabel.hidden = !/\$/.test(miniValue.textContent) || !miniLabel.textContent;
   } else if (eyebrows.length === 2 && heroes.length === 2) {
     miniLabel.textContent = eyebrows[0].textContent;
     miniLabel2.textContent = eyebrows[1].textContent;
@@ -137,9 +142,12 @@ function updateMini() {
   miniBtn.tabIndex = on ? 0 : -1;
 }
 const heroWatch = new IntersectionObserver((entries) => {
-  entries.forEach((en) => { if (en.target === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); } });
-}, { rootMargin: '-64px 0px 0px 0px', threshold: 1 });
-calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(el)));
+  entries.forEach((en) => {
+    const hero = en.target.closest('.res-hero');
+    if (hero === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); }
+  });
+}, { rootMargin: '-64px 0px 0px 0px', threshold: 0 });
+calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(heroValue(el))));
 new MutationObserver(() => updateMini()).observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
 // ----- Theme -----

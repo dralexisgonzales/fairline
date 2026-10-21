@@ -56,6 +56,7 @@ export function create(ctx) {
       am = oddsValue(state.odds);
       p = toImplied(am);
       probF.set(trim(p * 100, p < 0.01 ? 2 : 1));
+      probF.setSub('');
       probF.setComputed(Number.isFinite(p));
       probF.setPlaceholder(Number.isFinite(p) ? '' : '\u2014');
       oddsF.setComputed(false);
@@ -65,6 +66,7 @@ export function create(ctx) {
     } else {
       const pv = parseNum(state.prob);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
+      probF.setSub(Number.isFinite(pv) && !(pv > 0 && pv < 100) ? 'Enter a number above 0 and below 100' : '');
       am = probToAmerican(p);
       if (Number.isFinite(am)) {
         const txt = fmtOdds(am, { ascii: true });            // maps -100 to +100 like the hero

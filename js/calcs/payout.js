@@ -11,8 +11,8 @@ export function create(ctx) {
   const state = store.load('calc:' + id, { mode: 'risk', amount: { v: '100', mode: '$' }, odds: { sign: '-', v: '110' } });
   const persist = debounce(() => store.save('calc:' + id, state));
 
-  const hero = result({ label: 'Profit', hero: true });
-  const totalRes = result({ label: 'Total return' });
+  const hero = result({ label: 'Profit', hero: true, mini: 'Profit' });
+  const totalRes = result({ label: 'Total return', mini: 'Return' });
   const impliedRes = result({ label: 'Implied probability' });
   const modeSeg = segmented({
     options: [{ id: 'risk', label: 'I’m risking' }, { id: 'win', label: 'I want to win' }],
@@ -50,12 +50,12 @@ export function create(ctx) {
     }
     if (state.mode === 'risk') {
       const r = payoutFromRisk(amount, am);
-      hero.setLabel('Profit');
+      hero.setLabel('Profit'); hero.setMini('Profit');
       setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', sub: 'risking ' + fmtMoney(amount) + ' at ' + fmtOdds(am) });
       setMoney(totalRes, r.total, unit, { tone: '' });
     } else {
       const r = payoutFromWin(amount, am);
-      hero.setLabel('Risk needed');
+      hero.setLabel('Risk needed'); hero.setMini('Risk');
       setMoney(hero, r.stake, unit, { tone: '', sub: 'to win ' + fmtMoney(amount) + ' at ' + fmtOdds(am) });
       setMoney(totalRes, r.total, unit, { tone: '' });
     }
