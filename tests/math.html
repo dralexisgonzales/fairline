@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Fairline math tests</title>
+<style>body{font:14px/1.5 ui-monospace,Menlo,monospace;padding:20px;background:#111;color:#eee}.ok{color:#3ddc97}.bad{color:#ff6b6b}</style>
+</head><body><h1>Fairline math tests</h1><pre id="out"></pre>
+<script type="module">
+import * as M from '../js/math.js';
+import * as F from '../js/format.js';
+const cases = [];
+const near = (name, got, want, tol = 1e-4) => cases.push({ name, got, want, ok: Math.abs(got - want) <= tol });
+const eq = (name, got, want) => cases.push({ name, got, want, ok: got === want });
+
+// Conversions
+near('toDecimal(-110)', M.toDecimal(-110), 1.909091);
+near('toImplied(-110)', M.toImplied(-110), 0.523810);
+near('toDecimal(+150)', M.toDecimal(150), 2.5);
+near('toImplied(+150)', M.toImplied(150), 0.4);
+near('toDecimal(+100)', M.toDecimal(100), 2);
+near('toDecimal(-100)', M.toDecimal(-100), 2);
+near('toImplied(+100)', M.toImplied(100), 0.5);
+near('toImplied(-100)', M.toImplied(-100), 0.5);
+eq('isValidAmerican(99) false', M.isValidAmerican(99), false);
+eq('isValidAmerican(-99) false', M.isValidAmerican(-99), false);
+eq('isValidAmerican(100) true', M.isValidAmerican(100), true);
+near('probToAmerican(0.5)=+100', M.probToAmerican(0.5), 100);
+near('probToAmerican(0.6)=-150', M.probToAmerican(0.6), -150);
+near('probToAmerican(0.4)=+150', M.probToAmerican(0.4), 150);
+near('probToAmerican(0.01)=+9900', M.probToAmerican(0.01), 9900);
+near('probToAmerican(0.99)=-9900', M.probToAmerican(0.99), -9900);
+near('round trip +100000', M.probToAmerican(M.toImplied(100000)), 100000, 1e-6);
+near('round trip -100000', M.probToAmerican(M.toImplied(-100000)), -100000, 1e-6);
+near('round trip -105', M.probToAmerican(M.toImplied(-105)), -105, 1e-9);
+near('round trip +105', M.probToAmerican(M.toImplied(105)), 105, 1e-9);
+near('decimalToAmerican(1.5)', M.decimalToAmerican(1.5), -200);
+near('decimalToAmerican(3)', M.decimalToAmerican(3), 200);
+near('decimalToAmerican(2)', M.decimalToAmerican(2), 100);
+eq('probToAmerican(0) NaN', Number.isNaN(M.probToAmerican(0)), true);
+eq('probToAmerican(1) NaN', Number.isNaN(M.probToAmerican(1)), true);
+
+// No-vig
+let nv = M.noVig(-110, -110);
+near('noVig -110/-110 fairA', nv.fairA, 0.5);
+near('noVig -110/-110 fairOddsA', nv.fairOddsA, 100);
+near('noVig -110/-110 overround', nv.overround, 0.047619);
+near('noVig -110/-110 hold', nv.hold, 0.045455);
+nv = M.noVig(-150, 130);
+near('noVig -150/+130 impliedA', nv.impliedA, 0.6);
+near('noVig -150/+130 impliedB', nv.impliedB, 0.434783);
+near('noVig -150/+130 fairA', nv.fairA, 0.579832);
+near('noVig -150/+130 fairB', nv.fairB, 0.420168);
+near('noVig -150/+130 fairOddsA', nv.fairOddsA, -138.0, 0.05);
+near('noVig -150/+130 fairOddsB', nv.fairOddsB, 138.0, 0.05);
+near('noVig -150/+130 hold', nv.hold, 0.033613);
+nv = M.noVig(-150, 160);
+near('noVig -150/+160 hold negative (arb)', nv.hold, -0.015625);
+nv = M.noVig(100, 100);
+near('noVig +100/+100 fairA', nv.fairA, 0.5);
+near('noVig +100/+100 hold', nv.hold, 0);
+nv = M.noVig(-10000, 2500);
+near('noVig -10000/+2500 fairA', nv.fairA, 0.990099 / (0.990099 + 0.038462));
+
+// Parlay
+let p = M.parlay([-110, -110, -110], 100, 600);
+near('parlay 3x-110 prob', p.prob, 0.143727);
+near('parlay 3x-110 decimal', p.decimal, 6.957926);
+near('parlay 3x-110 american', p.american, 595.79, 0.01);
+near('parlay 3x-110 fairProfit', p.fairProfit, 595.79, 0.01);
+near('parlay 3x-110 fairTotal', p.fairTotal, 695.79, 0.01);
+near('parlay offered +600 profit', p.offered.profit, 600);
+near('parlay offered +600 edge', p.offered.edge, 0.143727 * 7 - 1);
+near('parlay offered +600 payoutGap', p.offered.payoutGap, 100 * (7 - 6.957926), 0.01);
+p = M.parlay([100, 100]);
+near('parlay +100/+100 prob', p.prob, 0.25);
+near('parlay +100/+100 american', p.american, 300);
+p = M.parlay([-200, 150, 100], 50);
+near('parlay -200/+150/+100 prob', p.prob, (2 / 3) * 0.4 * 0.5);
+near('parlay -200/+150/+100 decimal', p.decimal, 1.5 * 2.5 * 2);
+near('parlay -200/+150/+100 fairProfit', p.fairProfit, 50 * (7.5 - 1));
+p = M.parlay([-110]);
+near('parlay single leg = straight', p.american, -110, 1e-9);
+eq('parlay invalid leg null', M.parlay([-110, 50]), null);
+
+// Payout
+let po = M.payoutFromRisk(100, -110);
+near('risk 100 @ -110 profit', po.profit, 90.909091);
+near('risk 100 @ -110 total', po.total, 190.909091);
+po = M.payoutFromWin(100, -110);
+near('win 100 @ -110 stake', po.stake, 110);
+near('win 100 @ -110 total', po.total, 210);
+po = M.payoutFromRisk(100, 150);
+near('risk 100 @ +150 profit', po.profit, 150);
+po = M.payoutFromWin(150, 150);
+near('win 150 @ +150 stake', po.stake, 100);
+po = M.payoutFromRisk(25, 100);
+near('risk 25 @ +100 profit', po.profit, 25);
+po = M.payoutFromRisk(100, -100000);
+near('risk 100 @ -100000 profit', po.profit, 0.1);
+
+// Hedge
+let hd = M.hedge(100, 200, -150);
+near('hedge payout', hd.payout, 300);
+near('hedge equalStake', hd.equalStake, 180);
+near('hedge guaranteed', hd.guaranteed, 20);
+near('hedge breakEvenStake', hd.breakEvenStake, 150);
+near('hedge breakEvenIfOriginalWins', hd.breakEvenIfOriginalWins, 50);
+eq('hedge breakEvenPossible', hd.breakEvenPossible, true);
+let ho = M.hedgeOutcomes(100, 200, 180, -150);
+near('outcomes equal: orig wins', ho.ifOriginalWins, 20);
+near('outcomes equal: hedge wins', ho.ifHedgeWins, 20);
+ho = M.hedgeOutcomes(100, 200, 150, -150);
+near('outcomes breakeven: orig wins', ho.ifOriginalWins, 50);
+near('outcomes breakeven: hedge wins', ho.ifHedgeWins, 0, 1e-9);
+ho = M.hedgeOutcomes(100, 200, 0, -150);
+near('outcomes none: orig wins', ho.ifOriginalWins, 200);
+near('outcomes none: hedge wins', ho.ifHedgeWins, -100);
+hd = M.hedge(100, -110, -110);
+near('hedge -110/-110 equalStake', hd.equalStake, 100);
+near('hedge -110/-110 guaranteed (loss)', hd.guaranteed, -9.090909);
+eq('hedge -110/-110 breakEvenPossible false', hd.breakEvenPossible, false);
+hd = M.hedge(100, 100, 100);
+near('hedge +100/+100 equalStake', hd.equalStake, 100);
+near('hedge +100/+100 guaranteed', hd.guaranteed, 0, 1e-9);
+eq('hedge +100/+100 breakEvenPossible', hd.breakEvenPossible, true);
+hd = M.hedge(10, 5000, -2000);
+near('hedge longshot payout', hd.payout, 510);
+near('hedge longshot equalStake', hd.equalStake, 510 / 1.05);
+near('hedge longshot guaranteed', hd.guaranteed, 510 - 10 - 510 / 1.05);
+
+// Arb
+let ab = M.arb(-150, 160, 1000);
+eq('arb -150/+160 exists', ab.exists, true);
+near('arb sum', ab.sum, 0.984615);
+near('arb stakeA', ab.stakeA, 609.375);
+near('arb stakeB', ab.stakeB, 390.625);
+near('arb returnTotal', ab.returnTotal, 1015.625);
+near('arb profit', ab.profit, 15.625);
+near('arb roi', ab.roi, 0.015625);
+near('arb A wins return', ab.stakeA * M.toDecimal(-150), 1015.625);
+near('arb B wins return', ab.stakeB * M.toDecimal(160), 1015.625);
+near('arb shareA', ab.shareA, 0.609375);
+ab = M.arb(-110, -110, 1000);
+eq('arb -110/-110 exists false', ab.exists, false);
+near('arb -110/-110 roi', ab.roi, -0.045455);
+near('arb -110/-110 stakeA', ab.stakeA, 500);
+ab = M.arb(100, 100, 500);
+eq('arb +100/+100 exists false (exactly fair)', ab.exists, false);
+near('arb +100/+100 profit 0', ab.profit, 0, 1e-9);
+
+// Fees
+near('takerFee 0.5 @ 7%', M.takerFee(0.5, 0.07), 0.0175);
+near('takerFee 0.9 @ 7%', M.takerFee(0.9, 0.07), 0.0063);
+near('takerFee 0.1 @ 7%', M.takerFee(0.1, 0.07), 0.0063);
+near('effectivePrice 0.5 @ 7%', M.effectivePrice(0.5, 0.07).price, 0.5175);
+near('effectivePrice 0.62 @ 3%', M.effectivePrice(0.62, 0.03).price, 0.62 + 0.03 * 0.62 * 0.38);
+near('takerFee 0.5 @ 0', M.takerFee(0.5, 0), 0);
+
+// Formatting
+eq('fmtOdds(-110)', F.fmtOdds(-110), '−110');
+eq('fmtOdds(-110) ascii', F.fmtOdds(-110, { ascii: true }), '-110');
+eq('fmtOdds(150)', F.fmtOdds(150), '+150');
+eq('fmtOdds(-100) -> +100', F.fmtOdds(-100), '+100');
+eq('fmtOdds(100.4) -> +100', F.fmtOdds(100.4), '+100');
+eq('fmtOdds(-100.4) -> +100', F.fmtOdds(-100.4), '+100');
+eq('fmtOdds(-100.6) -> -101', F.fmtOdds(-100.6), '−101');
+eq('fmtOdds(-163.2)', F.fmtOdds(-163.2), '−163');
+eq('fmtOdds(NaN)', F.fmtOdds(NaN), '—');
+eq('fmtDecimal(1.909)', F.fmtDecimal(1.90909), '1.91');
+eq('fmtDecimal(1.05)', F.fmtDecimal(1.05), '1.050');
+eq('fmtDecimal(1.0099)', F.fmtDecimal(1.0099), '1.010');
+eq('fmtProb(0.5238)', F.fmtProb(0.52381), '52.4%');
+eq('fmtProb cents', F.fmtProb(0.52381, 'cents'), '52.4¢');
+eq('fmtMoney(1234.5)', F.fmtMoney(1234.5), '$1,234.50');
+eq('fmtMoney(-9.09)', F.fmtMoney(-9.0909), '−$9.09');
+eq('fmtMoney signed', F.fmtMoney(20, { signed: true }), '+$20.00');
+eq('fmtMoney(0) signed', F.fmtMoney(0, { signed: true }), '$0.00');
+eq('fmtUnits(2.5)', F.fmtUnits(2.5), '2.5u');
+eq('fmtUnits(2)', F.fmtUnits(2), '2u');
+eq('fmtUnits(0.333)', F.fmtUnits(0.3333), '0.33u');
+eq('fmtCentsExact(0.0175)', F.fmtCentsExact(0.0175), '1.75¢');
+eq('fmtCentsExact(0.02)', F.fmtCentsExact(0.02), '2¢');
+eq('fmtPctSigned', F.fmtPctSigned(0.015873, 2), '+1.59%');
+
+const out = document.getElementById('out');
+const fails = cases.filter((c) => !c.ok);
+out.innerHTML = cases.map((c) => `<span class="${c.ok ? 'ok' : 'bad'}">${c.ok ? 'PASS' : 'FAIL'}</span> ${c.name}${c.ok ? '' : ` — got ${c.got}, want ${c.want}`}`).join('\n')
+  + `\n\n${cases.length - fails.length}/${cases.length} passed`;
+window.__results = { total: cases.length, failed: fails.map((c) => ({ name: c.name, got: c.got, want: c.want })) };
+</script></body></html>

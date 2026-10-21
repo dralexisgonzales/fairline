@@ -1,0 +1,108 @@
+// Fairline app bootstrap: settings context, screens, tabs, theme, service worker.
+import * as store from './store.js';
+import { FEE_PRESETS } from './math.js';
+import { h, svg, toast } from './ui.js';
+import { createSettings } from './settings.js';
+import * as convert from './calcs/convert.js';
+import * as fairline from './calcs/fairline.js';
+import * as parlay from './calcs/parlay.js';
+import * as hedge from './calcs/hedge.js';
+import * as payout from './calcs/payout.js';
+
+const settings = store.loadSettings();
+
+function feePreset() {
+  return FEE_PRESETS.find((p) => p.id === settings.feePreset) || FEE_PRESETS[0];
+}
+function feeRate() {
+  const p = feePreset();
+  if (p.id === 'custom') return Number(settings.feeCustom) > 0 ? Number(settings.feeCustom) : 0;
+  return p.rate;
+}
+function feeLabel() {
+  const p = feePreset();
+  if (p.id === 'kalshi') return 'Kalshi';
+  if (p.id.startsWith('poly')) return 'Polymarket';
+  if (p.id === 'custom') return 'custom';
+  return '';
+}
+
+const ctx = {
+  settings,
+  unitSize: () => (Number(settings.unit) > 0 ? Number(settings.unit) : 0),
+  probMode: () => (settings.probMode === 'cents' ? 'cents' : 'pct'),
+  setProbMode: (m) => ctx.update({ probMode: m }),
+  feeRate,
+  feeLabel,
+  openSettings: () => sheet.open(),
+  update(patch) {
+    Object.assign(settings, patch);
+    store.saveSettings(settings);
+    applyTheme();
+    renderAll();
+    sheet.render();
+  },
+};
+
+const calcs = [convert, fairline, parlay, hedge, payout].map((m) => m.create(ctx));
+const sheet = createSettings(ctx);
+
+// ----- Layout -----
+const main = document.getElementById('screens');
+calcs.forEach((c) => main.append(c.root));
+document.body.append(sheet.root);
+
+const tabs = document.getElementById('tabs');
+const tabBtns = calcs.map((c) =>
+  h('button', { type: 'button', class: 'tab', 'data-id': c.id, 'aria-label': c.title, onclick: () => switchTo(c.id) },
+    svg(c.icon, 22), h('span', { class: 'tab-label', text: c.title })
+  )
+);
+tabs.append(...tabBtns);
+document.getElementById('settingsBtn').addEventListener('click', () => sheet.open());
+
+let active = null;
+function switchTo(id) {
+  if (active === id) { main.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  active = id;
+  calcs.forEach((c) => { c.root.hidden = c.id !== id; });
+  tabBtns.forEach((b) => {
+    const on = b.dataset.id === id;
+    b.classList.toggle('is-active', on);
+    b.setAttribute('aria-current', on ? 'page' : 'false');
+  });
+  store.save('tab', id);
+  window.scrollTo(0, 0);
+}
+
+function renderAll() { calcs.forEach((c) => c.render()); }
+
+// ----- Theme -----
+const media = window.matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() {
+  const t = settings.theme === 'light' ? 'light' : settings.theme === 'auto' ? (media.matches ? 'dark' : 'light') : 'dark';
+  document.documentElement.dataset.theme = t;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', t === 'dark' ? '#0a0c11' : '#f3f4f7');
+}
+media.addEventListener?.('change', () => { if (settings.theme === 'auto') applyTheme(); });
+
+// ----- Boot -----
+applyTheme();
+renderAll();
+switchTo(calcs.some((c) => c.id === store.load('tab', null)) ? store.load('tab', null) : 'fairline');
+
+if (!store.load('hinted', false)) {
+  setTimeout(() => { toast('Tap any result to copy it'); store.save('hinted', true); }, 900);
+}
+
+// Dismiss the keyboard when tapping empty space.
+main.addEventListener('pointerdown', (e) => {
+  if (e.target === main || e.target.classList.contains('screen')) document.activeElement?.blur?.();
+});
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
