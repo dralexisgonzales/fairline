@@ -128,8 +128,9 @@ function updateMini() {
     miniLabel2.hidden = !miniLabel2.textContent;
     miniValue2.textContent = custom ? custom.dataset.miniText : (money.querySelector('.res-value')?.textContent || '');
     miniSecond.hidden = false;
-    // Odds and percentages read on their own; a dollar headline keeps its (short) label.
-    miniLabel.hidden = !/\$/.test(miniValue.textContent) || !miniLabel.textContent;
+    // Odds and percentages read on their own; a dollar headline keeps its (short) label,
+    // unless the tile supplies its own longer text (the arbitrage split), where room is tight.
+    miniLabel.hidden = !!custom || !/\$/.test(miniValue.textContent) || !miniLabel.textContent;
   } else if (eyebrows.length === 2 && heroes.length === 2) {
     miniBtn.classList.add('is-pair');
     miniLabel.textContent = eyebrows[0].textContent;

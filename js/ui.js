@@ -109,6 +109,7 @@ export function oddsField({ label, value, onChange, placeholder = '110' }) {
     signBtn.classList.toggle('is-plus', state.sign === '+');
     const n = parseNum(state.v);
     const bad = state.v !== '' && Number.isFinite(n) && n < 100 && (final || state.v.length >= 3);
+    input.classList.toggle('is-long', state.v.length >= 5);
     root.classList.toggle('is-invalid', bad);
     subEl.textContent = bad ? 'Odds start at 100' : '';
     subEl.hidden = !bad;
@@ -267,6 +268,7 @@ export function numberField({ label, value, onChange, placeholder = '', suffix =
     setComputed: (on) => root.classList.toggle('is-computed', !!on),
     setPlaceholder: (t) => { input.placeholder = t; },
     setLabel: (t) => { labelEl.textContent = t; input.setAttribute('aria-label', t); },
+    setError: (on) => { root.classList.toggle('is-invalid', !!on); subEl.classList.toggle('is-error', !!on); },
     focus: () => input.focus(),
   };
 }
@@ -315,6 +317,9 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
   });
   function set(display, copyValue = display, sub = '', tone = '') {
     valueEl.textContent = display;
+    // Long figures shrink instead of wrapping mid-number.
+    root.classList.toggle('is-long', display.length >= 10);
+    root.classList.toggle('is-xlong', display.length >= 13);
     copy = display === '—' ? null : toAscii(copyValue);
     subEl.textContent = sub || '';
     subEl.hidden = !sub;

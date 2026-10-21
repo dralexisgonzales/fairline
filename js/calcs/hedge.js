@@ -146,7 +146,10 @@ export function create(ctx) {
     setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total) + ' \u00B7 returns ' + fmtMoney(r.returnTotal) + ' either way' });
     setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total' });
     setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total' });
-    bStakeA.root.dataset.miniText = 'A ' + fmtMoney(sA) + ' \u00B7 B ' + fmtMoney(sB);
+    const whole = (x) => '$' + Math.round(x).toLocaleString('en-US');
+    bStakeA.root.dataset.miniText = sA + sB >= 10000
+      ? 'A ' + whole(sA) + ' \u00B7 B ' + whole(sB)        // keep the strip short on big totals
+      : 'A ' + fmtMoney(sA) + ' \u00B7 B ' + fmtMoney(sB);
   }
 
   function render() {
