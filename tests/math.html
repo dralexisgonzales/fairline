@@ -169,6 +169,7 @@ eq('fmtDecimal(1.0099)', F.fmtDecimal(1.0099), '1.010');
 eq('fmtProb(0.5238)', F.fmtProb(0.52381), '52.4%');
 eq('fmtProb longshot auto 2 digits', F.fmtProb(0.0099), '0.99%');
 eq('fmtProb 1% keeps 1 digit', F.fmtProb(0.01), '1.0%');
+eq('fmtProb tiny longshot 4 digits', F.fmtProb(0.000023), '0.0023%');
 eq('fmtProb cents', F.fmtProb(0.52381, 'cents'), '52.4¢');
 eq('fmtMoney(1234.5)', F.fmtMoney(1234.5), '$1,234.50');
 eq('fmtMoney(-9.09)', F.fmtMoney(-9.0909), '−$9.09');

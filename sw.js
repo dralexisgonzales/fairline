@@ -1,6 +1,6 @@
 // Fairline service worker: precache the app shell, serve it offline, refresh it in the background.
 // Strategy: cache first for instant opens, then revalidate so the next open has the latest files.
-const VERSION = 'fairline-v1.1.0';
+const VERSION = 'fairline-v1.2.0';
 const SHELL = [
   '/',
   '/index.html',

@@ -69,7 +69,7 @@ export function create(ctx) {
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
       const outOfRange = Number.isFinite(pv) && !(pv > 0 && pv < 100);
       probF.setSub(outOfRange ? 'Enter a number above 0 and below 100' : '');
-      probF.setError(outOfRange);
+      probF.setError(Number.isFinite(pv) && pv >= 100);   // a leading "0." while typing is not an error
       am = probToAmerican(p);
       if (Number.isFinite(am)) {
         const txt = fmtOdds(am, { ascii: true });            // maps -100 to +100 like the hero

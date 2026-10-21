@@ -319,7 +319,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   box-shadow: var(--pop-shadow);
 }
 .mini-btn.is-pair .mini-second .mini-value { font-size: 17px; font-weight: 800; }
-.mini-btn.is-pair > .mini-label, .mini-btn.is-pair .mini-second { flex: 1 1 0; min-width: 0; }
+.mini-btn.is-pair > .mini-label { flex: none; }
 .mini-btn.is-pair .mini-second .mini-label { max-width: none; }
 .mini-label { font-size: 12px; font-weight: 600; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-value { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }

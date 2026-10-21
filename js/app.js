@@ -133,8 +133,9 @@ function updateMini() {
     miniLabel.hidden = !!custom || !/\$/.test(miniValue.textContent) || !miniLabel.textContent;
   } else if (eyebrows.length === 2 && heroes.length === 2) {
     miniBtn.classList.add('is-pair');
-    miniLabel.textContent = eyebrows[0].textContent.replace(/^Side /, '');
-    miniLabel2.textContent = eyebrows[1].textContent.replace(/^Side /, '');
+    // Bare side letters: the inputs already show the odds, and this always fits.
+    miniLabel.textContent = eyebrows[0].textContent.split(' \u00B7 ')[0].replace(/^Side /, '');
+    miniLabel2.textContent = eyebrows[1].textContent.split(' \u00B7 ')[0].replace(/^Side /, '');
     miniValue2.textContent = heroes[1].querySelector('.res-value')?.textContent || '';
     miniSecond.hidden = miniValue2.textContent === '—';
     miniLabel.hidden = false;

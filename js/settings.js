@@ -73,7 +73,7 @@ export function createSettings(ctx) {
         h('div', { class: 'section-title', text: 'Data' }),
         clearBtn,
         h('div', { class: 'note', text: 'Everything is calculated on this device and saved only here. No account, no tracking, nothing leaves the phone.' }),
-        h('div', { class: 'about', text: 'Fairline 1.1' })
+        h('div', { class: 'about', text: 'Fairline 1.2' })
       ),
       doneBottom
     )
