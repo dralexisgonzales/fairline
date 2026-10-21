@@ -298,20 +298,22 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   display: flex; justify-content: center; pointer-events: none; isolation: isolate;
   opacity: 0; transform: translateY(-6px); transition: opacity .16s, transform .16s;
 }
-.mini::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(var(--bg) 0, var(--bg) 60%, transparent); }
+.mini::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(var(--tabbar) 0, var(--bg) 30%, var(--bg) 60%, transparent); }
 .mini.is-on { opacity: 1; transform: none; pointer-events: auto; }
 .mini-btn {
-  display: inline-flex; align-items: baseline; gap: 8px; max-width: calc(100% - 32px);
+  display: inline-flex; align-items: baseline; gap: 8px; max-width: 100%; min-width: 0;
   padding: 8px 14px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line-strong);
   box-shadow: var(--pop-shadow);
 }
+.mini-btn.is-pair .mini-second .mini-value { font-size: 17px; font-weight: 800; }
 .mini-label { font-size: 12px; font-weight: 600; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-value { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
-.mini-second { display: inline-flex; align-items: baseline; gap: 6px; padding-left: 10px; margin-left: 2px; border-left: 1px solid var(--line-strong); min-width: 0; }
+.mini-second { display: inline-flex; align-items: baseline; gap: 6px; padding-left: 10px; margin-left: 2px; border-left: 1px solid var(--line-strong); min-width: 0; flex: none; }
 .mini-second .mini-value { font-size: 15px; font-weight: 700; }
 .mini-second .mini-label { overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
-.mini-btn > .mini-label { max-width: 140px; }
+.mini-btn > .mini-label { max-width: 140px; flex: 0 1 auto; min-width: 0; }
+.mini-btn > .mini-value { flex: none; }
 
 /* Toast: sits above the tab bar so it never covers the numbers being read */
 #toast {

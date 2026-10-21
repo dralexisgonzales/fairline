@@ -117,6 +117,8 @@ function updateMini() {
   // or the other side on Fair line.
   const tiles = [...(card?.querySelectorAll('.res-row .res:not(.is-empty), .res-line:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
   // A tile that provides its own strip text wins; otherwise the first dollar tile.
+  miniBtn.classList.remove('is-pair');
+  miniLabel2.hidden = false;
   const custom = tiles.find((t) => t.dataset.miniText);
   const money = custom || tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
   const eyebrows = card ? [...card.querySelectorAll('.eyebrow')] : [];
@@ -129,6 +131,7 @@ function updateMini() {
     // Odds and percentages read on their own; a dollar headline keeps its (short) label.
     miniLabel.hidden = !/\$/.test(miniValue.textContent) || !miniLabel.textContent;
   } else if (eyebrows.length === 2 && heroes.length === 2) {
+    miniBtn.classList.add('is-pair');
     miniLabel.textContent = eyebrows[0].textContent;
     miniLabel2.textContent = eyebrows[1].textContent;
     miniValue2.textContent = heroes[1].querySelector('.res-value')?.textContent || '';
