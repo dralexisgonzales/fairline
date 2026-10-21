@@ -23,7 +23,12 @@ export function createSettings(ctx) {
     );
   });
   const customF = numberField({ label: 'Custom rate', suffix: '%', placeholder: '5', value: s.feeCustom != null ? trim(s.feeCustom * 100) : '', maxLen: 6,
-    onChange: (v) => { const n = parseNum(v); ctx.update({ feeCustom: Number.isFinite(n) ? Math.min(100, Math.max(0, n)) / 100 : 0 }); } });
+    onChange: (v) => {
+      const n = parseNum(v);
+      const clamped = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+      if (Number.isFinite(n) && clamped !== n) customF.set(String(clamped));
+      ctx.update({ feeCustom: clamped / 100 });
+    } });
 
   const themeSeg = segmented({ options: [{ id: 'dark', label: 'Dark' }, { id: 'light', label: 'Light' }, { id: 'auto', label: 'Auto' }],
     value: s.theme, cls: 'seg-full', label: 'Theme', onChange: (v) => ctx.update({ theme: v }) });
@@ -39,8 +44,10 @@ export function createSettings(ctx) {
   });
 
   const doneBtn = h('button', { type: 'button', class: 'btn-done', text: 'Done', onclick: close });
+  const doneBottom = h('button', { type: 'button', class: 'btn-primary', text: 'Done', onclick: close });
+  const head = h('div', { class: 'sheet-head' }, h('h2', { class: 'sheet-title', text: 'Settings' }), doneBtn);
   const panel = h('div', { class: 'sheet-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Settings' },
-    h('div', { class: 'sheet-head' }, h('h2', { class: 'sheet-title', text: 'Settings' }), doneBtn),
+    head,
     h('div', { class: 'sheet-body' },
       h('div', { class: 'section' },
         h('div', { class: 'section-title', text: 'Units & bankroll' }),
@@ -48,26 +55,34 @@ export function createSettings(ctx) {
         unitNote
       ),
       h('div', { class: 'section' },
+        h('div', { class: 'section-title', text: 'Appearance' }),
+        themeSeg.root
+      ),
+      h('div', { class: 'section' },
+        h('div', { class: 'section-title', text: 'Show probabilities as' }),
+        probSeg.root,
+        h('div', { class: 'note', text: '62% or 62\u00A2. Cents is how prediction markets quote, and turns on the after-fee readout in Convert.' })
+      ),
+      h('div', { class: 'section' },
         h('div', { class: 'section-title', text: 'Prediction market fee' }),
         h('div', { class: 'options', role: 'radiogroup' }, feeRows),
         customF.root,
-        h('div', { class: 'note', text: 'Average taker fee per contract = rate × price × (1 − price). Kalshi rounds each order’s total fee up to the next cent, so tiny orders can cost up to 1¢ more. The converter shows the price after this fee when set to cents.' })
-      ),
-      h('div', { class: 'section' },
-        h('div', { class: 'section-title', text: 'Appearance' }),
-        themeSeg.root,
-        h('div', { class: 'section-title', text: 'Show probabilities as' }),
-        probSeg.root,
-        h('div', { class: 'note', text: '62% or 62¢. Cents is how prediction markets quote.' })
+        h('div', { class: 'note', text: 'Fee per contract = rate \u00D7 price \u00D7 (1 \u2212 price), so it peaks at the 50\u00A2 mark. Kalshi rounds each order\u2019s total fee up to the next cent.' })
       ),
       h('div', { class: 'section' },
         h('div', { class: 'section-title', text: 'Data' }),
         clearBtn,
         h('div', { class: 'note', text: 'Everything is calculated on this device and saved only here. No account, no tracking, nothing leaves the phone.' }),
-        h('div', { class: 'about', text: 'Fairline 1.0' })
-      )
+        h('div', { class: 'about', text: 'Fairline 1.1' })
+      ),
+      doneBottom
     )
   );
+  // Swipe down on the header to dismiss.
+  let dragY = null;
+  head.addEventListener('pointerdown', (e) => { dragY = e.clientY; });
+  head.addEventListener('pointerup', (e) => { if (dragY != null && e.clientY - dragY > 60) close(); dragY = null; });
+  head.addEventListener('pointercancel', () => { dragY = null; });
   const backdrop = h('div', { class: 'sheet-backdrop', onclick: close });
   const root = h('div', { class: 'sheet', hidden: true }, backdrop, panel);
 

@@ -50,14 +50,15 @@ export function create(ctx) {
     const cents = mode === 'cents';
     modeSeg.set(mode);
     probF.setSuffix(cents ? '¢' : '%');
-    probF.setComputed(state.src === 'odds');
-    oddsF.setComputed(state.src === 'prob');
-
     let p = NaN, am = NaN;
     if (state.src === 'odds') {
       am = oddsValue(state.odds);
       p = toImplied(am);
       probF.set(trim(p * 100, p < 0.01 ? 2 : 1));
+      probF.setComputed(Number.isFinite(p));
+      probF.setPlaceholder(Number.isFinite(p) ? '' : '\u2014');
+      oddsF.setComputed(false);
+      oddsF.setPlaceholder('110');
       hero.setLabel(cents ? 'Implied price' : 'Implied probability');
       hero.set(fmtProb(p, mode), fmtProb(p, mode), Number.isFinite(am) ? fmtOdds(am) + ' American' : 'Enter odds or a probability');
     } else {
@@ -70,6 +71,10 @@ export function create(ctx) {
       } else {
         oddsF.set({ sign: oddsF.get().sign, v: '' });
       }
+      oddsF.setComputed(Number.isFinite(am));
+      oddsF.setPlaceholder(Number.isFinite(am) ? '' : '\u2014');
+      probF.setComputed(false);
+      probF.setPlaceholder('52.4');
       hero.setLabel('American odds');
       hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), Number.isFinite(p) ? fmtProb(p, mode) + (cents ? ' price' : ' probability') : 'Enter odds or a probability');
     }

@@ -121,8 +121,9 @@ export function oddsField({ label, value, onChange, placeholder = '110' }) {
   }
   function setComputed(on) { root.classList.toggle('is-computed', !!on); }
   function setLabel(t) { labelEl.textContent = t; input.setAttribute('aria-label', t + ' American odds'); }
+  function setPlaceholder(t) { input.placeholder = t; }
   paint();
-  return { root, get, set, setComputed, setLabel, input, focus: () => input.focus() };
+  return { root, get, set, setComputed, setLabel, setPlaceholder, input, focus: () => input.focus() };
 }
 
 export function oddsValue(s) {
@@ -159,7 +160,7 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
   btn$.addEventListener('click', () => setMode('$'));
   btnU.addEventListener('click', () => setMode('u'));
 
-  const subEl = h('div', { class: 'field-sub', hidden: true });
+  const subEl = h('div', { class: 'field-sub field-sub-reserved', text: '\u00A0', onclick: () => { if (subEl.classList.contains('is-link')) ctx.openSettings('unit'); } });
   const labelEl = h('div', { class: 'field-label', text: label });
   const root = h('div', { class: 'field field-stake' },
     labelEl,
@@ -167,23 +168,26 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
     subEl
   );
 
+  let pendingUnits = false;
   function setMode(mode) {
     if (state.mode === mode) return;
     const unit = ctx.unitSize();
     if (mode === 'u' && !(unit > 0)) {
-      // No unit size yet: do not reinterpret the number, send the user to set one.
+      // No unit size yet: keep the number as it is, send the user to set one, and finish the switch after.
+      pendingUnits = true;
       ctx.openSettings('unit');
       return;
     }
     const n = parseNum(state.v);
-    if (Number.isFinite(n)) {
+    if (Number.isFinite(n) && unit > 0) {
       if (mode === 'u') {
-        // Remember the exact dollar figure so toggling back never drifts.
+        // Remember the exact dollar entry so toggling back never drifts.
+        const text = state.v;
         state.v = trimNum(n / unit, 4);
-        state.exact = { dollars: n, text: state.v, unit };
+        state.exact = { text, dollars: n, unitsText: state.v, unit };
       } else {
         const ex = state.exact;
-        state.v = ex && ex.text === state.v && ex.unit === unit ? trimNum(ex.dollars, 2) : trimNum(n * unit, 2);
+        state.v = ex && ex.unitsText === state.v && ex.unit === unit ? ex.text : trimNum(n * unit, 2);
         state.exact = null;
       }
       input.value = state.v;
@@ -195,14 +199,21 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
 
   function paint() {
     const unit = ctx.unitSize();
+    if (pendingUnits && unit > 0 && state.mode === '$') { pendingUnits = false; setMode('u'); return; }
+    if (unit > 0) pendingUnits = false;
     btn$.classList.toggle('is-on', state.mode === '$');
     btnU.classList.toggle('is-on', state.mode === 'u');
     btn$.setAttribute('aria-pressed', state.mode === '$');
     btnU.setAttribute('aria-pressed', state.mode === 'u');
     adorn.textContent = state.mode === '$' ? '$' : 'u';
     const n = parseNum(state.v);
-    if (!Number.isFinite(n) || !(unit > 0)) { subEl.hidden = true; subEl.textContent = ''; return; }
-    subEl.hidden = false;
+    subEl.classList.remove('is-link');
+    if (state.mode === 'u' && !(unit > 0)) {
+      subEl.textContent = 'Set a unit size';
+      subEl.classList.add('is-link');
+      return;
+    }
+    if (!Number.isFinite(n) || !(unit > 0)) { subEl.textContent = '\u00A0'; return; }
     subEl.textContent = state.mode === '$' ? '= ' + fmtUnits(n / unit) : '= ' + fmtMoney(n * unit);
   }
 
@@ -250,6 +261,7 @@ export function numberField({ label, value, onChange, placeholder = '', suffix =
     setSuffix: (s) => { suffixEl.textContent = s; suffixEl.hidden = !s; },
     setSub: (t) => { subEl.textContent = t || ''; subEl.hidden = !t; },
     setComputed: (on) => root.classList.toggle('is-computed', !!on),
+    setPlaceholder: (t) => { input.placeholder = t; },
     focus: () => input.focus(),
   };
 }
@@ -337,6 +349,7 @@ export function disclosure({ label, open = false }, ...body) {
     panel.hidden = !now;
     btn.setAttribute('aria-expanded', String(now));
     btn.classList.toggle('is-open', now);
+    if (now) requestAnimationFrame(() => panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
   });
   btn.classList.toggle('is-open', open);
   const root = h('div', { class: 'card card-disclosure' }, btn, panel);

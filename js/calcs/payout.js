@@ -41,7 +41,7 @@ export function create(ctx) {
     const amount = stakeDollars(state.amount, unit);
     const am = oddsValue(state.odds);
     impliedRes.setLabel(mode === 'cents' ? 'Implied price' : 'Implied probability');
-    impliedRes.set(fmtProb(toImplied(am), mode));
+    impliedRes.set(fmtProb(toImplied(am), mode), fmtProb(toImplied(am), mode), Number.isFinite(am) ? fmtDecimal(payoutFromRisk(1, am).decimal) + ' decimal' : '');
     if (!Number.isFinite(amount) || !Number.isFinite(am) || !(amount > 0)) {
       hero.setLabel(state.mode === 'risk' ? 'Profit' : 'Risk needed');
       hero.set('—', null, state.mode === 'risk' ? 'Enter a stake and odds' : 'Enter an amount to win and odds');
@@ -52,12 +52,12 @@ export function create(ctx) {
       const r = payoutFromRisk(amount, am);
       hero.setLabel('Profit');
       setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', sub: 'risking ' + fmtMoney(amount) + ' at ' + fmtOdds(am), unitsFirst: false });
-      setMoney(totalRes, r.total, unit, { tone: '', sub: fmtDecimal(r.decimal) + ' decimal', unitsFirst: false });
+      setMoney(totalRes, r.total, unit, { tone: '' });
     } else {
       const r = payoutFromWin(amount, am);
       hero.setLabel('Risk needed');
       setMoney(hero, r.stake, unit, { tone: '', sub: 'to win ' + fmtMoney(amount) + ' at ' + fmtOdds(am), unitsFirst: false });
-      setMoney(totalRes, r.total, unit, { tone: '', sub: fmtDecimal(r.decimal) + ' decimal', unitsFirst: false });
+      setMoney(totalRes, r.total, unit, { tone: '' });
     }
   }
 

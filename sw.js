@@ -1,5 +1,6 @@
-// Fairline service worker: precache the app shell, serve offline, update in the background.
-const VERSION = 'fairline-v1.0.0';
+// Fairline service worker: precache the app shell, serve it offline, refresh it in the background.
+// Strategy: cache first for instant opens, then revalidate so the next open has the latest files.
+const VERSION = 'fairline-v1.1.0';
 const SHELL = [
   '/',
   '/index.html',
@@ -10,6 +11,7 @@ const SHELL = [
   '/js/math.js',
   '/js/format.js',
   '/js/store.js',
+  '/js/settings.js',
   '/js/calcs/convert.js',
   '/js/calcs/fairline.js',
   '/js/calcs/parlay.js',
@@ -37,31 +39,35 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function revalidate(req, cacheKey) {
+  return fetch(req).then((res) => {
+    if (res && res.ok) caches.open(VERSION).then((cache) => cache.put(cacheKey, res.clone()));
+    return res;
+  });
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // App shell navigation: always serve the cached index so the app opens offline.
+  // App shell navigation: serve the cached page at once, refresh it quietly for next time.
   if (req.mode === 'navigate') {
     event.respondWith(
-      caches.match('/index.html').then((hit) => hit || fetch(req))
+      caches.match('/index.html').then((hit) => {
+        const fresh = revalidate(new Request('/index.html', { cache: 'no-cache' }), '/index.html').catch(() => null);
+        return hit || fresh.then((r) => r || Response.error());
+      })
     );
     return;
   }
 
-  // Everything else: cache first, fall back to network, and cache what we fetch.
+  // Everything else: cached copy first, network refresh in the background.
   event.respondWith(
     caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
-        if (res && res.ok) {
-          const copy = res.clone();
-          caches.open(VERSION).then((cache) => cache.put(req, copy));
-        }
-        return res;
-      });
+      const fresh = revalidate(req, req).catch(() => null);
+      return hit || fresh.then((r) => r || Response.error());
     })
   );
 });

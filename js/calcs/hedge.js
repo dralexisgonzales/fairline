@@ -15,6 +15,7 @@ export function create(ctx) {
   });
   const persist = debounce(() => store.save('calc:' + id, state));
 
+  // The mode switch stays at the top so it never moves between modes.
   const modeSeg = segmented({
     options: [{ id: 'A', label: 'Hedge a bet' }, { id: 'B', label: 'Arbitrage' }],
     value: state.mode, cls: 'seg-full', label: 'Hedge mode',
@@ -32,8 +33,8 @@ export function create(ctx) {
   const aWinO = result({ label: 'If original wins' });
   const aWinH = result({ label: 'If hedge bet wins' });
   const manual = disclosure({ label: 'Try a different hedge amount' },
-    h('div', { class: 'res-row' }, aWinO.root, aWinH.root),
-    aManual.root
+    aManual.root,
+    h('div', { class: 'res-row' }, aWinO.root, aWinH.root)
   );
 
   const paneA = h('div', { class: 'pane' },
@@ -42,8 +43,8 @@ export function create(ctx) {
       h('div', { class: 'res-row' }, aLocked.root, aBreak.root)
     ),
     h('div', { class: 'card card-inputs' },
-      aStake.root,
-      h('div', { class: 'row-2' }, aOrig.root, aHedge.root)
+      h('div', { class: 'row-2' }, aHedge.root, aOrig.root),
+      aStake.root
     ),
     manual.root
   );
@@ -52,18 +53,17 @@ export function create(ctx) {
   const bHero = result({ label: 'Locked profit', hero: true });
   const bStakeA = result({ label: 'Put on side A' });
   const bStakeB = result({ label: 'Put on side B' });
-  const bReturn = result({ label: 'Return either way', cls: 'res-line' });
-  const bSum = result({ label: 'Combined implied', cls: 'res-pill' });
+  const bReturn = result({ label: 'Return either way' });
+  const bSum = result({ label: 'Combined implied' });
   const bA = oddsField({ label: 'Side A odds', value: state.B.a, onChange: (v) => { state.B.a = v; render(); persist(); } });
   const bB = oddsField({ label: 'Side B odds', value: state.B.b, placeholder: '120', onChange: (v) => { state.B.b = v; render(); persist(); } });
   const bTotal = stakeField({ label: 'Total to put in', value: state.B.total, ctx, placeholder: '1000', onChange: (v) => { state.B.total = v; render(); persist(); } });
 
   const paneB = h('div', { class: 'pane' },
     h('div', { class: 'card card-hero' },
-      h('div', { class: 'card-head card-head-end' }, bSum.root),
       bHero.root,
       h('div', { class: 'res-row' }, bStakeA.root, bStakeB.root),
-      bReturn.root
+      h('div', { class: 'res-row' }, bReturn.root, bSum.root)
     ),
     h('div', { class: 'card card-inputs' },
       h('div', { class: 'row-2' }, bA.root, bB.root),
@@ -71,9 +71,7 @@ export function create(ctx) {
     )
   );
 
-  const root = h('section', { class: 'screen', 'data-screen': id, hidden: true }, paneA, paneB);
-  // The mode switch sits between the answer and the inputs, within thumb reach.
-  paneA.insertBefore(modeSeg.root, paneA.children[1]);
+  const root = h('section', { class: 'screen', 'data-screen': id, hidden: true }, modeSeg.root, paneA, paneB);
 
   function renderA() {
     const unit = ctx.unitSize();
@@ -83,21 +81,15 @@ export function create(ctx) {
     const hAm = oddsValue(state.A.hedge);
     if (!Number.isFinite(stake) || !Number.isFinite(orig) || !Number.isFinite(hAm) || !(stake > 0)) {
       aHero.setLabel('Bet to lock profit');
-      aHero.set('—', null, 'Enter your stake and both odds');
+      aHero.set('—', null, 'Enter the hedge odds, your odds and your stake');
       aLocked.set('—'); aBreak.set('—'); aWinO.set('—'); aWinH.set('—');
       return;
     }
     const r = hedge(stake, orig, hAm);
-    const units = unit > 0 ? ' (' + fmtUnits(r.guaranteed / unit, { signed: true }) + ')' : '';
-    if (r.guaranteed >= -0.005) {
-      aHero.setLabel('Bet to lock profit at ' + fmtOdds(hAm));
-      setMoney(aHero, r.equalStake, unit, { tone: '', sub: 'locks ' + fmtMoney(r.guaranteed, { signed: true }) + units + ' either way' });
-      aLocked.setLabel('Locked profit');
-    } else {
-      aHero.setLabel('Bet to lock the result at ' + fmtOdds(hAm));
-      setMoney(aHero, r.equalStake, unit, { tone: '', sub: 'locks ' + fmtMoney(r.guaranteed, { signed: true }) + units + ' either way' });
-      aLocked.setLabel('Locked loss');
-    }
+    const locksProfit = r.guaranteed >= -0.005;
+    aHero.setLabel((locksProfit ? 'Bet to lock profit at ' : 'Bet to lock the result at ') + fmtOdds(hAm));
+    setMoney(aHero, r.equalStake, unit, { tone: '', sub: 'whichever side wins' });
+    aLocked.setLabel(locksProfit ? 'Locked profit' : 'Locked loss');
     setMoney(aLocked, r.guaranteed, unit, { signed: true });
     if (r.breakEvenPossible) {
       setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: fmtMoney(r.breakEvenIfOriginalWins, { signed: true }) + ' if original wins', unitsFirst: false });
@@ -128,8 +120,8 @@ export function create(ctx) {
       return;
     }
     const r = arb(a, b, Number.isFinite(total) && total > 0 ? total : 0);
-    bSum.setLabel(r.exists ? 'Arb · combined' : 'No arb · combined');
-    bSum.set(fmtProb(r.sum, 'pct', 2), fmtProb(r.sum, 'pct', 2), '', r.exists ? 'pos' : 'neg');
+    bSum.setLabel('Combined implied');
+    bSum.set(fmtProb(r.sum, 'pct', 2), fmtProb(r.sum, 'pct', 2), r.exists ? 'under 100%: arb' : 'over 100%: no arb', r.exists ? 'pos' : 'neg');
     bStakeA.setLabel('Put on ' + fmtOdds(a));
     bStakeB.setLabel('Put on ' + fmtOdds(b));
     if (!(total > 0)) {
@@ -154,13 +146,7 @@ export function create(ctx) {
     modeSeg.set(state.mode);
     paneA.hidden = state.mode !== 'A';
     paneB.hidden = state.mode !== 'B';
-    if (state.mode === 'A') {
-      paneA.insertBefore(modeSeg.root, paneA.children[1]);
-      renderA();
-    } else {
-      paneB.insertBefore(modeSeg.root, paneB.children[1]);
-      renderB();
-    }
+    if (state.mode === 'A') renderA(); else renderB();
   }
 
   return { id, title: 'Hedge', icon: ICON, root, render };

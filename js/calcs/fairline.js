@@ -43,7 +43,9 @@ export function create(ctx) {
     probA.setLabel(mode === 'cents' ? 'Fair price' : 'Fair probability');
     probB.setLabel(mode === 'cents' ? 'Fair price' : 'Fair probability');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
-      oddsA.set('—'); oddsB.set('—'); probA.set('—'); probB.set('—'); hold.set('—');
+      oddsA.set('—', null, Number.isFinite(a) ? '' : 'Enter odds');
+      oddsB.set('—', null, Number.isFinite(b) ? '' : 'Enter odds');
+      probA.set('—'); probB.set('—'); hold.set('—');
       hold.setLabel('Hold');
       return;
     }

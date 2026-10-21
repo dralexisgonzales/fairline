@@ -10,6 +10,6 @@
     </linearGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <circle cx="512" cy="458" r="96" fill="url(#gold)"/>
-  <rect x="262" y="560" width="500" height="64" rx="32" fill="url(#gold)"/>
+  <circle cx="512" cy="482" r="96" fill="url(#gold)"/>
+  <rect x="262" y="578" width="500" height="64" rx="32" fill="url(#gold)"/>
 </svg>

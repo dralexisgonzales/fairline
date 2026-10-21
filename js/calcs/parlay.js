@@ -24,7 +24,8 @@ export function create(ctx) {
   const offeredRow = h('div', { class: 'res-row' }, offRes.root, edgeRes.root);
 
   const stakeF = stakeField({ label: 'Stake', value: state.stake, ctx, onChange: (v) => { state.stake = v; render(); persist(); } });
-  const offeredF = oddsField({ label: 'Book’s odds · optional', value: state.offered, placeholder: '600', onChange: (v) => { state.offered = v; render(); persist(); } });
+  // The book's price lives with its comparison, inside the answer card, so the answer stays on screen while typing it.
+  const offeredF = oddsField({ label: 'Compare to the book’s parlay odds · optional', value: state.offered, placeholder: '600', onChange: (v) => { state.offered = v; render(); persist(); } });
 
   const legsEl = h('div', { class: 'legs' });
   const legFields = [];
@@ -66,13 +67,13 @@ export function create(ctx) {
     h('div', { class: 'card card-hero' },
       hero.root,
       h('div', { class: 'res-row' }, probRes.root, payRes.root),
-      offeredRow
+      offeredRow,
+      h('div', { class: 'card-foot' }, offeredF.root)
     ),
     h('div', { class: 'card card-inputs' },
-      stakeF.root,
-      offeredF.root,
       legsEl,
       addBtn,
+      stakeF.root,
       h('div', { class: 'note', text: 'Legs multiply as entered. For a true fair price, use no-vig leg odds from Fair line.' })
     )
   );
@@ -102,7 +103,7 @@ export function create(ctx) {
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), fmtDecimal(r.decimal) + ' decimal');
     probRes.set(fmtProb(r.prob, mode));
     if (Number.isFinite(stake)) {
-      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'returns ' + fmtMoney(r.fairTotal), unitsFirst: false });
+      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'profit · returns ' + fmtMoney(r.fairTotal) });
     } else {
       payRes.set('—', null, 'enter a stake');
     }
@@ -112,7 +113,7 @@ export function create(ctx) {
     const e = r.offered.edge;
     const tone = e > 1e-9 ? 'pos' : e < -1e-9 ? 'neg' : '';
     if (Number.isFinite(stake)) {
-      setMoney(offRes, r.offered.profit, unit, { signed: true, tone: '', sub: 'returns ' + fmtMoney(r.offered.total), unitsFirst: false });
+      setMoney(offRes, r.offered.profit, unit, { signed: true, tone: '', sub: 'profit · returns ' + fmtMoney(r.offered.total) });
       const gap = r.offered.payoutGap;
       const gapText = Math.abs(gap) < 0.005 ? 'matches fair' : fmtMoney(gap, { signed: true }) + ' vs fair';
       edgeRes.set(fmtPctSigned(e, 1), fmtPctSigned(e, 1), gapText, tone);
