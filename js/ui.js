@@ -320,6 +320,8 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
     // Long figures shrink instead of wrapping mid-number.
     root.classList.toggle('is-long', display.length >= 10);
     root.classList.toggle('is-xlong', display.length >= 13);
+    root.classList.toggle('is-xxlong', display.length >= 15);
+    root.classList.toggle('is-xxxlong', display.length >= 18);
     copy = display === '—' ? null : toAscii(copyValue);
     subEl.textContent = sub || '';
     subEl.hidden = !sub;

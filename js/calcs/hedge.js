@@ -143,8 +143,8 @@ export function create(ctx) {
     const sB = Math.round((total - sA) * 100) / 100;
     bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Locked profit' : 'Locked loss');
     setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total) + ' \u00B7 returns ' + fmtMoney(r.returnTotal) + ' either way' });
-    setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total' });
-    setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total' });
+    setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1), unitsFirst: false });
+    setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1), unitsFirst: false });
     const wa = Math.round(sA), wb = Math.round(sA + sB) - wa;   // whole dollars that still add up
     const whole = (x) => '$' + x.toLocaleString('en-US');
     bStakeA.root.dataset.miniText = sA + sB >= 10000

@@ -133,8 +133,8 @@ function updateMini() {
     miniLabel.hidden = !!custom || !/\$/.test(miniValue.textContent) || !miniLabel.textContent;
   } else if (eyebrows.length === 2 && heroes.length === 2) {
     miniBtn.classList.add('is-pair');
-    miniLabel.textContent = eyebrows[0].textContent;
-    miniLabel2.textContent = eyebrows[1].textContent;
+    miniLabel.textContent = eyebrows[0].textContent.replace(/^Side /, '');
+    miniLabel2.textContent = eyebrows[1].textContent.replace(/^Side /, '');
     miniValue2.textContent = heroes[1].querySelector('.res-value')?.textContent || '';
     miniSecond.hidden = miniValue2.textContent === '—';
     miniLabel.hidden = false;
@@ -146,6 +146,10 @@ function updateMini() {
   mini.classList.toggle('is-on', on);
   mini.setAttribute('aria-hidden', String(!on));
   miniBtn.tabIndex = on ? 0 : -1;
+  // A label shows whole or not at all: after layout, drop any label that would be cut.
+  if (on) requestAnimationFrame(() => {
+    [miniLabel, miniLabel2].forEach((el) => { if (!el.hidden && el.scrollWidth > el.clientWidth + 1) el.hidden = true; });
+  });
 }
 let heroWatch = null;
 function watchHeroes() {
