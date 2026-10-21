@@ -53,7 +53,7 @@ export function create(ctx) {
   const bHero = result({ label: 'Locked profit', hero: true });
   const bStakeA = result({ label: 'Put on side A' });
   const bStakeB = result({ label: 'Put on side B' });
-  const bSum = result({ label: 'Combined implied', cls: 'res-line' });
+  const bSum = result({ label: 'Implied total', cls: 'res-line' });
   const bA = oddsField({ label: 'Side A odds', value: state.B.a, onChange: (v) => { state.B.a = v; render(); persist(); } });
   const bB = oddsField({ label: 'Side B odds', value: state.B.b, placeholder: '120', onChange: (v) => { state.B.b = v; render(); persist(); } });
   const bTotal = stakeField({ label: 'Total to put in', value: state.B.total, ctx, placeholder: '1000', onChange: (v) => { state.B.total = v; render(); persist(); } });
@@ -116,14 +116,14 @@ export function create(ctx) {
       bHero.set('—', null, 'Enter both prices');
       bStakeA.setLabel('Put on side A'); bStakeB.setLabel('Put on side B');
       bStakeA.set('—'); bStakeB.set('—'); bSum.set('—');
-      bSum.setLabel('Combined implied');
+      bSum.setLabel('Implied total');
       return;
     }
     const r = arb(a, b, Number.isFinite(total) && total > 0 ? total : 0);
     bSum.setLabel('Combined implied');
     let sumText = fmtProb(r.sum, 'pct', 2);
     if (r.exists && sumText === '100.00%') sumText = fmtProb(r.sum, 'pct', 3);   // never show "100.00%" next to "arb"
-    bSum.setLabel(r.exists ? 'Combined implied \u00B7 under 100%, arb' : 'Combined implied \u00B7 100% or more, no arb');
+    bSum.setLabel(r.exists ? 'Implied total \u00B7 arb' : 'Implied total \u00B7 no arb');
     bSum.set(sumText, sumText, '', r.exists ? 'pos' : 'neg');
     bStakeA.setLabel('Put on ' + fmtOdds(a));
     bStakeB.setLabel('Put on ' + fmtOdds(b));

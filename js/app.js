@@ -90,22 +90,29 @@ document.body.append(mini);
 let heroOffscreen = false;
 function activeHero() {
   const c = calcs.find((x) => x.id === active);
-  return c ? c.root.querySelector('.card-hero .res-hero') : null;
+  if (!c) return null;
+  // The first hero that is actually shown (Hedge keeps one per mode).
+  return [...c.root.querySelectorAll('.card-hero .res-hero')].find((el) => el.offsetParent !== null) || null;
 }
 function updateMini() {
   const hero = activeHero();
-  if (!hero) return;
+  if (!hero) { mini.classList.remove('is-on'); mini.setAttribute('aria-hidden', 'true'); miniBtn.tabIndex = -1; return; }
   miniLabel.textContent = hero.querySelector('.res-label')?.textContent || '';
   miniValue.textContent = hero.querySelector('.res-value')?.textContent || '';
   const on = heroOffscreen && miniValue.textContent !== '—';
   mini.classList.toggle('is-on', on);
   mini.setAttribute('aria-hidden', String(!on));
+  miniBtn.tabIndex = on ? 0 : -1;
 }
 const heroWatch = new IntersectionObserver((entries) => {
   entries.forEach((en) => { if (en.target === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); } });
-}, { rootMargin: '-56px 0px 0px 0px', threshold: 0 });
-calcs.forEach((c) => { const el = c.root.querySelector('.card-hero .res-hero'); if (el) heroWatch.observe(el); });
-new MutationObserver(() => updateMini()).observe(main, { childList: true, characterData: true, subtree: true });
+}, { rootMargin: '-68px 0px 0px 0px', threshold: 0 });
+calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(el)));
+new MutationObserver((muts) => {
+  // A pane being shown or hidden changes which hero is active; re-evaluate from scratch.
+  if (muts.some((m) => m.type === 'attributes')) heroOffscreen = false;
+  updateMini();
+}).observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
 // ----- Theme -----
 const media = window.matchMedia('(prefers-color-scheme: dark)');

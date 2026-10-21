@@ -353,7 +353,7 @@ export function disclosure({ label, open = false }, ...body) {
     panel.hidden = !now;
     btn.setAttribute('aria-expanded', String(now));
     btn.classList.toggle('is-open', now);
-    if (now) requestAnimationFrame(() => panel.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+    if (now) requestAnimationFrame(() => root.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
   });
   btn.classList.toggle('is-open', open);
   const root = h('div', { class: 'card card-disclosure' }, btn, panel);

@@ -19,13 +19,13 @@ export function create(ctx) {
   const hero = result({ label: 'Fair parlay odds', hero: true });
   const probRes = result({ label: 'Fair probability' });
   const payRes = result({ label: 'Fair payout' });
-  const offRes = result({ label: 'Payout at book’s odds' });
+  const offRes = result({ label: 'Book payout' });
   const edgeRes = result({ label: 'Edge at book’s price' });
   const offeredRow = h('div', { class: 'res-row res-row-after' }, offRes.root, edgeRes.root);
 
   const stakeF = stakeField({ label: 'Stake', value: state.stake, ctx, onChange: (v) => { state.stake = v; render(); persist(); } });
   // The book's price lives with its comparison, inside the answer card, so the answer stays on screen while typing it.
-  const offeredF = oddsField({ label: 'Compare to the book’s parlay odds · optional', value: state.offered, placeholder: '600', onChange: (v) => { state.offered = v; render(); persist(); } });
+  const offeredF = oddsField({ label: 'Book\u2019s parlay odds \u00B7 optional', value: state.offered, placeholder: '600', onChange: (v) => { state.offered = v; render(); persist(); } });
 
   const legsEl = h('div', { class: 'legs' });
   const legFields = [];
