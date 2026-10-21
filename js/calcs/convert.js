@@ -50,6 +50,7 @@ export function create(ctx) {
     const cents = mode === 'cents';
     modeSeg.set(mode);
     probF.setSuffix(cents ? '¢' : '%');
+    probF.setLabel(cents ? 'Price' : 'Probability');
     let p = NaN, am = NaN;
     if (state.src === 'odds') {
       am = oddsValue(state.odds);

@@ -84,7 +84,10 @@ function renderAll() { calcs.forEach((c) => c.render()); updateMini(); }
 // ----- Compact answer strip: keeps the answer visible once the answer card scrolls away -----
 const miniLabel = h('span', { class: 'mini-label' });
 const miniValue = h('span', { class: 'mini-value' });
-const miniBtn = h('button', { type: 'button', class: 'mini-btn', 'aria-label': 'Scroll back to the answer', onclick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) }, miniLabel, miniValue);
+const miniLabel2 = h('span', { class: 'mini-label' });
+const miniValue2 = h('span', { class: 'mini-value' });
+const miniSecond = h('span', { class: 'mini-second', hidden: true }, miniLabel2, miniValue2);
+const miniBtn = h('button', { type: 'button', class: 'mini-btn', 'aria-label': 'Scroll back to the answer', onclick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) }, miniLabel, miniValue, miniSecond);
 const mini = h('div', { class: 'mini', 'aria-hidden': 'true' }, miniBtn);
 document.body.append(mini);
 let heroOffscreen = false;
@@ -99,6 +102,18 @@ function updateMini() {
   if (!hero) { mini.classList.remove('is-on'); mini.setAttribute('aria-hidden', 'true'); miniBtn.tabIndex = -1; return; }
   miniLabel.textContent = hero.querySelector('.res-label')?.textContent || '';
   miniValue.textContent = hero.querySelector('.res-value')?.textContent || '';
+  // Second chip: the main money tile of the answer card (payout, locked profit, stake split), if any.
+  const tiles = [...(hero.closest('.card-hero')?.querySelectorAll('.res-row .res:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
+  const money = tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
+  if (money) {
+    miniLabel2.textContent = money.querySelector('.res-label')?.textContent || '';
+    miniValue2.textContent = money.querySelector('.res-value')?.textContent || '';
+    miniSecond.hidden = false;
+    miniLabel.hidden = true;                 // the headline value reads on its own; keep the strip short
+  } else {
+    miniSecond.hidden = true;
+    miniLabel.hidden = false;
+  }
   const on = heroOffscreen && miniValue.textContent !== '—';
   mini.classList.toggle('is-on', on);
   mini.setAttribute('aria-hidden', String(!on));
@@ -106,7 +121,7 @@ function updateMini() {
 }
 const heroWatch = new IntersectionObserver((entries) => {
   entries.forEach((en) => { if (en.target === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); } });
-}, { rootMargin: '-68px 0px 0px 0px', threshold: 0 });
+}, { rootMargin: '-64px 0px 0px 0px', threshold: 1 });
 calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(el)));
 new MutationObserver((muts) => {
   // A pane being shown or hidden changes which hero is active; re-evaluate from scratch.

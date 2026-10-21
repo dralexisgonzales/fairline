@@ -266,6 +266,7 @@ export function numberField({ label, value, onChange, placeholder = '', suffix =
     setSub: (t) => { subEl.textContent = t || ''; subEl.hidden = !t; },
     setComputed: (on) => root.classList.toggle('is-computed', !!on),
     setPlaceholder: (t) => { input.placeholder = t; },
+    setLabel: (t) => { labelEl.textContent = t; input.setAttribute('aria-label', t); },
     focus: () => input.focus(),
   };
 }
