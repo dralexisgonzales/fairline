@@ -142,13 +142,13 @@ export function create(ctx) {
     const sA = Math.round(r.stakeA * 100) / 100;
     const sB = Math.round((total - sA) * 100) / 100;
     bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Locked profit' : 'Locked loss');
-    bHero.setMini(r.profit < -0.005 ? 'Loss' : 'Profit');
     setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total) + ' \u00B7 returns ' + fmtMoney(r.returnTotal) + ' either way' });
     setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total' });
     setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total' });
-    const whole = (x) => '$' + Math.round(x).toLocaleString('en-US');
+    const wa = Math.round(sA), wb = Math.round(sA + sB) - wa;   // whole dollars that still add up
+    const whole = (x) => '$' + x.toLocaleString('en-US');
     bStakeA.root.dataset.miniText = sA + sB >= 10000
-      ? 'A ' + whole(sA) + ' \u00B7 B ' + whole(sB)        // keep the strip short on big totals
+      ? 'A ' + whole(wa) + ' \u00B7 B ' + whole(wb)        // keep the strip short on big totals
       : 'A ' + fmtMoney(sA) + ' \u00B7 B ' + fmtMoney(sB);
   }
 
