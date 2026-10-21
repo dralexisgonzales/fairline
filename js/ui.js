@@ -58,6 +58,12 @@ function cleanDecimal(raw) {
   return s;
 }
 
+export function trimNum(n, d = 2) {
+  if (!Number.isFinite(n)) return '';
+  const s = n.toFixed(d).replace(/\.?0+$/, '');
+  return s === '' ? '0' : s;
+}
+
 // ---------- Odds field: ± toggle plus numeric keypad ----------
 export function oddsField({ label, value, onChange, placeholder = '110' }) {
   const state = { sign: value?.sign === '+' ? '+' : '-', v: value?.v ?? '' };
@@ -80,27 +86,33 @@ export function oddsField({ label, value, onChange, placeholder = '110' }) {
     const cleaned = raw.replace(/\D/g, '').slice(0, 6);
     if (cleaned !== raw) input.value = cleaned;
     state.v = cleaned;
-    paint();
+    paint(false);
     onChange(get());
   });
+  input.addEventListener('blur', () => paint(true));
+  input.addEventListener('focus', () => paint(false));
   selectOnFocus(input);
 
-  const subEl = h('div', { class: 'field-sub', hidden: true });
+  const subEl = h('div', { class: 'field-sub is-error', hidden: true });
+  const labelEl = h('div', { class: 'field-label', text: label });
   const root = h('div', { class: 'field field-odds' },
-    h('div', { class: 'field-label', text: label }),
+    labelEl,
     h('div', { class: 'field-box' }, signBtn, input),
     subEl
   );
 
   function get() { return { sign: state.sign, v: state.v }; }
-  function paint() {
+  // Only flag odds under 100 once the user has clearly finished (3+ digits or blur),
+  // so typing "1" on the way to "150" never flashes red.
+  function paint(final = true) {
     signBtn.textContent = state.sign === '-' ? '−' : '+';
     signBtn.classList.toggle('is-plus', state.sign === '+');
     const n = parseNum(state.v);
-    const bad = state.v !== '' && Number.isFinite(n) && n < 100;
+    const bad = state.v !== '' && Number.isFinite(n) && n < 100 && (final || state.v.length >= 3);
     root.classList.toggle('is-invalid', bad);
+    subEl.textContent = bad ? 'Odds start at 100' : '';
+    subEl.hidden = !bad;
   }
-  function setSub(text) { subEl.textContent = text || ''; subEl.hidden = !text; }
   function set(v) {
     state.sign = v?.sign === '+' ? '+' : '-';
     state.v = v?.v ?? '';
@@ -108,8 +120,9 @@ export function oddsField({ label, value, onChange, placeholder = '110' }) {
     paint();
   }
   function setComputed(on) { root.classList.toggle('is-computed', !!on); }
+  function setLabel(t) { labelEl.textContent = t; input.setAttribute('aria-label', t + ' American odds'); }
   paint();
-  return { root, get, set, setSub, setComputed, input, focus: () => input.focus() };
+  return { root, get, set, setComputed, setLabel, input, focus: () => input.focus() };
 }
 
 export function oddsValue(s) {
@@ -121,7 +134,7 @@ export function oddsValue(s) {
 
 // ---------- Stake field: dollars or units ----------
 export function stakeField({ label, value, ctx, onChange, placeholder = '100' }) {
-  const state = { v: value?.v ?? '', mode: value?.mode === 'u' ? 'u' : '$' };
+  const state = { v: value?.v ?? '', mode: value?.mode === 'u' ? 'u' : '$', exact: null };
 
   const input = h('input', {
     type: 'text', inputmode: 'decimal', placeholder,
@@ -133,6 +146,7 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
     const cleaned = cleanDecimal(input.value).slice(0, 12);
     if (cleaned !== input.value) input.value = cleaned;
     state.v = cleaned;
+    state.exact = null;
     paint();
     onChange(get());
   });
@@ -141,29 +155,37 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
   const adorn = h('span', { class: 'adorn' });
   const btn$ = h('button', { type: 'button', class: 'seg-btn', text: '$', 'aria-label': 'Enter in dollars' });
   const btnU = h('button', { type: 'button', class: 'seg-btn', text: 'u', 'aria-label': 'Enter in units' });
-  const toggle = h('div', { class: 'seg seg-mini', role: 'group', 'aria-label': 'Dollars or units' }, btn$, btnU);
+  const toggle = h('div', { class: 'seg seg-field', role: 'group', 'aria-label': 'Dollars or units' }, btn$, btnU);
   btn$.addEventListener('click', () => setMode('$'));
   btnU.addEventListener('click', () => setMode('u'));
 
-  const subEl = h('button', { class: 'field-sub field-sub-btn', type: 'button' });
-  subEl.addEventListener('click', () => {
-    if (!(ctx.unitSize() > 0)) ctx.openSettings();
-  });
-
+  const subEl = h('div', { class: 'field-sub', hidden: true });
+  const labelEl = h('div', { class: 'field-label', text: label });
   const root = h('div', { class: 'field field-stake' },
-    h('div', { class: 'field-label', text: label }),
+    labelEl,
     h('div', { class: 'field-box' }, adorn, input, toggle),
     subEl
   );
 
   function setMode(mode) {
     if (state.mode === mode) return;
-    // Convert the typed number so the stake stays the same amount.
     const unit = ctx.unitSize();
+    if (mode === 'u' && !(unit > 0)) {
+      // No unit size yet: do not reinterpret the number, send the user to set one.
+      ctx.openSettings('unit');
+      return;
+    }
     const n = parseNum(state.v);
-    if (Number.isFinite(n) && unit > 0) {
-      const conv = mode === 'u' ? n / unit : n * unit;
-      state.v = trimNum(conv);
+    if (Number.isFinite(n)) {
+      if (mode === 'u') {
+        // Remember the exact dollar figure so toggling back never drifts.
+        state.v = trimNum(n / unit, 4);
+        state.exact = { dollars: n, text: state.v, unit };
+      } else {
+        const ex = state.exact;
+        state.v = ex && ex.text === state.v && ex.unit === unit ? trimNum(ex.dollars, 2) : trimNum(n * unit, 2);
+        state.exact = null;
+      }
       input.value = state.v;
     }
     state.mode = mode;
@@ -179,28 +201,15 @@ export function stakeField({ label, value, ctx, onChange, placeholder = '100' })
     btnU.setAttribute('aria-pressed', state.mode === 'u');
     adorn.textContent = state.mode === '$' ? '$' : 'u';
     const n = parseNum(state.v);
-    if (state.mode === 'u' && !(unit > 0)) {
-      subEl.textContent = 'Set a unit size in Settings';
-      subEl.hidden = false;
-      subEl.classList.add('is-link');
-      return;
-    }
-    subEl.classList.remove('is-link');
     if (!Number.isFinite(n) || !(unit > 0)) { subEl.hidden = true; subEl.textContent = ''; return; }
     subEl.hidden = false;
     subEl.textContent = state.mode === '$' ? '= ' + fmtUnits(n / unit) : '= ' + fmtMoney(n * unit);
   }
 
   function get() { return { v: state.v, mode: state.mode }; }
-  function setLabel(text) { root.querySelector('.field-label').textContent = text; input.setAttribute('aria-label', text); }
+  function setLabel(text) { labelEl.textContent = text; input.setAttribute('aria-label', text); }
   paint();
   return { root, get, paint, setLabel, input, focus: () => input.focus() };
-}
-
-function trimNum(n) {
-  if (!Number.isFinite(n)) return '';
-  const s = n.toFixed(2).replace(/\.?0+$/, '');
-  return s === '' ? '0' : s;
 }
 
 // Dollar amount of a stake field state, NaN if not available.
@@ -228,8 +237,9 @@ export function numberField({ label, value, onChange, placeholder = '', suffix =
   const prefixEl = h('span', { class: 'adorn', text: prefix, hidden: !prefix });
   const suffixEl = h('span', { class: 'adorn adorn-suffix', text: suffix, hidden: !suffix });
   const subEl = h('div', { class: 'field-sub', hidden: true });
+  const labelEl = h('div', { class: 'field-label', text: label });
   const root = h('div', { class: 'field field-number' },
-    h('div', { class: 'field-label', text: label }),
+    labelEl,
     h('div', { class: 'field-box' }, prefixEl, input, suffixEl),
     subEl
   );
@@ -245,11 +255,11 @@ export function numberField({ label, value, onChange, placeholder = '', suffix =
 }
 
 // ---------- Segmented control ----------
-export function segmented({ options, value, onChange, cls = '' }) {
+export function segmented({ options, value, onChange, cls = '', label = '' }) {
   const btns = options.map((o) =>
     h('button', { type: 'button', class: 'seg-btn', text: o.label, 'data-id': o.id, onclick: () => set(o.id, true) })
   );
-  const root = h('div', { class: 'seg ' + cls, role: 'group' }, btns);
+  const root = h('div', { class: 'seg ' + cls, role: 'group', 'aria-label': label || null }, btns);
   let current = value;
   function set(id, fire = false) {
     current = id;
@@ -273,9 +283,17 @@ export function result({ label, hero = false, cls = '' }) {
     labelEl, valueEl, subEl
   );
   let copy = null;
+  let currentLabel = label;
+  let flashTimer = null;
   root.addEventListener('click', () => {
     if (copy == null) return;
-    copyText(copy).then(() => toast('Copied ' + copy));
+    copyText(copy).then(() => {
+      toast('Copied ' + copy);
+      root.classList.add('is-copied');
+      labelEl.textContent = 'Copied';
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => { root.classList.remove('is-copied'); labelEl.textContent = currentLabel; }, 700);
+    });
   });
   function set(display, copyValue = display, sub = '', tone = '') {
     valueEl.textContent = display;
@@ -286,22 +304,43 @@ export function result({ label, hero = false, cls = '' }) {
     root.classList.remove('tone-pos', 'tone-neg', 'tone-accent');
     if (tone) root.classList.add('tone-' + tone);
   }
-  function setLabel(t) { labelEl.textContent = t; root.setAttribute('aria-label', t + ', tap to copy'); }
+  function setLabel(t) {
+    currentLabel = t;
+    if (!root.classList.contains('is-copied')) labelEl.textContent = t;
+    root.setAttribute('aria-label', t + ', tap to copy');
+  }
   set('—');
   return { root, set, setLabel, hide: (on) => { root.hidden = !!on; } };
 }
 
 // Money result with units in the sub line.
-export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto', sub = '' } = {}) {
+export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto', sub = '', unitsFirst = true } = {}) {
   if (!Number.isFinite(dollars)) { res.set('—'); return; }
   const display = fmtMoney(dollars, { signed });
   const copy = fmtMoney(dollars, { signed, ascii: true });
   const parts = [];
-  if (unitSize > 0) parts.push(fmtUnits(dollars / unitSize, { signed }));
-  if (sub) parts.push(sub);
+  const u = unitSize > 0 ? fmtUnits(dollars / unitSize, { signed }) : '';
+  if (unitsFirst) { if (u) parts.push(u); if (sub) parts.push(sub); }
+  else { if (sub) parts.push(sub); if (u) parts.push(u); }
   let t = tone;
   if (tone === 'auto') t = dollars > 0.005 ? 'pos' : dollars < -0.005 ? 'neg' : '';
   res.set(display, copy, parts.join(' · '), t);
+}
+
+// ---------- Collapsible section ----------
+export function disclosure({ label, open = false }, ...body) {
+  const chevron = svg('<path d="M6 9l6 6 6-6"/>', 18);
+  const btn = h('button', { type: 'button', class: 'disclosure', 'aria-expanded': String(open) }, h('span', { text: label }), chevron);
+  const panel = h('div', { class: 'disclosure-body', hidden: !open }, body);
+  btn.addEventListener('click', () => {
+    const now = panel.hidden;
+    panel.hidden = !now;
+    btn.setAttribute('aria-expanded', String(now));
+    btn.classList.toggle('is-open', now);
+  });
+  btn.classList.toggle('is-open', open);
+  const root = h('div', { class: 'card card-disclosure' }, btn, panel);
+  return { root, isOpen: () => !panel.hidden };
 }
 
 // ---------- Clipboard + toast ----------
@@ -320,13 +359,13 @@ export async function copyText(text) {
 }
 
 let toastTimer = null;
-export function toast(msg) {
+export function toast(msg, ms = 1300) {
   let el = document.getElementById('toast');
   if (!el) { el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.append(el); }
-  el.textContent = msg;
+  el.replaceChildren(svg('<path d="M5 12l5 5L20 7"/>', 16), h('span', { text: msg }));
   el.classList.add('is-on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('is-on'), 1300);
+  toastTimer = setTimeout(() => el.classList.remove('is-on'), ms);
 }
 
 // Persist helper: debounce saves so typing stays smooth.

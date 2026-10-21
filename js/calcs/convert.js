@@ -1,6 +1,6 @@
 // Odds <-> probability converter.
 import { h, oddsField, oddsValue, numberField, segmented, result, parseNum, debounce, svg } from '../ui.js';
-import { toImplied, toDecimal, probToAmerican, probToDecimal, effectivePrice } from '../math.js';
+import { toImplied, probToAmerican, probToDecimal, effectivePrice } from '../math.js';
 import { fmtOdds, fmtDecimal, fmtProb, fmtCentsExact } from '../format.js';
 import * as store from '../store.js';
 
@@ -16,9 +16,10 @@ export function create(ctx) {
   const hero = result({ label: 'Implied probability', hero: true });
   const decRes = result({ label: 'Decimal odds' });
   const feeRes = result({ label: 'After fees' });
+  const resRow = h('div', { class: 'res-row' }, decRes.root, feeRes.root);
   const modeSeg = segmented({
     options: [{ id: 'pct', label: '%' }, { id: 'cents', label: '¢' }],
-    value: ctx.probMode(), cls: 'seg-mini',
+    value: ctx.probMode(), cls: 'seg-mini', label: 'Show probabilities as percent or cents',
     onChange: (m) => ctx.setProbMode(m),
   });
 
@@ -33,9 +34,9 @@ export function create(ctx) {
 
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     h('div', { class: 'card card-hero' },
-      h('div', { class: 'card-head' }, h('span', { class: 'card-title', text: 'Convert' }), modeSeg.root),
+      h('div', { class: 'card-head card-head-end' }, modeSeg.root),
       hero.root,
-      h('div', { class: 'res-row' }, decRes.root, feeRes.root)
+      resRow
     ),
     h('div', { class: 'card card-inputs' },
       oddsF.root,
@@ -46,8 +47,9 @@ export function create(ctx) {
 
   function render() {
     const mode = ctx.probMode();
+    const cents = mode === 'cents';
     modeSeg.set(mode);
-    probF.setSuffix(mode === 'cents' ? '¢' : '%');
+    probF.setSuffix(cents ? '¢' : '%');
     probF.setComputed(state.src === 'odds');
     oddsF.setComputed(state.src === 'prob');
 
@@ -55,30 +57,39 @@ export function create(ctx) {
     if (state.src === 'odds') {
       am = oddsValue(state.odds);
       p = toImplied(am);
-      probF.set(trim(p * 100, 1));
-      hero.setLabel(mode === 'cents' ? 'Implied price' : 'Implied probability');
-      hero.set(fmtProb(p, mode), fmtProb(p, mode), Number.isFinite(am) ? fmtOdds(am) + ' American' : '');
+      probF.set(trim(p * 100, p < 0.01 ? 2 : 1));
+      hero.setLabel(cents ? 'Implied price' : 'Implied probability');
+      hero.set(fmtProb(p, mode), fmtProb(p, mode), Number.isFinite(am) ? fmtOdds(am) + ' American' : 'Enter odds or a probability');
     } else {
       const pv = parseNum(state.prob);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
       am = probToAmerican(p);
-      oddsF.set(Number.isFinite(am) ? { sign: am < 0 ? '-' : '+', v: String(Math.abs(Math.round(am))) } : { sign: oddsF.get().sign, v: '' });
+      if (Number.isFinite(am)) {
+        const txt = fmtOdds(am, { ascii: true });            // maps -100 to +100 like the hero
+        oddsF.set({ sign: txt.startsWith('-') ? '-' : '+', v: txt.slice(1) });
+      } else {
+        oddsF.set({ sign: oddsF.get().sign, v: '' });
+      }
       hero.setLabel('American odds');
-      hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), Number.isFinite(p) ? fmtProb(p, mode) + (mode === 'cents' ? ' price' : ' probability') : '');
+      hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), Number.isFinite(p) ? fmtProb(p, mode) + (cents ? ' price' : ' probability') : 'Enter odds or a probability');
     }
 
     const dec = Number.isFinite(p) ? probToDecimal(p) : NaN;
     decRes.set(fmtDecimal(dec));
 
+    // The after-fee readout belongs to prediction-market prices, so it shows in cents mode.
     const rate = ctx.feeRate();
-    if (!(rate > 0) || !Number.isFinite(p)) {
-      feeRes.hide(!(rate > 0));
-      feeRes.set('—');
-    } else {
-      const eff = effectivePrice(p, rate);
-      feeRes.hide(false);
+    const showFee = cents && rate > 0;
+    feeRes.hide(!showFee);
+    resRow.classList.toggle('res-row-1', !showFee);
+    if (showFee) {
       feeRes.setLabel('After ' + ctx.feeLabel() + ' fee');
-      feeRes.set(fmtProb(eff.price, mode), fmtProb(eff.price, mode), fmtOdds(probToAmerican(eff.price)) + ' · fee ' + fmtCentsExact(eff.fee));
+      if (Number.isFinite(p)) {
+        const eff = effectivePrice(p, rate);
+        feeRes.set(fmtProb(eff.price, mode), fmtProb(eff.price, mode), fmtOdds(probToAmerican(eff.price)) + ' · fee ' + fmtCentsExact(eff.fee));
+      } else {
+        feeRes.set('—');
+      }
     }
   }
 

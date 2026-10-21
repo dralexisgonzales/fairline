@@ -11,10 +11,10 @@ export function create(ctx) {
   const state = store.load('calc:' + id, { a: { sign: '-', v: '110' }, b: { sign: '-', v: '110' } });
   const persist = debounce(() => store.save('calc:' + id, state));
 
-  const headA = h('div', { class: 'col-head', text: 'Side A' });
-  const headB = h('div', { class: 'col-head', text: 'Side B' });
-  const oddsA = result({ label: 'Fair odds', hero: true, cls: 'res-col' });
-  const oddsB = result({ label: 'Fair odds', hero: true, cls: 'res-col' });
+  const headA = h('div', { class: 'eyebrow', text: 'Side A' });
+  const headB = h('div', { class: 'eyebrow', text: 'Side B' });
+  const oddsA = result({ label: 'Fair odds, side A', hero: true, cls: 'res-col' });
+  const oddsB = result({ label: 'Fair odds, side B', hero: true, cls: 'res-col' });
   const probA = result({ label: 'Fair probability', cls: 'res-col' });
   const probB = result({ label: 'Fair probability', cls: 'res-col' });
   const hold = result({ label: 'Hold', cls: 'res-pill' });
@@ -24,7 +24,7 @@ export function create(ctx) {
 
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     h('div', { class: 'card card-hero' },
-      h('div', { class: 'card-head' }, h('span', { class: 'card-title', text: 'Fair line' }), hold.root),
+      h('div', { class: 'card-head' }, h('span', { class: 'caption', text: 'Fair odds' }), hold.root),
       h('div', { class: 'cols' },
         h('div', { class: 'col' }, headA, oddsA.root, probA.root),
         h('div', { class: 'col' }, headB, oddsB.root, probB.root)
@@ -38,8 +38,8 @@ export function create(ctx) {
   function render() {
     const mode = ctx.probMode();
     const a = oddsValue(state.a), b = oddsValue(state.b);
-    headA.textContent = Number.isFinite(a) ? fmtOdds(a) : 'Side A';
-    headB.textContent = Number.isFinite(b) ? fmtOdds(b) : 'Side B';
+    headA.textContent = 'Side A' + (Number.isFinite(a) ? ' · ' + fmtOdds(a) : '');
+    headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     probA.setLabel(mode === 'cents' ? 'Fair price' : 'Fair probability');
     probB.setLabel(mode === 'cents' ? 'Fair price' : 'Fair probability');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
@@ -48,13 +48,13 @@ export function create(ctx) {
       return;
     }
     const r = noVig(a, b);
-    oddsA.set(fmtOdds(r.fairOddsA), fmtOdds(r.fairOddsA, { ascii: true }), fmtDecimal(r.fairDecA) + ' dec');
-    oddsB.set(fmtOdds(r.fairOddsB), fmtOdds(r.fairOddsB, { ascii: true }), fmtDecimal(r.fairDecB) + ' dec');
+    oddsA.set(fmtOdds(r.fairOddsA), fmtOdds(r.fairOddsA, { ascii: true }), fmtDecimal(r.fairDecA) + ' decimal', 'accent');
+    oddsB.set(fmtOdds(r.fairOddsB), fmtOdds(r.fairOddsB, { ascii: true }), fmtDecimal(r.fairDecB) + ' decimal', 'accent');
     probA.set(fmtProb(r.fairA, mode), fmtProb(r.fairA, mode), fmtProb(r.impliedA, mode) + ' implied');
     probB.set(fmtProb(r.fairB, mode), fmtProb(r.fairB, mode), fmtProb(r.impliedB, mode) + ' implied');
     if (r.hold < -1e-9) {
-      hold.setLabel('No hold');
-      hold.set(fmtPctSigned(-r.hold, 2) + ' arb', fmtPctSigned(-r.hold, 2), '', 'pos');
+      hold.setLabel('Arb');
+      hold.set(fmtPctSigned(-r.hold, 2), fmtPctSigned(-r.hold, 2), '', 'pos');
     } else {
       hold.setLabel('Hold');
       hold.set(fmtProb(r.hold, 'pct', 2), fmtProb(r.hold, 'pct', 2), '', r.hold > 0.08 ? 'neg' : '');

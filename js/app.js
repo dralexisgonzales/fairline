@@ -34,7 +34,7 @@ const ctx = {
   setProbMode: (m) => ctx.update({ probMode: m }),
   feeRate,
   feeLabel,
-  openSettings: () => sheet.open(),
+  openSettings: (focus) => sheet.open(focus),
   update(patch) {
     Object.assign(settings, patch);
     store.saveSettings(settings);
@@ -63,7 +63,7 @@ document.getElementById('settingsBtn').addEventListener('click', () => sheet.ope
 
 let active = null;
 function switchTo(id) {
-  if (active === id) { main.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (active === id) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   active = id;
   calcs.forEach((c) => { c.root.hidden = c.id !== id; });
   tabBtns.forEach((b) => {
@@ -90,16 +90,20 @@ media.addEventListener?.('change', () => { if (settings.theme === 'auto') applyT
 // ----- Boot -----
 applyTheme();
 renderAll();
-switchTo(calcs.some((c) => c.id === store.load('tab', null)) ? store.load('tab', null) : 'fairline');
+const lastTab = store.load('tab', null);
+switchTo(calcs.some((c) => c.id === lastTab) ? lastTab : 'fairline');
 
 if (!store.load('hinted', false)) {
-  setTimeout(() => { toast('Tap any result to copy it'); store.save('hinted', true); }, 900);
+  setTimeout(() => { toast('Tap any result to copy it', 2600); store.save('hinted', true); }, 900);
 }
 
-// Dismiss the keyboard when tapping empty space.
-main.addEventListener('pointerdown', (e) => {
-  if (e.target === main || e.target.classList.contains('screen')) document.activeElement?.blur?.();
-});
+// iOS number pads have no Done key: a tap anywhere outside a field puts the keyboard away.
+document.addEventListener('pointerdown', (e) => {
+  const a = document.activeElement;
+  if (!a || a.tagName !== 'INPUT') return;
+  if (e.target.closest('input, .field-box, .sheet-panel')) return;
+  a.blur();
+}, { capture: true });
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   window.addEventListener('load', () => {

@@ -47,8 +47,8 @@ near('noVig -150/+130 impliedA', nv.impliedA, 0.6);
 near('noVig -150/+130 impliedB', nv.impliedB, 0.434783);
 near('noVig -150/+130 fairA', nv.fairA, 0.579832);
 near('noVig -150/+130 fairB', nv.fairB, 0.420168);
-near('noVig -150/+130 fairOddsA', nv.fairOddsA, -138.0, 0.05);
-near('noVig -150/+130 fairOddsB', nv.fairOddsB, 138.0, 0.05);
+near('noVig -150/+130 fairOddsA', nv.fairOddsA, -138.0, 1e-6);
+near('noVig -150/+130 fairOddsB', nv.fairOddsB, 138.0, 1e-6);
 near('noVig -150/+130 hold', nv.hold, 0.033613);
 nv = M.noVig(-150, 160);
 near('noVig -150/+160 hold negative (arb)', nv.hold, -0.015625);
@@ -60,7 +60,7 @@ near('noVig -10000/+2500 fairA', nv.fairA, 0.990099 / (0.990099 + 0.038462));
 
 // Parlay
 let p = M.parlay([-110, -110, -110], 100, 600);
-near('parlay 3x-110 prob', p.prob, 0.143727);
+near('parlay 3x-110 prob', p.prob, 0.1437209, 1e-7);
 near('parlay 3x-110 decimal', p.decimal, 6.957926);
 near('parlay 3x-110 american', p.american, 595.79, 0.01);
 near('parlay 3x-110 fairProfit', p.fairProfit, 595.79, 0.01);
@@ -167,6 +167,8 @@ eq('fmtDecimal(1.909)', F.fmtDecimal(1.90909), '1.91');
 eq('fmtDecimal(1.05)', F.fmtDecimal(1.05), '1.050');
 eq('fmtDecimal(1.0099)', F.fmtDecimal(1.0099), '1.010');
 eq('fmtProb(0.5238)', F.fmtProb(0.52381), '52.4%');
+eq('fmtProb longshot auto 2 digits', F.fmtProb(0.0099), '0.99%');
+eq('fmtProb 1% keeps 1 digit', F.fmtProb(0.01), '1.0%');
 eq('fmtProb cents', F.fmtProb(0.52381, 'cents'), '52.4¢');
 eq('fmtMoney(1234.5)', F.fmtMoney(1234.5), '$1,234.50');
 eq('fmtMoney(-9.09)', F.fmtMoney(-9.0909), '−$9.09');

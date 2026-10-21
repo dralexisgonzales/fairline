@@ -17,14 +17,14 @@ export function create(ctx) {
   const persist = debounce(() => store.save('calc:' + id, state));
 
   const hero = result({ label: 'Fair parlay odds', hero: true });
-  const probRes = result({ label: 'True probability' });
-  const payRes = result({ label: 'Fair profit' });
-  const offRes = result({ label: 'Offered profit' });
-  const edgeRes = result({ label: 'Your edge at offered' });
+  const probRes = result({ label: 'Fair probability' });
+  const payRes = result({ label: 'Fair payout' });
+  const offRes = result({ label: 'Payout at book’s odds' });
+  const edgeRes = result({ label: 'Edge at book’s price' });
   const offeredRow = h('div', { class: 'res-row' }, offRes.root, edgeRes.root);
 
   const stakeF = stakeField({ label: 'Stake', value: state.stake, ctx, onChange: (v) => { state.stake = v; render(); persist(); } });
-  const offeredF = oddsField({ label: 'Book’s parlay odds (optional)', value: state.offered, placeholder: '600', onChange: (v) => { state.offered = v; render(); persist(); } });
+  const offeredF = oddsField({ label: 'Book’s odds · optional', value: state.offered, placeholder: '600', onChange: (v) => { state.offered = v; render(); persist(); } });
 
   const legsEl = h('div', { class: 'legs' });
   const legFields = [];
@@ -57,24 +57,23 @@ export function create(ctx) {
   }
   function relabel() {
     legFields.forEach((f, i) => {
-      f.root.querySelector('.field-label').textContent = 'Leg ' + (i + 1);
+      f.setLabel('Leg ' + (i + 1));
       f.row.querySelector('.leg-remove').hidden = legFields.length <= 1;
     });
   }
 
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     h('div', { class: 'card card-hero' },
-      h('div', { class: 'card-head' }, h('span', { class: 'card-title', text: 'Parlay' })),
       hero.root,
       h('div', { class: 'res-row' }, probRes.root, payRes.root),
       offeredRow
     ),
     h('div', { class: 'card card-inputs' },
       stakeF.root,
+      offeredF.root,
       legsEl,
       addBtn,
-      h('div', { class: 'divider' }),
-      offeredF.root
+      h('div', { class: 'note', text: 'Legs multiply as entered. For a true fair price, use no-vig leg odds from Fair line.' })
     )
   );
 
@@ -83,39 +82,43 @@ export function create(ctx) {
   function render() {
     const mode = ctx.probMode();
     const unit = ctx.unitSize();
-    const legs = state.legs.map(oddsValue);
+    const all = state.legs.map(oddsValue);
+    const legs = all.filter(Number.isFinite);           // blank legs are ignored, so the answer never blinks out
     const stake = stakeDollars(state.stake, unit);
     const offeredAm = oddsValue(state.offered);
-    const r = legs.length && legs.every(Number.isFinite) ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
+    const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
-    probRes.setLabel(mode === 'cents' ? 'True price' : 'True probability');
-    hero.setLabel(legs.length === 1 ? 'Fair odds (1 leg)' : 'Fair parlay odds · ' + legs.length + ' legs');
+    probRes.setLabel(mode === 'cents' ? 'Fair price' : 'Fair probability');
+    const count = legs.length === all.length ? legs.length + (legs.length === 1 ? ' leg' : ' legs') : legs.length + ' of ' + all.length + ' legs';
+    hero.setLabel('Fair parlay odds · ' + count);
 
     if (!r) {
-      hero.set('—'); probRes.set('—'); payRes.set('—');
+      hero.setLabel('Fair parlay odds');
+      hero.set('—', null, 'Enter the legs');
+      probRes.set('—'); payRes.set('—');
       offeredRow.hidden = true;
       return;
     }
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), fmtDecimal(r.decimal) + ' decimal');
-    probRes.set(fmtProb(r.prob, mode, r.prob < 0.01 ? 2 : 1));
+    probRes.set(fmtProb(r.prob, mode));
     if (Number.isFinite(stake)) {
-      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'returns ' + fmtMoney(r.fairTotal) });
+      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'returns ' + fmtMoney(r.fairTotal), unitsFirst: false });
     } else {
-      payRes.set('—');
+      payRes.set('—', null, 'enter a stake');
     }
 
-    if (r.offered && Number.isFinite(stake)) {
-      offeredRow.hidden = false;
-      setMoney(offRes, r.offered.profit, unit, { signed: true, tone: '', sub: 'returns ' + fmtMoney(r.offered.total) });
+    if (!r.offered) { offeredRow.hidden = true; return; }
+    offeredRow.hidden = false;
+    const e = r.offered.edge;
+    const tone = e > 1e-9 ? 'pos' : e < -1e-9 ? 'neg' : '';
+    if (Number.isFinite(stake)) {
+      setMoney(offRes, r.offered.profit, unit, { signed: true, tone: '', sub: 'returns ' + fmtMoney(r.offered.total), unitsFirst: false });
       const gap = r.offered.payoutGap;
-      const gapText = Math.abs(gap) < 0.005 ? 'matches fair' : (gap < 0 ? fmtMoney(gap, { signed: true }) + ' vs fair' : fmtMoney(gap, { signed: true }) + ' vs fair');
-      edgeRes.set(fmtPctSigned(r.offered.edge, 1), fmtPctSigned(r.offered.edge, 1), gapText, r.offered.edge > 1e-9 ? 'pos' : r.offered.edge < -1e-9 ? 'neg' : '');
-    } else if (r.offered) {
-      offeredRow.hidden = false;
-      offRes.set('—');
-      edgeRes.set(fmtPctSigned(r.offered.edge, 1), fmtPctSigned(r.offered.edge, 1), 'enter a stake for dollars', r.offered.edge > 1e-9 ? 'pos' : r.offered.edge < -1e-9 ? 'neg' : '');
+      const gapText = Math.abs(gap) < 0.005 ? 'matches fair' : fmtMoney(gap, { signed: true }) + ' vs fair';
+      edgeRes.set(fmtPctSigned(e, 1), fmtPctSigned(e, 1), gapText, tone);
     } else {
-      offeredRow.hidden = true;
+      offRes.set('—', null, 'enter a stake');
+      edgeRes.set(fmtPctSigned(e, 1), fmtPctSigned(e, 1), '', tone);
     }
   }
 

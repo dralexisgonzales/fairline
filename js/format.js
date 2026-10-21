@@ -21,8 +21,9 @@ export function fmtDecimal(d) {
 }
 
 // p is a fraction. mode: 'pct' | 'cents'
-export function fmtProb(p, mode = 'pct', digits = 1) {
+export function fmtProb(p, mode = 'pct', digits) {
   if (!Number.isFinite(p)) return '—';
+  if (digits == null) digits = p < 0.01 ? 2 : 1;   // longshots keep their precision
   const v = p * 100;
   return mode === 'cents' ? num(v, digits) + '¢' : num(v, digits) + '%';
 }
