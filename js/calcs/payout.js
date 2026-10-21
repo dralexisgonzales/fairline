@@ -44,7 +44,8 @@ export function create(ctx) {
     impliedRes.set(fmtProb(toImplied(am), mode), fmtProb(toImplied(am), mode), Number.isFinite(am) ? fmtDecimal(payoutFromRisk(1, am).decimal) + ' decimal' : '');
     if (!Number.isFinite(amount) || !Number.isFinite(am) || !(amount > 0)) {
       hero.setLabel(state.mode === 'risk' ? 'Profit' : 'Risk needed');
-      hero.set('—', null, state.mode === 'risk' ? 'Enter a stake and odds' : 'Enter an amount to win and odds');
+      const oddsTyped = (state.odds.v || '') !== '' && !Number.isFinite(am);
+      hero.set('—', null, oddsTyped ? 'Odds start at 100' : state.mode === 'risk' ? 'Enter a stake and odds' : 'Enter an amount to win and odds');
       totalRes.set('—');
       return;
     }
