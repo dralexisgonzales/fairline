@@ -113,6 +113,7 @@ export function createSettings(ctx) {
       const on = r.dataset.id === st.feePreset;
       r.classList.toggle('is-on', on);
       r.setAttribute('aria-checked', on);
+      if (r.dataset.id === 'custom') r.querySelector('.option-rate').textContent = (Math.round((Number(st.feeCustom) || 0) * 1000) / 10) + '%';
     });
     customF.root.hidden = st.feePreset !== 'custom';
     themeSeg.set(st.theme);

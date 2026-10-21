@@ -110,8 +110,9 @@ function updateMini() {
   miniValue.textContent = hero.querySelector('.res-value')?.textContent || '';
   // Second chip: the main money tile of the answer card (payout, locked profit, stake split),
   // or the other side on Fair line.
-  const tiles = [...(card?.querySelectorAll('.res-row .res:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
-  const money = tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
+  const tiles = [...(card?.querySelectorAll('.res-row .res:not(.is-empty), .res-line:not(.is-empty)') || [])].filter((t) => !t.hidden && !t.closest('[hidden]'));
+  // A summary line (arbitrage's implied total) wins; otherwise the first dollar tile.
+  const money = tiles.find((t) => t.classList.contains('res-line')) || tiles.find((t) => /\$/.test(t.querySelector('.res-value')?.textContent || ''));
   const eyebrows = card ? [...card.querySelectorAll('.eyebrow')] : [];
   const heroes = card ? [...card.querySelectorAll('.res-hero')] : [];
   if (money) {

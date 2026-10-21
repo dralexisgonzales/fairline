@@ -23,6 +23,7 @@
   --tabbar: rgba(10, 12, 17, 0.84);
   --sheet: #171b25;
   --sheet-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5);
+  --pop-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
   --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 30px -18px rgba(0, 0, 0, 0.6);
   --danger-soft: rgba(255, 107, 107, 0.12);
   --radius: 22px;
@@ -55,6 +56,7 @@
   --tabbar: rgba(243, 244, 247, 0.86);
   --sheet: #ffffff;
   --sheet-shadow: 0 -16px 48px rgba(15, 18, 24, 0.18);
+  --pop-shadow: 0 8px 20px -10px rgba(15, 18, 24, 0.22), 0 0 0 1px var(--line);
   --card-shadow: 0 1px 2px rgba(15, 18, 24, 0.04), 0 8px 24px -12px rgba(15, 18, 24, 0.12);
   --danger-soft: rgba(214, 69, 69, 0.1);
   color-scheme: light;
@@ -91,7 +93,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; justify-content: space-between;
   padding: calc(env(safe-area-inset-top) + 10px) 16px 8px;
-  background: var(--bg);
+  background: var(--tabbar);
+  -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
 }
 .wordmark {
   display: inline-flex; align-items: center; gap: 8px;
@@ -158,8 +161,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .res-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .res-row + .res-row, .res-row + .res-line { margin-top: 8px; }
 .res-row-1 { grid-template-columns: 1fr; }
-.res-row-1 .res { justify-content: center; min-height: 64px; }
-.res-row .res { min-height: 100px; justify-content: center; }
+
+.res-row .res { min-height: 100px; }
+.res-row.res-row-1 .res { min-height: 64px; }
 .card-foot { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
 .res-row-after { margin-top: 10px; }
 
@@ -184,7 +188,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); }
 .res-col.res-hero { padding: 0 0 6px; min-height: 66px; gap: 2px; justify-content: flex-start; }
-.col .res:not(.res-hero) { min-height: 100px; justify-content: center; }
+.col .res:not(.res-hero) { min-height: 100px; }
 .res-col.res-hero .res-label { display: none; }
 .res-col.res-hero .res-value { font-size: clamp(32px, 9.6vw, 44px); }
 .res-col.res-hero .res-sub { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
@@ -289,16 +293,18 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 /* Compact answer strip: appears under the header when the answer card scrolls out of view */
 .mini {
   position: fixed; left: 0; right: 0; z-index: 25;
-  top: calc(env(safe-area-inset-top) + 68px);
-  display: flex; justify-content: center; pointer-events: none;
+  top: calc(env(safe-area-inset-top) + 62px);
+  padding: 6px 16px 14px;
+  display: flex; justify-content: center; pointer-events: none; isolation: isolate;
   opacity: 0; transform: translateY(-6px); transition: opacity .16s, transform .16s;
 }
+.mini::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(var(--bg) 0, var(--bg) 60%, transparent); }
 .mini.is-on { opacity: 1; transform: none; pointer-events: auto; }
 .mini-btn {
   display: inline-flex; align-items: baseline; gap: 8px; max-width: calc(100% - 32px);
   padding: 8px 14px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line-strong);
-  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+  box-shadow: var(--pop-shadow);
 }
 .mini-label { font-size: 12px; font-weight: 600; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-value { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
@@ -315,7 +321,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   padding: 10px 16px 10px 12px; border-radius: 999px;
   background: var(--card); color: var(--text); border: 1px solid var(--line-strong);
   font-size: 14px; font-weight: 600;
-  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+  box-shadow: var(--pop-shadow);
   transition: opacity .16s, transform .16s;
   max-width: calc(100% - 32px); white-space: nowrap;
 }
