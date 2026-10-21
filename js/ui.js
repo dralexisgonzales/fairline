@@ -325,7 +325,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
       while (guard-- > 0 && subEl.scrollHeight > subEl.clientHeight + 1 && subEl.textContent.includes(' \u00B7 ')) {
         subEl.textContent = subEl.textContent.slice(0, subEl.textContent.lastIndexOf(' \u00B7 '));
       }
-      if (subEl.scrollHeight > subEl.clientHeight + 1) subEl.hidden = true;
+      if (subEl.scrollHeight > subEl.clientHeight + 1 || subEl.scrollWidth > subEl.clientWidth + 1) subEl.hidden = true;
     }, 0);
   }
   function set(display, copyValue = display, sub = '', tone = '') {
