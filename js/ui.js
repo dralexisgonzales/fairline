@@ -318,15 +318,15 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
   let fitTimer = 0;
   // A sub-line shows whole or not at all: after layout, drop trailing " · " segments until it fits two lines.
   function fitSub() {
-    cancelAnimationFrame(fitTimer);
-    fitTimer = requestAnimationFrame(() => {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(() => {
       if (subEl.hidden || !subEl.isConnected) return;
       let guard = 6;
       while (guard-- > 0 && subEl.scrollHeight > subEl.clientHeight + 1 && subEl.textContent.includes(' \u00B7 ')) {
         subEl.textContent = subEl.textContent.slice(0, subEl.textContent.lastIndexOf(' \u00B7 '));
       }
       if (subEl.scrollHeight > subEl.clientHeight + 1) subEl.hidden = true;
-    });
+    }, 0);
   }
   function set(display, copyValue = display, sub = '', tone = '') {
     valueEl.textContent = display;

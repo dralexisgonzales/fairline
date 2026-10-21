@@ -149,11 +149,11 @@ function updateMini() {
   miniBtn.tabIndex = on ? 0 : -1;
   // Very long figures shrink; a label shows whole or not at all (checked after layout).
   [miniValue, miniValue2].forEach((el) => el.classList.toggle('is-long', el.textContent.length >= 14));
-  if (on) requestAnimationFrame(() => {
+  if (on) setTimeout(() => {
     [miniLabel, miniLabel2].forEach((el) => { if (!el.hidden && el.scrollWidth > el.clientWidth + 1) el.hidden = true; });
     // If the pill still cannot hold everything, keep only the headline value.
     if (miniBtn.scrollWidth > miniBtn.clientWidth + 1) { miniSecond.hidden = true; miniLabel.hidden = true; }
-  });
+  }, 0);
 }
 let heroWatch = null;
 function watchHeroes() {
