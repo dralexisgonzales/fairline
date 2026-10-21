@@ -310,10 +310,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
   display: flex; justify-content: center; pointer-events: none; isolation: isolate;
   opacity: 0; transform: translateY(-6px); transition: opacity .16s, transform .16s;
 }
-.mini::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(var(--tabbar) 0, var(--bg) 30%, var(--bg) 60%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); -webkit-mask-image: linear-gradient(#000 0, #000 55%, transparent); mask-image: linear-gradient(#000 0, #000 55%, transparent); }
+.mini::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(var(--tabbar) 0, var(--bg) 25%, var(--bg) 75%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); -webkit-mask-image: linear-gradient(#000 0, #000 75%, transparent); mask-image: linear-gradient(#000 0, #000 75%, transparent); }
 .mini.is-on { opacity: 1; transform: none; pointer-events: auto; }
 .mini-btn {
-  display: inline-flex; align-items: baseline; gap: 8px; max-width: 100%; min-width: 0;
+  display: inline-flex; align-items: baseline; gap: 8px; max-width: 100%; min-width: 0; overflow: hidden;
   padding: 8px 14px; border-radius: 999px;
   background: var(--card); border: 1px solid var(--line-strong);
   box-shadow: var(--pop-shadow);

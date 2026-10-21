@@ -151,6 +151,8 @@ function updateMini() {
   [miniValue, miniValue2].forEach((el) => el.classList.toggle('is-long', el.textContent.length >= 14));
   if (on) requestAnimationFrame(() => {
     [miniLabel, miniLabel2].forEach((el) => { if (!el.hidden && el.scrollWidth > el.clientWidth + 1) el.hidden = true; });
+    // If the pill still cannot hold everything, keep only the headline value.
+    if (miniBtn.scrollWidth > miniBtn.clientWidth + 1) { miniSecond.hidden = true; miniLabel.hidden = true; }
   });
 }
 let heroWatch = null;
