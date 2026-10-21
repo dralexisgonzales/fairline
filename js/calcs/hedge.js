@@ -86,9 +86,10 @@ export function create(ctx) {
     }
     const r = hedge(stake, orig, hAm);
     const locksProfit = r.guaranteed >= -0.005;
+    const even = Math.abs(r.guaranteed) < 0.005;
     aHero.setLabel((locksProfit ? 'Bet to lock profit at ' : 'Bet to lock the result at ') + fmtOdds(hAm));
     setMoney(aHero, r.equalStake, unit, { tone: '', sub: 'whichever side wins' });
-    aLocked.setLabel(locksProfit ? 'Locked profit' : 'Locked loss');
+    aLocked.setLabel(even ? 'Break even' : locksProfit ? 'Locked profit' : 'Locked loss');
     setMoney(aLocked, r.guaranteed, unit, { signed: true });
     if (r.breakEvenPossible) {
       setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: fmtMoney(r.breakEvenIfOriginalWins, { signed: true }) + ' if original wins', unitsFirst: false });
@@ -129,8 +130,9 @@ export function create(ctx) {
     bStakeA.setLabel('Put on ' + fmtOdds(a));
     bStakeB.setLabel('Put on ' + fmtOdds(b));
     if (!(total > 0)) {
-      bHero.setLabel(r.exists ? 'Locked return' : 'Locked loss');
-      bHero.set(fmtPctSigned(r.roi, 2), fmtPctSigned(r.roi, 2), 'enter a total for dollars', r.exists ? 'pos' : 'neg');
+      const even = Math.abs(r.roi) < 0.00005;
+      bHero.setLabel(even ? 'Break even' : r.exists ? 'Locked return' : 'Locked loss');
+      bHero.set(fmtPctSigned(r.roi, 2), fmtPctSigned(r.roi, 2), 'enter a total for dollars', even ? '' : r.exists ? 'pos' : 'neg');
       bStakeA.set(fmtProb(r.shareA, 'pct', 1), fmtProb(r.shareA, 'pct', 1), 'of total');
       bStakeB.set(fmtProb(r.shareB, 'pct', 1), fmtProb(r.shareB, 'pct', 1), 'of total');
       delete bStakeA.root.dataset.miniText;
@@ -140,6 +142,7 @@ export function create(ctx) {
     const sA = Math.round(r.stakeA * 100) / 100;
     const sB = Math.round((total - sA) * 100) / 100;
     bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Locked profit' : 'Locked loss');
+    bHero.setMini(r.profit < -0.005 ? 'Loss' : 'Profit');
     setMoney(bHero, r.profit, unit, { signed: true, sub: fmtPctSigned(r.roi, 2) + ' on ' + fmtMoney(total) + ' \u00B7 returns ' + fmtMoney(r.returnTotal) + ' either way' });
     setMoney(bStakeA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total' });
     setMoney(bStakeB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total' });

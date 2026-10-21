@@ -180,6 +180,7 @@ eq('fmtUnits(0.333)', F.fmtUnits(0.3333), '0.33u');
 eq('fmtCentsExact(0.0175)', F.fmtCentsExact(0.0175), '1.75¢');
 eq('fmtCentsExact(0.02)', F.fmtCentsExact(0.02), '2¢');
 eq('fmtPctSigned', F.fmtPctSigned(0.015873, 2), '+1.59%');
+eq('fmtPctSigned tiny negative is unsigned', F.fmtPctSigned(-1e-9, 2), '0.00%');
 
 const out = document.getElementById('out');
 const fails = cases.filter((c) => !c.ok);

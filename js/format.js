@@ -31,8 +31,10 @@ export function fmtProb(p, mode = 'pct', digits) {
 export function fmtPctSigned(x, digits = 1) {
   if (!Number.isFinite(x)) return '—';
   const v = x * 100;
-  const sign = v > 0 ? '+' : v < 0 ? MINUS : '';
-  return sign + num(Math.abs(v), digits) + '%';
+  const body = num(Math.abs(v), digits);
+  const zero = /^[0.,]*$/.test(body);           // never print "−0.00%"
+  const sign = zero ? '' : v > 0 ? '+' : v < 0 ? MINUS : '';
+  return sign + body + '%';
 }
 
 export function fmtMoney(x, { ascii = false, signed = false } = {}) {

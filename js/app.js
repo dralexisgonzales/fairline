@@ -94,8 +94,10 @@ document.body.append(mini);
 let heroOffscreen = false;
 let lastHero = null;
 const heroValue = (el) => el.querySelector('.res-value') || el;
+// Bottom edge of the sticky header, including the phone's safe area (notch).
+const topEdge = () => Math.max(1, Math.round(document.querySelector('.top').getBoundingClientRect().bottom));
 // The strip appears once the big number itself is fully hidden, so it never covers the value it repeats.
-const heroGone = (el) => { const r = heroValue(el).getBoundingClientRect(); return r.bottom < 64 || r.top > window.innerHeight; };
+const heroGone = (el) => { const r = heroValue(el).getBoundingClientRect(); return r.bottom < topEdge() || r.top > window.innerHeight; };
 const shortLabel = (el) => el?.dataset.mini ?? (el?.querySelector('.res-label')?.textContent || '');
 function activeHero() {
   const c = calcs.find((x) => x.id === active);
@@ -141,13 +143,19 @@ function updateMini() {
   mini.setAttribute('aria-hidden', String(!on));
   miniBtn.tabIndex = on ? 0 : -1;
 }
-const heroWatch = new IntersectionObserver((entries) => {
-  entries.forEach((en) => {
-    const hero = en.target.closest('.res-hero');
-    if (hero === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); }
-  });
-}, { rootMargin: '-64px 0px 0px 0px', threshold: 0 });
-calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(heroValue(el))));
+let heroWatch = null;
+function watchHeroes() {
+  heroWatch?.disconnect();
+  heroWatch = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      const hero = en.target.closest('.res-hero');
+      if (hero === activeHero()) { heroOffscreen = !en.isIntersecting; updateMini(); }
+    });
+  }, { rootMargin: '-' + topEdge() + 'px 0px 0px 0px', threshold: 0 });
+  calcs.forEach((c) => c.root.querySelectorAll('.card-hero .res-hero').forEach((el) => heroWatch.observe(heroValue(el))));
+}
+watchHeroes();
+window.addEventListener('resize', () => { watchHeroes(); lastHero = null; updateMini(); });
 new MutationObserver(() => updateMini()).observe(main, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
 // ----- Theme -----
