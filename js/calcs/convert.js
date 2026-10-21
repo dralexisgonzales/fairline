@@ -55,7 +55,7 @@ export function create(ctx) {
     if (state.src === 'odds') {
       am = oddsValue(state.odds);
       p = toImplied(am);
-      probF.set(trim(p * 100, p < 0.01 ? 2 : 1));
+      probF.set(trim(p * 100, p < 0.01 || p > 0.995 ? 2 : 1));
       probF.setSub('');
       probF.setError(false);
       probF.setComputed(Number.isFinite(p));

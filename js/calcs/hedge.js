@@ -94,7 +94,7 @@ export function create(ctx) {
     if (r.breakEvenPossible) {
       setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: fmtMoney(r.breakEvenIfOriginalWins, { signed: true }) + ' if original wins', unitsFirst: false });
     } else {
-      aBreak.set('None', 'None', 'no hedge breaks even in both outcomes', 'neg');
+      aBreak.set('None', 'None', 'no break-even hedge at these odds', 'neg');
     }
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {
