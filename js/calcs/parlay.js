@@ -1,5 +1,5 @@
 // Parlay: odds and payout for a combo bet.
-import { h, field, oddsValue, stakeDollars, result, setMoney, sentence, examplePill, debounce, svg, toast } from '../ui.js';
+import { h, field, oddsValue, stakeDollars, result, setMoney, sentence, examplePill, debounce, svg, toast, committedBad } from '../ui.js';
 import { parlay } from '../math.js';
 import { fmtOdds, fmtDecimal, fmtProb, fmtPctSigned, fmtMoney, fmtUnits } from '../format.js';
 import * as store from '../store.js';
@@ -32,7 +32,7 @@ export function create(ctx) {
   const addBtn = h('button', { type: 'button', class: 'btn-row', onclick: () => addLeg({ sign: '-', v: '', ghost: false }, true) }, svg('<path d="M12 5v14M5 12h14"/>', 18), 'Add a leg');
   const addHead = h('button', { type: 'button', class: 'pill pill-btn', 'aria-label': 'Add a leg', onclick: () => addLeg({ sign: '-', v: '', ghost: false }, true) }, svg('<path d="M12 5v14M5 12h14"/>', 16), 'Leg');
 
-  function dropQuote() { if (offeredF.text() !== '') { offeredF.set({ sign: '+', v: '', ghost: false }); state.offered = offeredF.get(); toast('Book’s odds cleared', 1800); } }
+  function dropQuote() { if (offeredF.text() !== '') { offeredF.set({ sign: '+', v: '', ghost: false }); state.offered = offeredF.get(); toast('Book’s odds cleared: the legs changed', 2200, 'tip'); } }
   function addLeg(val, focus = false) {
     const idx = legFields.length;
     const f = field({ type: 'odds', label: 'Leg ' + (idx + 1), value: val, ctx, keypad: ctx.keypad, compact: true, onChange: (v) => { const was = state.legs[legFields.indexOf(f)]; const had = (was?.v || '') !== '', has = v.v !== ''; if (had !== has) dropQuote(); state.legs[legFields.indexOf(f)] = v; render(); persist(); } });
@@ -63,7 +63,7 @@ export function create(ctx) {
   }
   function fieldsList() { return [...legFields, stakeF, offeredF]; }
   // A leg added and left blank is removed when the keypad closes, so the count never says "1 blank" for nothing.
-  ctx.keypad.onActive((a) => { root.classList.toggle('stake-active', a === stakeF || a === offeredF); });
+  ctx.keypad.onActive((a) => { root.classList.toggle('stake-active', a === stakeF || a === offeredF); if (!root.hidden) render(); });
   let tidying = false;
   ctx.keypad.onActive((a) => {
     if (a || root.hidden || tidying || legFields.length <= 2) return;
@@ -103,6 +103,13 @@ export function create(ctx) {
     ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost() && !Number.isFinite(offeredAm));
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
+    const badLeg = legFields.find((f) => committedBad(ctx, f));
+    if (badLeg) {
+      countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + ', 1 needs fixing';
+      hero.setLabel('These legs combine to'); hero.set('—', null, ''); chanceRes.set('—'); payRes.setLabel('Profit if all legs win'); payRes.set('—');
+      say.set('Leg ' + (legFields.indexOf(badLeg) + 1) + ' needs odds of 100 or more.');
+      return;
+    }
     if (!r) {
       hero.setLabel('These legs combine to'); hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—');
       say.set('Add the odds of each pick. Every pick has to win.');

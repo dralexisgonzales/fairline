@@ -409,7 +409,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
 .tight.kb-open .tiles-whatif:not(.tiles-keep) .res, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .res { display: none; }
 .cap-sum { display: none; font-weight: 600; color: var(--text); }
-.screen.fold-whatif .tiles-whatif:not(.tiles-keep) .tiles-cap { white-space: normal; }
+.screen.fold-whatif .tiles-whatif:not(.tiles-keep) .tiles-cap, .tight.kb-open .tiles-whatif:not(.tiles-keep) .tiles-cap { white-space: normal; }
 .tight.kb-open .tiles-whatif:not(.tiles-keep) .cap-sum, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .cap-sum { display: inline; }
 .kb-open .screen.trim-answer .answer.whatif-focus.whatif-on .res-hero .res-sub, .kb-open .screen.fold-whatif.trim-answer .res-hero .res-sub { display: none; }
 .kb-open .screen.trim-cap .answer.whatif-focus.whatif-on .tiles-cap, .kb-open .screen.fold-whatif.trim-cap .tiles-whatif:not(.tiles-keep) .tiles-cap { display: none; }

@@ -106,7 +106,7 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'Hedging at ' + fmtOdds(hAm) + ' loses either way; a full hedge is');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : even ? 'Bet this on the other side at ' + fmtOdds(hAm) + ' to get out flat' : 'Hedging at ' + fmtOdds(hAm) + ' loses either way; a full hedge is');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const m$ = (d) => (lead && unit > 0 ? fmtUnits(d / unit, { signed: true }) : fmtMoney(d, { signed: true }));
@@ -148,7 +148,7 @@ export function create(ctx) {
       answer.classList.remove('is-stale');
       bHero.setLabel('Guaranteed profit'); bHero.set('—', null, '');
       bSay.set('Enter one side’s odds at book A and the other side’s odds at book B.');
-      bOnA.set('—'); bOnB.set('—');
+      bOnA.setLabel('Bet at book A'); bOnB.setLabel('Bet at book B'); bOnA.set('—'); bOnB.set('—');
       return;
     }
     answer.classList.remove('is-stale'); hadB = true;

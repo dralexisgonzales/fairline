@@ -53,7 +53,7 @@ export function create(ctx) {
       const boxP = feeBox ? listedPriceFor(p, ctx.feeRate()) : p;
       probF.set({ v: Number.isFinite(boxP) ? (boxP * 100).toFixed(boxP < 0.01 || boxP > 0.995 ? 2 : 1) : '', ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
-      probF.setSub(Number.isFinite(p) ? (ctx.keypad.active() === probF ? 'type to change it' : feeBox ? 'with the fee' : 'calculated') : '');
+      probF.setSub(Number.isFinite(p) ? (ctx.keypad.active() === probF ? 'type to change it' : feeBox ? 'listed price to buy at' : 'calculated') : '');
     } else {
       const pv = parseNum(state.prob.v);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
