@@ -110,10 +110,10 @@ export function create(ctx) {
     setMoney(aLocked, r.guaranteed, unit, { signed: true, leadUnits: lead });
     if (r.breakEvenPossible) {
       aBreak.setLabel('Break-even bet');
-      setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: '$0 if the other side wins', unitsFirst: false, leadUnits: lead });
+      setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: '$0 if your bet loses', unitsFirst: false, leadUnits: lead });
     } else {
       aBreak.setLabel('Break-even bet');
-      aBreak.set('None', 'None', 'no amount gets you to $0 at these odds', 'neg');
+      aBreak.set('None', 'None', 'not possible at these odds', 'neg');
     }
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {

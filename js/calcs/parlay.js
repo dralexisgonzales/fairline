@@ -90,7 +90,7 @@ export function create(ctx) {
     }
     hero.setLabel('Parlay odds from these legs');
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), '', 'plain');
-    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), fmtDecimal(r.decimal) + ' decimal');
+    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'decimal odds ' + fmtDecimal(r.decimal));
     if (Number.isFinite(stake)) {
       setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: ctx.leadUnits() });
       say.set('All ' + legs.length + ' must win. That happens about ' + fmtProb(r.prob, 'pct') + ' of the time. ' + fmtMoney(stake) + ' would win ' + fmtMoney(r.fairProfit) + '.');
