@@ -118,13 +118,17 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         // Pure function of layout: where the row sits in the content decides the scroll, never the previous scroll.
         screen.style.setProperty('--overscroll', '0px'); void screen.scrollHeight;
         const ch = screen.clientHeight;
-        if (screen.scrollHeight <= ch + 1) { screen.scrollTop = 0; screen.classList.remove('is-scrolled'); return; }   // everything fits: nothing is scrolled under the answer
+        if (screen.scrollHeight <= ch + 1) { screen.scrollTop = 0; screen.classList.remove('is-scrolled', 'is-end'); return; }   // everything fits: nothing is scrolled under the answer
         const sr = screen.getBoundingClientRect();
         const rowTop = el.getBoundingClientRect().top - sr.top + screen.scrollTop;   // content coordinate
         const ansH = ans && getComputedStyle(ans).position === 'sticky' ? ans.offsetHeight : 0;
         const m = 12;   // clear of the fade under the answer
         const align = Math.max(0, rowTop - ansH - m);               // puts the typed row m px under the sticky answer
-        const need = Math.max(0, rowTop + el.offsetHeight + 24 - ch); // least scroll that keeps the typed row clear of the fade at the keypad edge
+        const rows = [...screen.querySelectorAll('.slots > .row-2, .slots > .fld, .legs-list > .leg')].filter((e) => e.offsetParent !== null);
+        const mine = rows.find((r) => r.contains(el));
+        const lastRow = !!mine && rows.every((r) => r.getBoundingClientRect().top <= mine.getBoundingClientRect().top + 1);
+        // Least scroll that keeps the typed row clear of the fade at the keypad edge; the last row has nothing under it to fade.
+        const need = Math.max(0, rowTop + el.offsetHeight + (lastRow ? 10 : 24) - ch);
         // Land on a row boundary: the highest row that can sit under the answer while the typed row stays above the keypad,
         // so the rows above stay as context and none of them is half shown.
         let target = Math.min(align, Math.max(need, align));
@@ -145,6 +149,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         }
         screen.scrollTop = target;
         screen.classList.toggle('is-scrolled', screen.scrollTop > 2);
+        screen.classList.toggle('is-end', screen.scrollTop >= screen.scrollHeight - ch - 1);
       }, 40);
     },
     get, set, setLabel, paint, setSuffix, setSub,

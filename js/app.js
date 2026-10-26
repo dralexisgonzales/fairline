@@ -58,7 +58,7 @@ const calcs = [convert, fairline, parlay, hedge, payout].map((m) => m.create(ctx
 const settingsSheet = createSettings(ctx);
 
 // ----- Layout -----
-calcs.forEach((c) => { main.append(c.root); c.root.addEventListener('scroll', () => c.root.classList.toggle('is-scrolled', c.root.scrollTop > 2), { passive: true }); });
+calcs.forEach((c) => { main.append(c.root); c.root.addEventListener('scroll', () => { c.root.classList.toggle('is-scrolled', c.root.scrollTop > 2); c.root.classList.toggle('is-end', c.root.scrollTop >= c.root.scrollHeight - c.root.clientHeight - 1); }, { passive: true }); });
 dock.insertBefore(keypad.root, tabs);
 function contentSpare(screen) {
   // Room left after the answer block and the slots at their natural heights (idle, the answer stretches to fill).
@@ -71,6 +71,8 @@ function contentSpare(screen) {
 // Sizes are decided on keypad open/close, tab switch, resize and settings changes, each time from scratch
 // (every size class off, then each tier added only if the grown layout still fits). Between those moments
 // the sizes stay put, so moving from slot to slot never changes the keypad or the answer.
+// A what-if row in a hidden pane (the other Hedge mode) never counts.
+const inView = (e) => { for (let p = e.parentElement; p && !p.classList.contains('screen'); p = p.parentElement) if (p.hidden) return false; return true; };
 function placeDock(decideTight = false) {
   const c = calcs.find((x) => x.id === active);
   const screen = c ? c.root : null;
@@ -81,9 +83,9 @@ function placeDock(decideTight = false) {
     const open = keypad.isOpen();
     // Tight looks at what must be on screen (the what-if tiles count only while that slot is being typed);
     // growing counts the what-if tiles too, so their arrival never shrinks anything.
-    const optional = [...screen.querySelectorAll('.tiles-whatif[hidden]')];
-    const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
-    const shown = [...screen.querySelectorAll('.tiles-whatif:not([hidden])')];
+    const optional = [...screen.querySelectorAll('.tiles-whatif[hidden]')].filter(inView);
+    const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')].filter(inView);
+    const shown = [...screen.querySelectorAll('.tiles-whatif:not([hidden])')].filter(inView);
     shown.forEach((e) => { e.hidden = true; });
     app.classList.toggle('tight', open && contentSpare(screen) < 0);
     shown.forEach((e) => { e.hidden = false; });
@@ -94,8 +96,10 @@ function placeDock(decideTight = false) {
     const folded = screen.classList.contains('fold-whatif');
     if (folded && open && contentSpare(screen) < 0) app.classList.add('tight');
     // Idle: if the screen still overflows after the fold, the sentence goes before the slots do.
-    screen.classList.remove('trim-say');
+    screen.classList.remove('trim-say', 'trim-hero', 'trim-tiles');
     if (!open && contentSpare(screen) < -1) screen.classList.add('trim-say');
+    if (!open && contentSpare(screen) < -1) screen.classList.add('trim-hero');
+    if (!open && contentSpare(screen) < -1) screen.classList.add('trim-tiles');
     // Growth counts the what-if tiles that could still appear (not a folded one), so their arrival never shrinks anything.
     if (!folded) optional.forEach((e) => { e.hidden = false; });
     if (open) {
@@ -119,7 +123,7 @@ function placeDock(decideTight = false) {
     // The answer grew after the sizes were decided (a book comparison, a what-if): give room back, never take more.
     for (const cls of ['vast', 'roomy', 'say-fits', 'slack', 'keep-tiles']) { if (contentSpare(screen) >= 0) break; screen.classList.remove(cls); }
     if (!screen.classList.contains('slack') && !screen.classList.contains('keep-tiles')) { screen.classList.add('keep-tiles'); if (contentSpare(screen) < 4) screen.classList.remove('keep-tiles'); }
-    const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
+    const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')].filter(inView);
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
     // Typing a what-if: the reference tiles step aside if the two rows together would push the slots away.
     const focusing = screen.querySelector('.answer.whatif-focus.whatif-on') || (screen.classList.contains('fold-whatif') ? screen : null);

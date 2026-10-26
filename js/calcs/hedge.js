@@ -98,7 +98,7 @@ export function create(ctx) {
       if (hadA && !committedBad(ctx, aOrig, aHedge)) { answer.classList.add('is-stale'); aHero.setLabel('Waiting for a number'); return; }
       answer.classList.remove('is-stale');
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');
-      aSay.set('Enter your bet’s odds, what you staked, and the other side’s odds now.');
+      aSay.set(committedBad(ctx, aOrig, aHedge) ? 'Odds start at 100: fix the slot marked in red.' : 'Enter your bet’s odds, what you staked, and the other side’s odds now.');
       aLocked.set('—'); aBreak.set('—'); aWinO.set('—'); aWinH.set('—');
       return;
     }
@@ -147,7 +147,7 @@ export function create(ctx) {
       if (hadB && !committedBad(ctx, bA, bB)) { answer.classList.add('is-stale'); bHero.setLabel('Waiting for a number'); return; }
       answer.classList.remove('is-stale');
       bHero.setLabel('Guaranteed profit'); bHero.set('—', null, '');
-      bSay.set('Enter one side’s odds at book A and the other side’s odds at book B.');
+      bSay.set(committedBad(ctx, bA, bB) ? 'Odds start at 100: fix the book marked in red.' : 'Enter one side’s odds at book A and the other side’s odds at book B.');
       bOnA.setLabel('Bet at book A'); bOnB.setLabel('Bet at book B'); bOnA.set('—'); bOnB.set('—');
       return;
     }

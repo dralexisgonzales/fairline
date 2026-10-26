@@ -112,7 +112,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .screen::-webkit-scrollbar { display: none; }
 .screen::after { content: ""; flex: none; height: var(--overscroll, 0px); }
 .screen.measure .answer { flex: 0 0 auto !important; margin-top: 0 !important; }
-.screen:not(.fits) { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); }
+.screen:not(.fits):not(.is-end) { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); }
 #app:not(.kb-open) .screen.many-legs .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 #app:not(.kb-open) .screen.legs-5 .res-hero .res-value { font-size: clamp(52px, 14vw, 64px); }
 .answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 -20px; padding: 8px 20px 12px; background: var(--bg); display: flex; flex-direction: column; }
@@ -315,7 +315,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* Toast: above the dock, never over the answer */
 #toast {
-  position: fixed; left: 108px; right: 96px; margin: 0 auto; width: max-content; max-width: calc(100vw - 204px); top: calc(var(--sat) + 8px); z-index: 90;
+  position: fixed; left: 12px; right: 12px; margin: 0 auto; width: max-content; max-width: calc(100vw - 24px); top: calc(var(--sat) + 11px); z-index: 90;
   display: inline-flex; align-items: center; gap: 8px;
   transform: translateY(-6px); opacity: 0; pointer-events: none;
   padding: 8px 12px 8px 10px; border-radius: 999px;
@@ -415,6 +415,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.trim-cap .answer.whatif-focus.whatif-on .tiles-cap, .kb-open .screen.fold-whatif.trim-cap .tiles-whatif:not(.tiles-keep) .tiles-cap { display: none; }
 #app:not(.kb-open) .screen.trim-say .say { display: none; }
 #app:not(.kb-open) .screen.trim-say .tiles .res-sub { display: none; }
+#app:not(.kb-open) .screen.trim-hero .res-hero .res-value { font-size: clamp(44px, 12vw, 56px); }
+#app:not(.kb-open) .screen.trim-hero .res-hero .res-sub { display: none; }
+#app:not(.kb-open) .screen.trim-tiles .tiles { display: none; }
 .tight.kb-open .answer.whatif-focus.whatif-on .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus.whatif-on .tiles:not(.tiles-whatif) { display: none; }
 @media (max-height: 740px) { .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; } }
 .fld:focus-visible, .res:focus-visible { outline: none; }
@@ -434,6 +437,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* Compact mode for short screens (iPhone SE, or a browser tab with chrome) */
 @media (max-height: 740px) {
   .top { min-height: 44px; padding-top: env(safe-area-inset-top); padding-bottom: 0; }
+  #toast { top: calc(var(--sat) + 5px); }
   :root { --tab-h: 50px; }
   .tabs { padding: 0 8px max(env(safe-area-inset-bottom), 0px); }
   .keypad { padding: 4px 12px 6px; }
