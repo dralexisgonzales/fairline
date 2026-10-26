@@ -17,7 +17,7 @@ export function create(ctx) {
   const kp = ctx.keypad;
 
   const modeSeg = segmented({ options: [{ id: 'A', label: 'Hedge a bet' }, { id: 'B', label: 'Both sides' }], value: state.mode, cls: 'seg-mini', label: 'Mode',
-    onChange: (m) => { state.mode = m; root.scrollTop = 0; render(); persist(); kp.setFields(fieldsList()); kp.focus(fieldsList()[0], false); } });
+    onChange: (m) => { state.mode = m; root.scrollTop = 0; render(); persist(); kp.setFields(fieldsList()); if (kp.isOpen()) kp.focus(fieldsList()[0], false); ctx.relayout?.(); } });
 
   // ----- A: hedge an open bet -----
   const aHero = result({ label: 'Bet on the other side', hero: true, mini: 'Bet' });
@@ -57,7 +57,7 @@ export function create(ctx) {
   const exB = examplePill();
   const bTotal = field({ type: 'money', label: 'Total to split', value: state.B.total, ctx, keypad: kp, onChange: (v) => { state.B.total = v; render(); persist(); } });
   const modeSegB = segmented({ options: [{ id: 'A', label: 'Hedge a bet' }, { id: 'B', label: 'Both sides' }], value: state.mode, cls: 'seg-mini', label: 'Mode',
-    onChange: (m) => { state.mode = m; root.scrollTop = 0; render(); persist(); kp.setFields(fieldsList()); kp.focus(fieldsList()[0], false); } });
+    onChange: (m) => { state.mode = m; root.scrollTop = 0; render(); persist(); kp.setFields(fieldsList()); if (kp.isOpen()) kp.focus(fieldsList()[0], false); ctx.relayout?.(); } });
 
   const paneB = h('div', { class: 'pane-b' },
     h('div', { class: 'answer' },
@@ -104,10 +104,11 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover it at ' + fmtOdds(hAm) + ' on the other side, bet');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'Covering at ' + fmtOdds(hAm) + ' loses either way; a full cover is');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
-    const unhedged = 'Without the hedge you end up ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' or ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + '.';
+    const m$ = (d) => (lead && unit > 0 ? fmtUnits(d / unit, { signed: true }) : fmtMoney(d, { signed: true }));
+    const unhedged = 'Without the hedge you end up ' + m$(noHedge.ifOriginalWins) + ' or ' + m$(noHedge.ifHedgeWins) + '.';
     if (profit) aSay.set('Bet that much and you come out ahead whichever side wins. ' + unhedged);
     else if (even) aSay.set('Bet that much and you get out flat, $0 either way. ' + unhedged);
     else aSay.set('At these odds covering your bet loses a little whichever side wins; there is no profit to lock. ' + unhedged);

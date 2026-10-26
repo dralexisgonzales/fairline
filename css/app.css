@@ -111,8 +111,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 }
 .screen::-webkit-scrollbar { display: none; }
 .screen::after { content: ""; flex: none; height: var(--overscroll, 0px); }
-.kb-open .screen { -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
-.kb-open .screen.fits { -webkit-mask-image: none; mask-image: none; }
+.screen:not(.fits) { -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
+#app:not(.kb-open) .screen.many-legs .res-hero .res-value { font-size: clamp(52px, 14vw, 64px); }
 .answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 -20px; padding: 8px 20px 12px; background: var(--bg); display: flex; flex-direction: column; }
 #app:not(.kb-open) .answer { flex: 1 1 auto; justify-content: center; position: static; }
 #app:not(.kb-open) .res-hero .res-value { font-size: clamp(72px, min(26vw, 12dvh), 112px); }
@@ -125,19 +125,19 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .slots { flex: none; margin-top: auto; padding: 4px 0 10px; display: flex; flex-direction: column; gap: 10px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .legs-list { display: flex; flex-direction: column; gap: 10px; }
-.legs-list.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.legs-list.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
 .legs-list.two-col .leg { grid-template-columns: 1fr 44px; gap: 6px; }
 
 /* Answer pieces */
 .say { margin: 4px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--text-2); min-height: 20px; text-wrap: pretty; }
 .say strong { color: var(--text); font-weight: 600; }
-.answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap { opacity: 0.55; }
-.answer.is-stale .pill:not(.pill-example) { opacity: 0.75; }
-:root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.65; }
+.answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap { opacity: 0.75; }
+.answer.is-stale .pill:not(.pill-example) { opacity: 0.8; }
+:root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.8; }
 .answer.is-stale .res-hero { opacity: 1; }
 .answer.is-stale .res-hero .res-value { opacity: 0.5; }
-.answer.is-stale .res-hero .res-sub { opacity: 0.7; }
-.answer.is-stale .say { display: none !important; }
+.answer.is-stale .res-hero .res-sub { opacity: 0.75; }
+.answer.is-stale .say { visibility: hidden; }
 :root[data-theme="light"] .answer.is-stale .res-hero { opacity: 1; }
 :root[data-theme="light"] .answer.is-stale .res-hero .res-value, :root[data-theme="light"] .answer.is-stale .res-hero .res-sub { opacity: 0.92; }
 .answer.is-stale .res-hero .res-label { color: var(--text); }
@@ -180,7 +180,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 @keyframes tick { from { opacity: .8; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
 /* Two columns (fair odds) */
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .col { min-width: 0; }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); margin-bottom: 2px; }
 .res-col.res-hero { min-height: 0; }
@@ -216,12 +216,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld-tag { flex: none; color: var(--text-3); font-weight: 500; }
 .legs-list.two-col .fld-tag { display: none; }
 .legs-list.two-col .fld-compact .fld-value, .legs-list.two-col .fld-compact .fld-sign { font-size: 21px; }
-.fld-row { display: inline-flex; align-items: baseline; gap: 1px; max-width: 100%; font-variant-numeric: proportional-nums; }
+.fld-row { display: inline-flex; min-height: 31px; align-items: baseline; gap: 1px; max-width: 100%; font-variant-numeric: proportional-nums; }
 .fld-value, .fld-sign { font-family: var(--font-num); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap; }
 .fld.is-long .fld-value, .fld.is-long .fld-sign { font-size: 22px; }
 .fld.is-xlong .fld-value, .fld.is-xlong .fld-sign { font-size: 17px; }
 .fld-affix { font-size: 18px; font-weight: 600; color: var(--text-3); align-self: baseline; }
-.fld-suffix { padding-left: 0; }
+.fld-suffix { padding-left: 0; margin-left: -2px; }
 .fld-caret { width: 0; height: 26px; margin-left: 0; border-radius: 1px; background: var(--gold); opacity: 0; align-self: center; }
 .fld.is-active .fld-caret { width: 2px; margin-left: 1px; opacity: 1; animation: blink 1.1s steps(2, start) infinite; }
 @keyframes blink { to { visibility: hidden; } }
@@ -241,14 +241,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld-sub { font-size: 13px; color: var(--text-3); }
 .fld-money .fld-sub, .fld-percent .fld-sub, .fld.has-hint .fld-sub { min-height: 17px; }
 /* Tight: the money sub line (= 4u) sits beside the value, so a row is one line unless it has to wrap */
-.tight .fld-money { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
-.tight .fld-money .fld-label { flex-basis: 100%; }
-.tight .fld-money .fld-sub { margin-left: auto; min-height: 0; }
-.tight .fld-money .fld-sub:empty { display: none; }
+.tight .fld-money, .tight .fld.has-hint { flex-direction: row; flex-wrap: wrap; align-items: baseline; align-content: flex-start; column-gap: 8px; }
+.tight .fld-money .fld-label, .tight .fld.has-hint .fld-label { flex-basis: 100%; }
+.tight .fld-money .fld-sub, .tight .fld.has-hint .fld-sub { margin-left: auto; min-height: 0; }
+.tight .fld-money .fld-sub:empty, .tight .fld.has-hint .fld-sub:empty { display: none; }
 .fld-sub.is-error { color: var(--neg); }
 .fld-sub.is-link { color: var(--gold-text); font-weight: 600; }
 .fld-compact { min-height: 54px; padding: 7px 14px; }
 .fld-compact .fld-value, .fld-compact .fld-sign { font-size: 24px; }
+.fld-compact .fld-row, .tight .fld-row { min-height: 27px; }
 
 /* Slot rows with a trailing action (parlay legs) */
 .leg { display: grid; grid-template-columns: 1fr 44px; gap: 8px; align-items: stretch; }
@@ -345,7 +346,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .btn-done { color: var(--gold-text); font-weight: 700; font-size: 17px; min-height: 44px; padding: 0 2px 0 12px; }
 .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
 .sheet-panel .keypad { flex: none; border-radius: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
-.sheet-panel .keypad + .sheet-body, .sheet-body:has(+ .keypad) { padding-bottom: 12px; }
+.sheet-panel .keypad + .sheet-body, .sheet-body:has(+ .keypad) { padding-bottom: 12px; -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
 .sheet-body > * { flex-shrink: 0; }
 .sheet-body::-webkit-scrollbar { display: none; }
 .section { display: flex; flex-direction: column; gap: 10px; }
@@ -387,7 +388,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
-.kb-open .screen.vast .answer { margin-top: auto; position: static; padding-bottom: 18px; box-shadow: none; }
+.kb-open .screen.vast .answer { margin-top: var(--vast-top, 0px); position: static; padding-bottom: 18px; box-shadow: none; }
 .kb-open .screen.vast .answer::after { display: none; }
 .kb-open .screen.slack .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 .kb-open .screen.slack .res-col.res-hero .res-value { font-size: clamp(52px, 15.5vw, 68px); }
@@ -402,7 +403,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.slack .answer .tiles .res { padding: 8px 12px; }
 .kb-open .slots .note { display: none; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
-.tight.kb-open .tiles-whatif:not(.tiles-keep), .kb-open .screen.fold-whatif .tiles-whatif:not(.tiles-keep) { display: none; }
+.tight.kb-open .tiles-whatif:not(.tiles-keep), .screen.fold-whatif .tiles-whatif:not(.tiles-keep) { display: none; }
+.kb-open .screen.trim-answer .answer.whatif-focus .res-hero .res-sub, .kb-open .screen.trim-answer .answer.whatif-focus .tiles-cap { display: none; }
 .tight.kb-open .answer.whatif-focus .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus .tiles:not(.tiles-whatif) { display: none; }
 @media (max-height: 740px) { .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; } }
 .fld:focus-visible, .res:focus-visible { outline: none; }

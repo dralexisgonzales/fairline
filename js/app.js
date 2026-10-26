@@ -95,7 +95,7 @@ function placeDock(decideTight = false) {
     // The sentence comes back whenever it fits on its own (it steps aside again if the what-if tiles appear).
     if (open && !screen.classList.contains('roomy')) { screen.classList.add('say-fits'); if (contentSpare(screen) < 4) screen.classList.remove('say-fits'); }
     // With a lot of room left, the answer centres in the space instead of leaving a void between it and the slots.
-    if (open && contentSpare(screen) >= 48) screen.classList.add('vast');
+    if (open && contentSpare(screen) >= 48) { screen.classList.add('vast'); screen.style.setProperty('--vast-top', Math.round(contentSpare(screen) / 2) + 'px'); }
     // A stored what-if that would push the slots under the keypad folds away until that slot is typed.
     screen.classList.remove('fold-whatif');
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
@@ -109,8 +109,8 @@ function placeDock(decideTight = false) {
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
     // Typing a what-if: the reference tiles step aside if the two rows together would push the slots away.
     const focusing = screen.querySelector('.answer.whatif-focus');
-    screen.classList.remove('fold-ref');
-    if (focusing && contentSpare(screen) < 0) screen.classList.add('fold-ref');
+    screen.classList.remove('fold-ref', 'trim-answer');
+    if (focusing && contentSpare(screen) < 0) { screen.classList.add('trim-answer'); if (contentSpare(screen) < 0) screen.classList.add('fold-ref'); }
   }
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   if (decideTight) refitResults();

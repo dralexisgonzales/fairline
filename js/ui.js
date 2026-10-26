@@ -127,7 +127,8 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         // Land on a row boundary: the highest row that can sit under the answer while the typed row stays above the keypad,
         // so the rows above stay as context and none of them is half shown.
         let target = Math.min(align, Math.max(need, align));
-        if (need <= align) {
+        if (screen.classList.contains('sheet-body')) target = need;   // a sheet scrolls only as far as it must
+        else if (need <= align) {
           const tops = [...new Set([...screen.querySelectorAll('.slots > .row-2, .slots > .fld, .legs-list > .leg')]
             .filter((e) => e.offsetParent !== null)
             .map((e) => Math.round(e.getBoundingClientRect().top - sr.top + screen.scrollTop)))].sort((a, b) => a - b);
@@ -372,7 +373,7 @@ export function disclosure({ label, open = false }, ...body) {
     if (now) setTimeout(() => root.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0);
   });
   btn.classList.toggle('is-open', open);
-  return { root, isOpen: () => !panel.hidden };
+  return { root, isOpen: () => !panel.hidden, close: () => { if (!panel.hidden) btn.click(); } };
 }
 
 // ---------- Clipboard + toast ----------
