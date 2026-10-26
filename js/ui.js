@@ -140,17 +140,17 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
           // The last row takes a boundary only if it leaves at most 30px blank under it, or if the least scroll would
           // leave less than half a row showing under the answer (a sliver). A mostly visible row stays as a scroll cue.
           const maxTop0 = screen.scrollHeight - ch;
-          const cands = tops.map((t) => Math.max(0, t - ansH - m)).filter((c) => c >= need && c <= align);
+          const cands = tops.map((t) => Math.max(0, t - ansH - m)).filter((c) => c >= need - 1 && c <= align + 1);   // 1px tolerance: rounded row tops
           const first = cands[0];
           let sliver = false;
           if (lastRow && first != null && first > maxTop0 + 30) {
             const edge = need + ansH;   // content coordinate of the answer's bottom at the least scroll
             const rows2 = [...screen.querySelectorAll('.slots > .row-2, .legs-list > .leg')].filter((e) => e.offsetParent !== null);
-            sliver = rows2.some((r) => { const top = r.getBoundingClientRect().top - sr.top + screen.scrollTop, h = r.offsetHeight; return top < edge && top + h > edge + 2 && top + h - edge < h / 2; });
+            sliver = rows2.some((r) => { const top = r.getBoundingClientRect().top - sr.top + screen.scrollTop, h = r.offsetHeight; return top < edge && top + h > edge + 6 && top + h - edge < h / 2; });   // a 6px edge sits under the fade and is not a sliver
           }
           if (first != null && (!lastRow || first <= maxTop0 + 30 || sliver)) target = first;
           else if (lastRow) target = need;
-        } else target = need;
+        } else target = ansH + m + el.offsetHeight <= ch ? align : need;   // too tall for both clearances: keep the top (its label) and let the bottom sit in the fade
         // Room below the last row so this scroll is always possible (the slots' auto margin absorbs the first of it).
         let os = 0;
         for (let i = 0; i < 4; i++) {
@@ -228,6 +228,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     paintLabel();
     valueEl.textContent = empty ? (placeholder || '\u2014') : (type === 'odds' ? state.v : withCommas(state.v));
     el.classList.toggle('is-long', !empty && state.v.length >= 8);
+    el.classList.toggle('is-longer', !empty && state.v.length >= 10);
     el.classList.toggle('is-xlong', !empty && state.v.length >= 11);
     if (type === 'odds') {
       signEl.textContent = state.sign === '-' ? '−' : '+';

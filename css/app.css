@@ -221,6 +221,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld-row { display: inline-flex; min-height: 31px; align-items: baseline; gap: 1px; max-width: 100%; font-variant-numeric: proportional-nums; }
 .fld-value, .fld-sign { font-family: var(--font-num); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap; }
 .fld.is-long .fld-value, .fld.is-long .fld-sign { font-size: 22px; }
+.fld.is-longer .fld-value, .fld.is-longer .fld-sign { font-size: 17px; }
 .fld.is-xlong .fld-value, .fld.is-xlong .fld-sign { font-size: 17px; }
 .fld-affix { font-size: 18px; font-weight: 600; color: var(--text-3); align-self: baseline; }
 .fld-suffix { padding-left: 0; margin-left: -2px; }
