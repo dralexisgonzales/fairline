@@ -111,8 +111,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 }
 .screen::-webkit-scrollbar { display: none; }
 .screen::after { content: ""; flex: none; height: var(--overscroll, 0px); }
-.screen:not(.fits) { -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
-#app:not(.kb-open) .screen.many-legs .res-hero .res-value { font-size: clamp(52px, 14vw, 64px); }
+.screen.measure .answer { flex: 0 0 auto !important; margin-top: 0 !important; }
+.screen:not(.fits) { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); }
+#app:not(.kb-open) .screen.many-legs .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
+#app:not(.kb-open) .screen.legs-5 .res-hero .res-value { font-size: clamp(52px, 14vw, 64px); }
 .answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 -20px; padding: 8px 20px 12px; background: var(--bg); display: flex; flex-direction: column; }
 #app:not(.kb-open) .answer { flex: 1 1 auto; justify-content: center; position: static; }
 #app:not(.kb-open) .res-hero .res-value { font-size: clamp(72px, min(26vw, 12dvh), 112px); }
@@ -133,7 +135,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .say strong { color: var(--text); font-weight: 600; }
 .answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap { opacity: 0.75; }
 .answer.is-stale .pill:not(.pill-example) { opacity: 0.8; }
-:root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.9; }
+:root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say, :root[data-theme="light"] .answer.is-stale .tiles-cap { opacity: 0.9; }
 .answer.is-stale .res-hero { opacity: 1; }
 .answer.is-stale .res-hero .res-value { opacity: 0.5; }
 .answer.is-stale .res-hero .res-sub { opacity: 0.75; }
@@ -232,6 +234,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld.is-active.is-empty .fld-value { display: none; }
 .fld.is-ghost .fld-value, .fld.is-ghost .fld-sign { color: var(--text-3); }
 .fld.is-active.is-fresh .fld-row { background: var(--gold-sel); border-radius: 6px; padding: 0 5px; margin: 0 -5px; }
+.fld.is-fresh .fld-affix { color: var(--text-2); }
 .fld.is-computed { background: transparent; box-shadow: inset 0 0 0 1px var(--hair); }
 .fld.is-computed.is-active { box-shadow: inset 0 0 0 1.5px var(--gold); }
 .fld.is-computed.is-active .fld-value, .fld.is-computed.is-active .fld-sign { color: var(--text); }
@@ -296,8 +299,6 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kp-half.is-on { background: var(--s3); color: var(--text); }
 .res-hero.tone-muted .res-value { color: var(--text); }
 .kp-key.is-pressed { transform: scale(0.94); background: var(--key-press); }
-.kp-grid.kp-odds .kp-zero { grid-column: 2 / 4; }
-.kp-grid.kp-odds .kp-key:disabled { display: none; }
 .kp-key.kp-next.is-pressed { background: var(--gold); filter: brightness(1.1); }
 .tabs {
   display: grid; grid-template-columns: repeat(5, 1fr);
@@ -347,7 +348,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
 .sheet-panel .keypad { flex: none; border-radius: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
 .sheet-panel .keypad:not([hidden]) + .sheet-body, .sheet-body:has(+ .keypad:not([hidden])) { padding-bottom: 12px; }
-.sheet-body { -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
+.sheet-body { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); }
 .sheet-body > * { flex-shrink: 0; }
 .sheet-body::-webkit-scrollbar { display: none; }
 .section { display: flex; flex-direction: column; gap: 10px; }
@@ -386,7 +387,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer .tiles .res-label { font-size: 11px; }
 .kb-open .say { display: none; }
 .kb-open .answer { box-shadow: 0 1px 0 var(--hair); }
-.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
+.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--bg) 45%, transparent); pointer-events: none; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
 .kb-open .screen.vast .answer { margin-top: var(--vast-top, 0px); position: static; padding-bottom: 18px; box-shadow: none; }
@@ -407,6 +408,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
 .tight.kb-open .tiles-whatif:not(.tiles-keep) .res, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .res { display: none; }
 .cap-sum { display: none; font-weight: 600; color: var(--text); }
+.screen.fold-whatif .tiles-whatif:not(.tiles-keep) .tiles-cap, .tight.kb-open .tiles-whatif:not(.tiles-keep) .tiles-cap { white-space: normal; }
 .tight.kb-open .tiles-whatif:not(.tiles-keep) .cap-sum, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .cap-sum { display: inline; }
 .kb-open .screen.trim-answer .answer.whatif-focus .res-hero .res-sub { display: none; }
 .kb-open .screen.trim-cap .answer.whatif-focus .tiles-cap { display: none; }

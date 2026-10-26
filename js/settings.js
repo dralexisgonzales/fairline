@@ -65,6 +65,7 @@ export function createSettings(ctx) {
       ctx.takeKeypad(sh.panel);
       kp.setFields(fieldsList());
       if (focusOnOpen === 'unit') setTimeout(() => kp.focus(unitF, true), 280); else kp.close();
+      if (focusOnOpen === 'fee') setTimeout(() => { if (!feeDisc.isOpen()) feeDisc.root.querySelector('.disclosure').click(); feeDisc.root.scrollIntoView({ block: 'start', behavior: 'auto' }); }, 300);
     },
     onClose: () => { ctx.afterSettingsClose?.(); },
   });

@@ -141,7 +141,7 @@ export function createKeypad({ haptic } = {}) {
     dotKey.replaceChildren(type === 'odds' ? 'C' : '.');
     dotKey.classList.toggle('kp-fn', type === 'odds');
     dotKey.setAttribute('aria-label', type === 'odds' ? 'Clear' : 'Decimal point');
-    dblKey.disabled = type === 'odds';
+    dblKey.disabled = false;
     grid.classList.toggle('kp-odds', type === 'odds');
     const visible = fields.filter((f) => f.el.isConnected && f.el.offsetParent !== null);
     const last = active.noAdvance || visible.indexOf(active) === visible.length - 1;

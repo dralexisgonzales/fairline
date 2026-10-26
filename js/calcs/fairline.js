@@ -43,10 +43,10 @@ export function create(ctx) {
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
       const emptied = !state.a.v || !state.b.v;
-      if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel(lastWasExample ? 'Book’s cut' : 'Last full line'); return; }
+      if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel(lastWasExample ? 'Book’s cut' : 'Before this change'); return; }
       answer.classList.remove('is-stale'); hadValid = false;   // no full line on screen now, so nothing to keep dim
       ex.set(false);
-      oddsA.set('—', null, Number.isFinite(a) ? fmtProb(toImplied(a), 'pct') + ' chance at ' + fmtOdds(a) : ''); oddsB.set('—', null, Number.isFinite(b) ? fmtProb(toImplied(b), 'pct') + ' chance at ' + fmtOdds(b) : ''); cut.setLabel('Book’s cut'); cut.set('—');
+      oddsA.set('—', null, Number.isFinite(a) ? fmtProb(toImplied(a), 'pct') + ' at ' + fmtOdds(a) + ', cut included' : ''); oddsB.set('—', null, Number.isFinite(b) ? fmtProb(toImplied(b), 'pct') + ' at ' + fmtOdds(b) + ', cut included' : ''); cut.setLabel('Book’s cut'); cut.set('—');
       say.set(Number.isFinite(a) || Number.isFinite(b) ? 'Type the other side too to see the odds without the book’s cut.' : 'Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;
     }

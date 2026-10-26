@@ -90,7 +90,7 @@ export function create(ctx) {
     answer.classList.toggle('is-example', [aHedge, aOrig, aStake].every((f) => f.isGhost()));
     const manualFocused = kp.active() === aManual;
     const manualHas = Number.isFinite(stakeDollars(state.A.manual, unit)) && stakeDollars(state.A.manual, unit) >= 0;
-    tilesManual.hidden = !(manualFocused || manualHas);
+    tilesManual.hidden = !manualHas;
     tilesManual.classList.toggle('tiles-keep', manualFocused);
     answer.classList.toggle('whatif-focus', manualFocused);
     answer.classList.toggle('whatif-on', !tilesManual.hidden);
@@ -126,7 +126,7 @@ export function create(ctx) {
     if (Number.isFinite(amount) && amount >= 0) {
       const o = hedgeOutcomes(stake, orig, amount, hAm);
       capMain.textContent = 'With ' + (lead && unit > 0 ? fmtUnits(amount / unit) : fmtMoney(amount).replace(/\.00$/, '')) + ' on the other side instead:';
-      capSum.textContent = ' ' + m$(o.ifOriginalWins) + ' / ' + m$(o.ifHedgeWins);
+      capSum.textContent = ' ' + m$(o.ifOriginalWins).replace(/\.00$/, '') + ' if yours wins, ' + m$(o.ifHedgeWins).replace(/\.00$/, '') + ' if not';
       aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins');
       setMoney(aWinO, o.ifOriginalWins, unit, { signed: true, leadUnits: lead });
       setMoney(aWinH, o.ifHedgeWins, unit, { signed: true, leadUnits: lead });

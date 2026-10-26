@@ -35,7 +35,7 @@ export function create(ctx) {
   function dropQuote() { if (offeredF.text() !== '') { offeredF.set({ sign: '+', v: '', ghost: false }); state.offered = offeredF.get(); toast('Book’s odds cleared: the legs changed', 1800, 'tip'); } }
   function addLeg(val, focus = false) {
     const idx = legFields.length;
-    const f = field({ type: 'odds', label: 'Leg ' + (idx + 1), value: val, ctx, keypad: ctx.keypad, compact: true, onChange: (v) => { const was = state.legs[legFields.indexOf(f)]; if ((was?.v || '') === '' && v.v !== '') dropQuote(); state.legs[legFields.indexOf(f)] = v; render(); persist(); } });
+    const f = field({ type: 'odds', label: 'Leg ' + (idx + 1), value: val, ctx, keypad: ctx.keypad, compact: true, onChange: (v) => { const was = state.legs[legFields.indexOf(f)]; const had = (was?.v || '') !== '', has = v.v !== ''; if (had !== has) dropQuote(); state.legs[legFields.indexOf(f)] = v; render(); persist(); } });
     const removeBtn = h('button', { type: 'button', class: 'leg-remove', 'aria-label': 'Remove leg', onclick: () => removeLeg(f) }, svg('<path d="M6 6l12 12M18 6L6 18"/>', 16));
     const row = h('div', { class: 'leg' }, f.el, removeBtn);
     f.row = row;
@@ -97,6 +97,7 @@ export function create(ctx) {
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
     legsEl.classList.toggle('two-col', legFields.length >= 2);
+    root.classList.toggle('legs-5', legFields.length >= 5);
     const many = legFields.length >= 3;
     if (root.classList.contains('many-legs') !== many) { root.classList.toggle('many-legs', many); if (!root.hidden) setTimeout(() => ctx.relayout?.(), 0); }
     ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost() && !Number.isFinite(offeredAm));
@@ -113,7 +114,7 @@ export function create(ctx) {
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');
     if (Number.isFinite(stake) && r.offered) {
       payRes.setLabel('At book’s ' + fmtOdds(offeredAm));
-      setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'profit on ' + money(stake) + ' if all legs win', leadUnits: lead });
+      setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake) + ' if all win', leadUnits: lead });
       say.set('Every leg must win for it to pay.');
     } else if (Number.isFinite(stake)) {
       payRes.setLabel('Profit if all legs win');

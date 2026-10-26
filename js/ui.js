@@ -134,6 +134,8 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
             .filter((e) => e.offsetParent !== null)
             .map((e) => Math.round(e.getBoundingClientRect().top - sr.top + screen.scrollTop)))].sort((a, b) => a - b);
           for (const t of tops) { const cand = Math.max(0, t - ansH - m); if (cand >= need && cand <= align) { target = cand; break; } }
+          // A row boundary that leaves a big gap under the typed row is worse than a row tucked under the answer.
+          if (target - need > 24) target = need;
         } else target = need;
         // Room below the last row so this scroll is always possible (the slots' auto margin absorbs the first of it).
         let os = 0;

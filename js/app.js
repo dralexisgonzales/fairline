@@ -61,9 +61,12 @@ const settingsSheet = createSettings(ctx);
 calcs.forEach((c) => main.append(c.root));
 dock.insertBefore(keypad.root, tabs);
 function contentSpare(screen) {
-  // Room left after the answer block and the slots (the screen itself always fills, so scrollHeight says nothing).
+  // Room left after the answer block and the slots at their natural heights (idle, the answer stretches to fill).
+  screen.classList.add('measure');
   const parts = [...screen.querySelectorAll('.answer, .slots')].filter((e) => e.offsetParent !== null);
-  return screen.clientHeight - parts.reduce((a, e) => a + e.offsetHeight, 0);
+  const spare = screen.clientHeight - parts.reduce((a, e) => a + e.offsetHeight, 0);
+  screen.classList.remove('measure');
+  return spare;
 }
 // Sizes are decided on keypad open/close, tab switch, resize and settings changes, each time from scratch
 // (every size class off, then each tier added only if the grown layout still fits). Between those moments
@@ -87,8 +90,10 @@ function placeDock(decideTight = false) {
     // A stored what-if that would push the slots under the keypad folds away until that slot is typed.
     screen.classList.remove('fold-whatif');
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
-    // Growth counts the what-if tiles that could still appear (not a folded one), so their arrival never shrinks anything.
+    // A folded what-if keeps its one-line caption, so the fit is checked again.
     const folded = screen.classList.contains('fold-whatif');
+    if (folded && open && contentSpare(screen) < 0) app.classList.add('tight');
+    // Growth counts the what-if tiles that could still appear (not a folded one), so their arrival never shrinks anything.
     if (!folded) optional.forEach((e) => { e.hidden = false; });
     if (open) {
       screen.classList.add('slack');

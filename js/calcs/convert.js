@@ -24,8 +24,9 @@ export function create(ctx) {
   // Tapping the calculated box does not change anything until the first key: the old answer stays until there is a new one.
 
   const ex = examplePill();
+  const feePill = h('button', { type: 'button', class: 'pill pill-btn pill-fee', hidden: true, 'aria-label': 'Change the fee', onclick: () => ctx.openSettings('fee') });
   const answer = h('div', { class: 'answer' },
-    h('div', { class: 'screen-head' }, modeSeg.root, h('span', { class: 'spacer' }), ex.el),
+    h('div', { class: 'screen-head' }, modeSeg.root, feePill, h('span', { class: 'spacer' }), ex.el),
     hero.root, say.el
   );
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
@@ -40,15 +41,19 @@ export function create(ctx) {
     ex.set(oddsF.isGhost() || probF.isGhost(), true);
     answer.classList.toggle('is-example', oddsF.isGhost() && state.src === 'odds');
     modeSeg.set(ctx.probMode());
+    feePill.hidden = !cents;
+    feePill.textContent = (ctx.feePreset().short || 'No fee') + (ctx.feePreset().short && ctx.feeRate() === 0 ? ' \u00B7 no fee' : '');
     probF.setSuffix(cents ? '¢' : '%');
     probF.setLabel(cents ? 'Price in cents' : 'Chance to win');
     let p = NaN, am = NaN;
     if (state.src === 'odds') {
       am = oddsValue(state.odds);
       p = toImplied(am);
-      probF.set({ v: Number.isFinite(p) ? (p * 100).toFixed(p < 0.01 || p > 0.995 ? 2 : 1) : '', ghost: false });
+      const feeBox = cents && ctx.feeRate() > 0 && Number.isFinite(p);
+      const boxP = feeBox ? effectivePrice(p, ctx.feeRate()).price : p;
+      probF.set({ v: Number.isFinite(boxP) ? (boxP * 100).toFixed(boxP < 0.01 || boxP > 0.995 ? 2 : 1) : '', ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
-      probF.setSub(Number.isFinite(p) ? (ctx.keypad.active() === probF ? 'type to change it' : 'calculated') : '');
+      probF.setSub(Number.isFinite(p) ? (ctx.keypad.active() === probF ? 'type to change it' : feeBox ? 'with the fee' : 'calculated') : '');
     } else {
       const pv = parseNum(state.prob.v);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
@@ -58,21 +63,22 @@ export function create(ctx) {
       const txt = Number.isFinite(shownAm) ? fmtOdds(shownAm, { ascii: true }) : '';
       oddsF.set(txt ? { sign: txt.startsWith('-') ? '-' : '+', v: txt.slice(1), ghost: false } : { sign: '-', v: '', ghost: false });
       oddsF.el.classList.add('is-computed'); probF.el.classList.remove('is-computed');
-      oddsF.setSub(Number.isFinite(am) ? (ctx.keypad.active() === oddsF ? 'type to change it' : 'calculated') : '');
+      oddsF.setSub(Number.isFinite(am) ? (ctx.keypad.active() === oddsF ? 'type to change it' : (cents && ctx.feeRate() > 0 ? 'with the fee' : 'calculated')) : '');
       const bad = Number.isFinite(pv) && pv >= 100;
       probF.setSub(Number.isFinite(pv) && !(pv > 0 && pv < 100) ? 'Use a number above 0 and below 100' : '', bad ? 'is-error' : '');
     }
     if (state.src === 'odds') { if (!oddsF.el.classList.contains('is-invalid')) oddsF.setSub(''); } else if (!Number.isFinite(parseNum(state.prob.v)) || (parseNum(state.prob.v) > 0 && parseNum(state.prob.v) < 100)) probF.setSub('');
 
+    const committedBad = state.src === 'odds' && oddsF.el.classList.contains('is-invalid') && ctx.keypad.active() !== oddsF;
     if (!Number.isFinite(p)) {
-      if (hadValid) {
+      if (hadValid && !committedBad) {
         answer.classList.add('is-stale'); hero.setLabel('Waiting for a number');
         if (state.src === 'odds') probF.set({ v: '', ghost: false }); else oddsF.set({ sign: state.odds.sign || '-', v: '', ghost: false });
         return;
       }
       hero.setLabel(state.src === 'odds' ? (cents ? 'Price' : 'Chance to win') : 'American odds');
       hero.set('—', null, '');
-      say.set(state.src === 'odds' ? 'Type odds like \u2212110 or +150.' : (cents ? 'Type a price in cents, like 62.' : 'Type a chance like 52.4.'));
+      say.set(state.src === 'odds' ? (committedBad ? 'Odds start at 100: type something like \u2212110 or +150.' : 'Type odds like \u2212110 or +150.') : (cents ? 'Type a price in cents, like 62.' : 'Type a chance like 52.4.'));
       return;
     }
     answer.classList.remove('is-stale'); hadValid = true;
