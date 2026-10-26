@@ -93,7 +93,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* iOS 26 home-screen app: with a translucent status bar the layout viewport comes up short by the status bar's height
    (WebKit bug 301108), leaving a blank strip under the tab bar. Stretch the page back to the screen, capped at the real screen height. */
-@media (display-mode: standalone) { #app { height: min(100lvh, calc(100dvh + env(safe-area-inset-top))); } }
+@media (display-mode: standalone) {
+  #app, .sheet { height: min(100lvh, calc(100dvh + env(safe-area-inset-top))); }
+  .sheet { bottom: auto; }   /* the sheets are fixed to the same short viewport, so they get the same height */
+}
 
 /* Header */
 .top {
@@ -149,7 +152,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 :root[data-theme="light"] .answer.is-stale .res-hero .res-value, :root[data-theme="light"] .answer.is-stale .res-hero .res-sub { opacity: 0.92; }
 .answer.is-stale .res-hero .res-label { color: var(--text); }
 .answer.is-example .res-hero .res-value { opacity: 0.9; }
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }   /* same seam as the slot rows */
 .tiles-1 { grid-template-columns: 1fr; }
 .tiles-cap { grid-column: 1 / -1; flex-basis: 100%; font-size: 12.5px; font-weight: 500; color: var(--text-2); margin-bottom: -2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -388,7 +391,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* While typing, the answer stays but its secondary tiles fold away so the slot being edited is always on screen */
 /* Key tiles stay, in a compact one-line form, so the number the current slot drives is never hidden */
-.kb-open .answer .tiles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.kb-open .answer .tiles { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 6px; }   /* columns on the slot rows' seam */
 .kb-open .answer .tiles-cap { margin-bottom: -2px; font-size: 11.5px; }
 .kb-open .answer .tiles .res { min-height: 0; padding: 5px 10px 6px; gap: 0; flex: 1 1 0; min-width: 0; overflow: hidden; }
 .kb-open .answer .tiles .res-sub { display: none; }
