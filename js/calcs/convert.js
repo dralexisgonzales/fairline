@@ -81,18 +81,18 @@ export function create(ctx) {
       hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am));
       hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) : (cents ? '' : 'decimal odds ' + fmtDecimal(dec)));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
-      if (cents) t = 'On sites that price bets in cents (Novig, Kalshi, Polymarket), ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
+      if (cents) t = 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
       hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance'));
       hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) + ', like ' + fmtOdds(probToAmerican(effectivePrice(p, rate).price)) : 'decimal odds ' + fmtDecimal(dec));
       let t = 'If something wins ' + tidy(fmtProb(p, 'pct')) + ' of the time, these odds are exactly break-even on it.';
-      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. These odds say the same. ' + feeLine(p, rate, label);
+      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. ' + fmtOdds(am) + ' is that same chance written as odds. ' + feeLine(p, rate, label);
       say.set(t);
     }
   }
   function feeLine(p, rate, label) {
-    if (!(rate > 0)) return label === 'Novig pregame' ? 'Your fee setting is Novig: no fee before the game starts.' : (label === 'None' ? '' : 'Your fee setting is ' + label + ': no fee here.');
+    if (!(rate > 0)) return label === 'Novig pregame' ? 'No fee on Novig before the game starts.' : (label === 'None' ? '' : 'No fee on ' + label + ' here.');
     const eff = effectivePrice(p, rate);
     return (label === 'Custom' ? 'Your custom fee adds ' : 'Your fee setting is ' + label + ': the fee adds ') + fmtCentsExact(eff.fee) + ', so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
   }

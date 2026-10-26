@@ -73,18 +73,25 @@ function placeDock(decideTight = false) {
   const screen = c ? c.root : null;
   if (decideTight && screen) {
     // Optional tile rows (the hedge what-if) count as present, so showing them later never forces a size change.
+    app.classList.remove('tight');
+    screen.classList.remove('slack', 'roomy', 'keep-tiles');
+    const open = keypad.isOpen();
+    // Tight looks at what is on screen now; growing counts the what-if tiles too, so their arrival never shrinks anything.
+    app.classList.toggle('tight', open && contentSpare(screen) < 0);
     const optional = [...screen.querySelectorAll('.tiles-whatif[hidden]')];
     optional.forEach((e) => { e.hidden = false; });
-    app.classList.remove('tight');
-    screen.classList.remove('slack', 'roomy');
-    const open = keypad.isOpen();
-    app.classList.toggle('tight', open && contentSpare(screen) < 0);
     if (open) {
       screen.classList.add('slack');
       if (contentSpare(screen) < 4) screen.classList.remove('slack');
       else { screen.classList.add('roomy'); if (contentSpare(screen) < 4) screen.classList.remove('roomy'); }
+      if (!screen.classList.contains('slack')) { screen.classList.add('keep-tiles'); if (contentSpare(screen) < 4) screen.classList.remove('keep-tiles'); }
     }
     optional.forEach((e) => { e.hidden = true; });
+    // The sentence comes back whenever it fits on its own (it steps aside again if the what-if tiles appear).
+    screen.classList.remove('say-fits', 'vast');
+    if (open && !screen.classList.contains('roomy')) { screen.classList.add('say-fits'); if (contentSpare(screen) < 4) screen.classList.remove('say-fits'); }
+    // With a lot of room left, the answer sits just above the slots, close to the thumb, instead of leaving a void between them.
+    if (open && contentSpare(screen) >= 120) screen.classList.add('vast');
   } else if (decideTight) {
     app.classList.remove('tight');
   }
@@ -175,7 +182,7 @@ const lastTab = store.load('tab', null);
 switchTo(calcs.some((c) => c.id === lastTab) ? lastTab : 'fairline');
 placeDock(true);
 if (!store.load('hinted2', false)) {
-  setTimeout(() => { toast('Tap a result to copy it', 2600, 'tip'); store.save('hinted2', true); }, 1200);
+  setTimeout(() => { toast('Tap a result to copy', 2600, 'tip'); store.save('hinted2', true); }, 1200);
 }
 window.addEventListener('scroll', () => window.scrollTo(0, 0));
 

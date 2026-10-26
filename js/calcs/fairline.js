@@ -21,7 +21,7 @@ export function create(ctx) {
   const fA = field({ type: 'odds', label: 'Side A', value: state.a, ctx, keypad: ctx.keypad, onChange: (v) => { state.a = v; render(); persist(); } });
   const fB = field({ type: 'odds', label: 'Side B', value: state.b, ctx, keypad: ctx.keypad, onChange: (v) => { state.b = v; render(); persist(); } });
   // A two-way line usually has a plus side: when B is started from empty and A is minus, default B to plus.
-  fB.el.addEventListener('click', () => { if ((fB.text() === '' || fB.isGhost()) && !fA.isGhost() && state.a.sign === '-' && fB.sign === '-') { fB.setSign('+'); state.b = fB.get(); render(); } });
+  ctx.keypad.onActive((f) => { if (f === fB && (fB.text() === '' || fB.isGhost()) && !fA.isGhost() && state.a.sign === '-' && fB.sign === '-') { fB.setSign('+'); state.b = fB.get(); render(); ctx.keypad.refresh(); } });
 
   const ex = examplePill();
   const answer = h('div', { class: 'answer' },

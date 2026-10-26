@@ -83,7 +83,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
 
   let pendingUnits = false;
   const api = {
-    el, root: el, type, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix, chips, noAdvance,
+    el, root: el, type, prefix, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix, chips, noAdvance,
     get mode() { return state.mode; },
     text: () => state.v,
     isGhost: () => state.ghost,
@@ -103,7 +103,8 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       // Units first: a stake you tap is offered in units, so typing 2 means 2u (the $ key switches back for one entry).
       if (on && type === 'money' && state.mode === '$' && ctx?.leadUnits?.() && ctx.unitSize() > 0) {
         const n = parseNum(state.v);
-        if (Number.isFinite(n)) { state.v = trimNum(n / ctx.unitSize(), 2); state.mode = 'u'; paint(); onChange(get()); keypad.refresh(); }
+        if (Number.isFinite(n)) state.v = trimNum(n / ctx.unitSize(), 2);
+        state.mode = 'u'; paint(); onChange(get()); keypad.refresh();
       }
     },
     setFresh(on) { el.classList.toggle('is-fresh', !!on && state.v !== ''); },

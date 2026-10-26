@@ -130,8 +130,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .say strong { color: var(--text); font-weight: 600; }
 .answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap, .answer.is-stale .pill:not(.pill-example) { opacity: 0.55; }
 :root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.65; }
-.answer.is-stale .res-hero { opacity: 0.65; }
-.answer.is-stale .res-hero .res-value, .answer.is-stale .res-hero .res-sub { opacity: 0.45; }
+.answer.is-stale .res-hero { opacity: 1; }
+.answer.is-stale .res-hero .res-value, .answer.is-stale .res-hero .res-sub { opacity: 0.5; }
+.answer.is-stale .say { display: none; }
 .answer.is-stale .res-hero .res-label { color: var(--text); }
 .answer.is-example .res-hero .res-value { opacity: 0.9; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
@@ -207,6 +208,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld-label-text { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .fld-tag { flex: none; color: var(--text-3); font-weight: 500; }
 .legs-list.two-col .fld-tag { display: none; }
+.legs-list.two-col .fld-compact .fld-value, .legs-list.two-col .fld-compact .fld-sign { font-size: 21px; }
 .fld-row { display: inline-flex; align-items: baseline; gap: 1px; max-width: 100%; font-variant-numeric: proportional-nums; }
 .fld-value, .fld-sign { font-family: var(--font-num); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap; }
 .fld.is-long .fld-value, .fld.is-long .fld-sign { font-size: 22px; }
@@ -214,7 +216,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld-affix { font-size: 18px; font-weight: 600; color: var(--text-3); align-self: baseline; }
 .fld-suffix { padding-left: 0; }
 .fld-caret { width: 0; height: 26px; margin-left: 0; border-radius: 1px; background: var(--gold); opacity: 0; align-self: center; }
-.fld.is-active .fld-caret { width: 2px; margin-left: 3px; opacity: 1; animation: blink 1.1s steps(2, start) infinite; }
+.fld.is-active .fld-caret { width: 2px; margin-left: 1px; opacity: 1; animation: blink 1.1s steps(2, start) infinite; }
 @keyframes blink { to { visibility: hidden; } }
 .fld.is-empty .fld-value, .fld.is-empty .fld-sign { color: var(--text-4); }
 .fld.is-empty .fld-value { opacity: .85; }
@@ -240,7 +242,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .btn-row { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: var(--r); width: 100%; background: var(--s1); color: var(--text); font-weight: 600; font-size: 15px; box-shadow: var(--slot-shadow); }
 .btn-row:active { background: var(--s2); }
 .btn-primary { min-height: 50px; border-radius: var(--r); background: var(--gold); color: var(--gold-ink); font-weight: 700; font-size: 17px; width: 100%; }
-.btn-danger { min-height: 48px; border-radius: var(--r); background: var(--neg-soft); color: var(--neg); font-weight: 600; font-size: 15px; width: 100%; }
+.btn-danger { min-height: 48px; border-radius: var(--r); background: transparent; box-shadow: inset 0 0 0 1px var(--hair-2); color: var(--neg); font-weight: 600; font-size: 15px; width: 100%; }
 
 /* Segmented controls */
 .seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--s1); border-radius: 12px; }
@@ -296,7 +298,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* Toast: above the dock, never over the answer */
 #toast {
-  position: fixed; left: 12px; right: 96px; margin: 0 0 0 auto; width: max-content; max-width: calc(100vw - 108px); top: calc(var(--sat) + 8px); z-index: 90;
+  position: fixed; left: 104px; right: 96px; margin: 0 auto; width: max-content; max-width: calc(100vw - 200px); top: calc(var(--sat) + 8px); z-index: 90;
   display: inline-flex; align-items: center; gap: 8px;
   transform: translateY(-6px); opacity: 0; pointer-events: none;
   padding: 8px 14px 8px 11px; border-radius: 999px;
@@ -326,7 +328,6 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .btn-done { color: var(--gold-text); font-weight: 700; font-size: 17px; min-height: 44px; padding: 0 2px 0 12px; }
 .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
 .sheet-panel .keypad { flex: none; border-radius: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
-.sheet-panel .kp-key { height: 48px; }
 .sheet-panel .keypad + .sheet-body, .sheet-body:has(+ .keypad) { padding-bottom: 12px; }
 .sheet-body > * { flex-shrink: 0; }
 .sheet-body::-webkit-scrollbar { display: none; }
@@ -366,13 +367,16 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer .tiles .res-label { font-size: 11px; }
 .kb-open .say { display: none; }
 .kb-open .answer { box-shadow: 0 1px 0 var(--hair); }
-.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
+.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
+.kb-open .screen.vast .answer { margin-top: auto; position: static; padding-bottom: 18px; }
 .kb-open .screen.slack .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 .kb-open .screen.slack .res-col.res-hero .res-value { font-size: clamp(52px, 15.5vw, 68px); }
 .kb-open .screen.roomy .say { display: block; }
+.kb-open .screen.say-fits .answer:not(.whatif-on):not(.whatif-focus) .say { display: block; }
 .kb-open .screen.roomy .res-hero:not(.res-col) .res-value { font-size: clamp(64px, 20vw, 92px); }
+.kb-open .screen.roomy .res-col.res-hero .res-value { font-size: clamp(58px, 18vw, 76px); }
 /* Many legs on a tight screen: spare room brings the tiles back rather than a bigger hero */
 .tight.kb-open .screen.many-legs.slack .res-hero .res-value { font-size: clamp(40px, 12vw, 52px); }
 .kb-open .screen.slack .answer .tiles .res-value { font-size: 20px; }
@@ -383,11 +387,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .tight.kb-open .tiles-whatif:not(.tiles-keep) { display: none; }
 .tight.kb-open .answer.whatif-focus .tiles:not(.tiles-whatif) { display: none; }
 .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; }
-/* The room kept for the what-if tiles carries the sentence until they are needed */
-.kb-open .screen.slack .answer:not(.whatif-on):not(.whatif-focus) .pane-say { display: block; }
 .fld:focus-visible, .res:focus-visible { outline: none; }
 /* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */
-.tight.kb-open .screen.many-legs:not(.slack) .tiles { display: none; }
+.tight.kb-open .screen.many-legs:not(.slack):not(.keep-tiles) .tiles { display: none; }
 /* Tight: little room between the header and the keypad (notched phones). Only sizes shrink; nothing folds. */
 .tight .answer { padding: 4px 20px 10px; }
 .tight .screen-head { min-height: 36px; margin-bottom: 6px; }
@@ -401,9 +403,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 @media (max-height: 740px) {
   .top { min-height: 44px; padding-top: env(safe-area-inset-top); padding-bottom: 0; }
   :root { --tab-h: 50px; }
-  .keypad { padding: 6px 12px 8px; }
+  .tabs { padding: 0 8px max(env(safe-area-inset-bottom), 0px); }
+  .keypad { padding: 4px 12px 6px; }
   .kp-chips { padding-bottom: 6px; }
-  .kp-chip { height: 40px; }
   .kp-grid { gap: 6px; }
   .answer { padding: 4px 20px 10px; }
   .screen-head { min-height: 36px; margin-bottom: 6px; }

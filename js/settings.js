@@ -22,6 +22,7 @@ export function createSettings(ctx) {
   const feeNote = h('div', { class: 'note' });
   const feeDisc = disclosure({ label: 'Fee' }, h('div', { class: 'note', text: 'Novig, Kalshi and Polymarket are betting exchanges that charge a fee per trade. Pick the one you use.' }), feeChips, customF.el, feeNote);
 
+  feeDisc.root.querySelector('.disclosure').addEventListener('click', () => kp.close());
   const themeSeg = segmented({ options: [{ id: 'dark', label: 'Dark' }, { id: 'light', label: 'Light' }, { id: 'auto', label: 'Auto' }], value: s.theme, cls: 'seg-full', label: 'Theme', onChange: (v) => ctx.update({ theme: v }) });
 
   const clearBtn = h('button', { type: 'button', class: 'btn-danger', text: 'Start fresh (clear saved numbers)' });
