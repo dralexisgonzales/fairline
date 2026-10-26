@@ -28,6 +28,7 @@
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
   --font-num: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Inter, system-ui, sans-serif;
   --tab-h: 56px;
+  --gutter: 16px;   /* one side gutter for the header, the screens, the keypad and the sheets */
   --sat: env(safe-area-inset-top);
   --r: 16px;
   --r-key: 14px;
@@ -90,10 +91,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
   max-width: 560px; margin: 0 auto; overflow: hidden;
 }
 
+/* iOS 26 home-screen app: with a translucent status bar the layout viewport comes up short by the status bar's height
+   (WebKit bug 301108), leaving a blank strip under the tab bar. Stretch the page back to the screen, capped at the real screen height. */
+@media (display-mode: standalone) { #app { height: min(100lvh, calc(100dvh + env(safe-area-inset-top))); } }
+
 /* Header */
 .top {
   flex: none; display: flex; align-items: center; justify-content: space-between;
-  padding: calc(env(safe-area-inset-top) + 6px) 8px 2px 20px; min-height: 48px;
+  padding: calc(env(safe-area-inset-top) + 6px) 6px 2px var(--gutter); min-height: 48px;
 }
 .wordmark { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 17px; letter-spacing: -0.02em; color: var(--text); }
 .wm-mark { position: relative; width: 16px; height: 12px; }
@@ -106,7 +111,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* Screens: one scroller each, answer sticky on top, slots anchored to the keypad */
 #screens { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .screen {
-  flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 20px;
+  flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 0 var(--gutter);
   overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none; -webkit-overflow-scrolling: touch; scrollbar-width: none;
 }
 .screen::-webkit-scrollbar { display: none; }
@@ -115,7 +120,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .screen:not(.fits):not(.is-end) { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); }
 #app:not(.kb-open) .screen.many-legs .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 #app:not(.kb-open) .screen.legs-5 .res-hero .res-value { font-size: clamp(52px, 14vw, 64px); }
-.answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 -20px; padding: 8px 20px 12px; background: var(--bg); display: flex; flex-direction: column; }
+.answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 calc(-1 * var(--gutter)); padding: 8px var(--gutter) 12px; background: var(--bg); display: flex; flex-direction: column; }
 #app:not(.kb-open) .answer { flex: 1 1 auto; justify-content: center; position: static; }
 #app:not(.kb-open) .res-hero .res-value { font-size: clamp(72px, min(26vw, 12dvh), 112px); }
 .screen.fits .answer { margin-top: auto; }
@@ -283,8 +288,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* Dock: keypad + tabs */
 .dock { flex: none; display: flex; flex-direction: column; position: relative; z-index: 3; }
-.keypad { padding: 8px 12px 10px; background: var(--kp-bg); border-top: 1px solid var(--hair); }
-.kp-chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 24px 8px 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
+.keypad { padding: 8px var(--gutter) 10px; background: var(--kp-bg); border-top: 1px solid var(--hair); }
+.kp-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter) 8px; scroll-padding: 0 var(--gutter); scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), rgba(0,0,0,.25)); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), rgba(0,0,0,.25)); }
+.kp-chip { scroll-snap-align: start; }
 .kp-chips::-webkit-scrollbar { display: none; }
 .kp-chip { flex: none; height: 44px; padding: 0 14px; border-radius: 999px; background: var(--key); color: var(--text); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--hair); }
 .kp-chip:active { background: var(--s3); }
@@ -345,10 +351,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .sheet.is-open .sheet-backdrop { opacity: 1; }
 .sheet.is-open .sheet-panel { transform: none; }
 .sheet-grab { width: 36px; height: 5px; border-radius: 3px; background: var(--hair-2); margin: 8px auto 0; }
-.sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 4px; touch-action: none; box-shadow: 0 1px 0 var(--hair); position: relative; z-index: 1; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px var(--gutter) 4px; touch-action: none; box-shadow: 0 1px 0 var(--hair); position: relative; z-index: 1; }
 .sheet-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 .btn-done { color: var(--gold-text); font-weight: 700; font-size: 17px; min-height: 44px; padding: 0 2px 0 12px; }
-.sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
+.sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px var(--gutter) calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
 .sheet-panel .keypad { flex: none; border-radius: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
 .sheet-panel .keypad:not([hidden]) + .sheet-body, .sheet-body:has(+ .keypad:not([hidden])) { padding-bottom: 12px; }
 .sheet-body { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), rgba(0,0,0,.35) calc(100% - 6px), transparent); }
@@ -429,7 +435,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */
 .tight.kb-open .screen[data-screen="parlay"]:not(.slack):not(.keep-tiles):not(.stake-active) .tiles { display: none; }
 /* Tight: little room between the header and the keypad (notched phones). Only sizes shrink; nothing folds. */
-.tight .answer { padding: 4px 20px 10px; }
+.tight .answer { padding: 4px var(--gutter) 10px; }
 .tight .screen-head { min-height: 36px; margin-bottom: 6px; }
 .tight .res-hero .res-value { font-size: clamp(40px, 12vw, 52px); }
 .tight .res-col.res-hero .res-value { font-size: clamp(36px, 10.5vw, 46px); }
@@ -445,10 +451,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
   #toast:not(.is-wide) { top: calc(var(--sat) + 5px); }
   :root { --tab-h: 50px; }
   .tabs { padding: 0 8px max(env(safe-area-inset-bottom), 0px); }
-  .keypad { padding: 4px 12px 6px; }
+  .keypad { padding: 4px var(--gutter) 6px; }
   .kp-chips { padding-bottom: 6px; }
   .kp-grid { gap: 6px; }
-  .answer { padding: 4px 20px 10px; }
+  .answer { padding: 4px var(--gutter) 10px; }
   .screen-head { min-height: 36px; margin-bottom: 6px; }
   .res-hero { min-height: 0; }
   .res-hero .res-value { font-size: clamp(40px, 12vw, 46px); }
