@@ -33,7 +33,7 @@ export function create(ctx) {
   kp.onActive(() => { if (state.mode === 'A' && !root.hidden) renderA(); });
   const exA = examplePill();
   const tilesA = h('div', { class: 'tiles' }, aLocked.root, aBreak.root);
-  const tilesManual = h('div', { class: 'tiles', hidden: true }, aWinO.root, aWinH.root);
+  const tilesManual = h('div', { class: 'tiles tiles-keep', hidden: true }, aWinO.root, aWinH.root);
 
   const paneA = h('div', { class: 'pane-a' },
     h('div', { class: 'answer' },
@@ -98,7 +98,7 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'A full hedge at ' + fmtOdds(hAm) + ' would be');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To hedge fully at ' + fmtOdds(hAm) + ' you would bet');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const unhedged = 'Without it: ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' if your bet wins, ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + ' if it loses.';
@@ -117,9 +117,14 @@ export function create(ctx) {
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {
       const o = hedgeOutcomes(stake, orig, amount, hAm);
-      aWinO.setLabel('Hedge ' + fmtMoney(amount) + ' \u00B7 your bet wins'); aWinH.setLabel('Hedge ' + fmtMoney(amount) + ' \u00B7 other side wins');
+      aWinO.setLabel('If your bet wins'); aWinH.setLabel('If the other side wins');
       setMoney(aWinO, o.ifOriginalWins, unit, { signed: true, leadUnits: lead });
       setMoney(aWinH, o.ifHedgeWins, unit, { signed: true, leadUnits: lead });
+      if (manualFocused) {
+        aHero.setLabel('If you hedge this much at ' + fmtOdds(hAm) + ' instead');
+        setMoney(aHero, amount, unit, { tone: 'muted', leadUnits: lead });
+        aSay.set('Your bet wins: ' + fmtMoney(o.ifOriginalWins, { signed: true }) + '. Other side wins: ' + fmtMoney(o.ifHedgeWins, { signed: true }) + '. The full hedge is ' + fmtMoney(r.equalStake) + '.');
+      }
     } else { aWinO.setLabel('If your bet wins'); aWinH.setLabel('If the other side wins'); aWinO.set('—', null, 'enter an amount'); aWinH.set('—', null, 'enter an amount'); }
   }
 

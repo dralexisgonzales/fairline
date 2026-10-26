@@ -25,8 +25,9 @@ export function create(ctx) {
   const ex = examplePill();
 
   const stakeF = field({ type: 'money', label: 'Stake', value: state.stake, ctx, keypad: ctx.keypad, onChange: (v) => { state.stake = v; render(); persist(); } });
-  const offeredF = field({ type: 'odds', label: 'Book’s odds (optional)', value: state.offered, placeholder: '600', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
+  const offeredF = field({ type: 'odds', label: 'Book’s odds', value: state.offered, placeholder: '600', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
   offeredF.autoAdvance = false;
+  offeredF.setSub('optional');
 
   const legsEl = h('div', { class: 'legs-list' });
   const legFields = [];
@@ -93,9 +94,9 @@ export function create(ctx) {
       return;
     }
     hero.setLabel('Parlay odds from these legs');
-    const bookSub = r.offered ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.edge) < 0.0005 ? 'the same' : fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more'))) : '';
+    const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : fmtMoney(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more'))) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') : '');
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
-    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'if every leg is independent');
+    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'all of them, together');
     if (Number.isFinite(stake)) {
       setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: ctx.leadUnits() });
       say.set('Every leg must win. Then ' + fmtMoney(stake) + ' wins ' + fmtMoney(r.fairProfit) + '.');
@@ -105,9 +106,11 @@ export function create(ctx) {
     }
     if (r.offered && Number.isFinite(stake)) {
       const e = r.offered.edge;
-      bookSay.set('At the book’s ' + fmtOdds(offeredAm) + ' you would win ' + fmtMoney(r.offered.profit) + ', ' + (Math.abs(e) < 0.0005 ? 'exactly what the legs imply.' : (fmtPctSigned(Math.abs(e), 1).replace(/^[+−]/, '') + (e < 0 ? ' worse' : ' better') + ' than the legs imply (' + fmtMoney(r.offered.payoutGap, { signed: true }) + ').')));
+      const gap = r.offered.payoutGap;
+      const pct = fmtPctSigned(Math.abs(e), 1).replace(/^[+−]/, '');
+      bookSay.set('The book’s ' + fmtOdds(offeredAm) + ' would pay ' + fmtMoney(r.offered.profit) + '. These legs add up to ' + fmtOdds(r.american) + ', which would pay ' + fmtMoney(r.fairProfit) + ', so the book pays ' + (Math.abs(gap) < 0.005 ? 'exactly that.' : fmtMoney(Math.abs(gap)) + (gap < 0 ? ' less' : ' more') + ' (' + pct + (gap < 0 ? ' worse' : ' better') + ' value).'));
     } else if (r.offered) {
-      bookSay.set('The book’s ' + fmtOdds(offeredAm) + ' is ' + fmtPctSigned(r.offered.edge, 1) + ' versus what the legs imply.');
+      bookSay.set('The book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(r.offered.edge, 1) + ' versus what these legs add up to. Add a stake to see dollars.');
     } else {
       bookSay.set('');
     }

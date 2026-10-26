@@ -62,7 +62,7 @@ dock.insertBefore(keypad.root, tabs);
 function placeDock() {
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   // Tight: the room left for the answer and slots is small (notched phones, short browsers).
-  app.classList.toggle('tight', main.clientHeight < 470);
+  app.classList.toggle('tight', main.clientHeight < 400);
 }
 keypad.onOpenChange((open) => { app.classList.toggle('kb-open', open); setTimeout(() => { placeDock(); keypad.active()?.reveal?.(); }, 0); });
 window.addEventListener('resize', placeDock);
@@ -138,7 +138,7 @@ const lastTab = store.load('tab', null);
 switchTo(calcs.some((c) => c.id === lastTab) ? lastTab : 'fairline');
 placeDock();
 if (!store.load('hinted2', false)) {
-  setTimeout(() => { toast('Tap any result to copy it', 2600); store.save('hinted2', true); }, 1200);
+  setTimeout(() => { toast('Tap a result to copy it', 2600); store.save('hinted2', true); }, 1200);
 }
 window.addEventListener('scroll', () => window.scrollTo(0, 0));
 

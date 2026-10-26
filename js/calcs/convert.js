@@ -6,6 +6,7 @@ import * as store from '../store.js';
 
 export const ICON = '<path d="M7 4v16"/><path d="M3 8l4-4 4 4"/><path d="M17 20V4"/><path d="M13 16l4 4 4-4"/>';
 const trim = (n, d) => Number.isFinite(n) ? String(Number(n.toFixed(d))) : '';
+const tidy = (t) => t.replace(/\.0(?=[%\u00A2])/, '');
 
 export function create(ctx) {
   const id = 'convert';
@@ -47,7 +48,7 @@ export function create(ctx) {
       p = toImplied(am);
       probF.set({ v: trim(p * 100, p < 0.01 || p > 0.995 ? 2 : 1), ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
-      probF.setSub(Number.isFinite(p) ? 'worked out from the odds' : '');
+      probF.setSub(Number.isFinite(p) ? 'from the odds box' : '');
     } else {
       const pv = parseNum(state.prob.v);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
@@ -55,7 +56,7 @@ export function create(ctx) {
       const txt = Number.isFinite(am) ? fmtOdds(am, { ascii: true }) : '';
       oddsF.set(txt ? { sign: txt.startsWith('-') ? '-' : '+', v: txt.slice(1), ghost: false } : { sign: '-', v: '', ghost: false });
       oddsF.el.classList.add('is-computed'); probF.el.classList.remove('is-computed');
-      oddsF.setSub(Number.isFinite(am) ? 'worked out from the chance' : '');
+      oddsF.setSub(Number.isFinite(am) ? (cents ? 'from the price box' : 'from the chance box') : '');
       const bad = Number.isFinite(pv) && pv >= 100;
       probF.setSub(Number.isFinite(pv) && !(pv > 0 && pv < 100) ? 'Use a number above 0 and below 100' : '', bad ? 'is-error' : '');
     }
@@ -73,21 +74,21 @@ export function create(ctx) {
     const rate = ctx.feeRate();
     const label = ctx.feePreset().label;
     if (state.src === 'odds') {
-      hero.setLabel(cents ? 'Price this implies' : 'Chance to win this implies');
+      hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am));
       hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), '');
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even. In decimal odds that is ' + fmtDecimal(dec) + '.';
-      if (cents) t = fmtOdds(am) + ' is the same as paying ' + fmtProb(p, 'cents') + ' for a contract that pays $1 if it wins. ' + feeLine(p, rate, label);
+      if (cents) t = 'On a prediction market, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: you pay that to win $1. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
-      hero.setLabel('Odds for a ' + fmtProb(p, cents ? 'cents' : 'pct').replace(/\.0(?=[%\u00A2])/, '') + (cents ? ' price' : ' chance'));
+      hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance'));
       hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), '');
       let t = 'A bet that wins ' + fmtProb(p, 'pct') + ' of the time is fairly priced at these odds. In decimal odds that is ' + fmtDecimal(dec) + '.';
-      if (cents) t = 'Paying ' + fmtProb(p, 'cents') + ' for a contract that pays $1 if it wins is a ' + fmtProb(p, 'pct') + ' chance, the same as these odds. ' + feeLine(p, rate, label);
+      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: you pay ' + tidy(fmtProb(p, 'cents')) + ' to win $1. That is the same as these odds. ' + feeLine(p, rate, label);
       say.set(t);
     }
   }
   function feeLine(p, rate, label) {
-    if (!(rate > 0)) return label + ' charges no fee here, so what you see is what you pay.';
+    if (!(rate > 0)) return label === 'Novig pregame' ? 'Novig charges no fee before the game starts, so that is what you pay.' : (label === 'None' ? '' : label + ' charges no fee here, so that is what you pay.');
     const eff = effectivePrice(p, rate);
     return label + ' adds a ' + fmtCentsExact(eff.fee) + ' fee, so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
   }

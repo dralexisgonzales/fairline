@@ -125,7 +125,7 @@ export function createKeypad({ haptic } = {}) {
       signMinus.classList.toggle('is-on', active.sign === '-'); signPlus.classList.toggle('is-on', active.sign === '+');
       modeKey.replaceChildren(signMinus, signPlus); modeKey.classList.add('kp-sign'); modeKey.disabled = false; modeKey.setAttribute('aria-label', 'Minus or plus');
     }
-    else if (type === 'money') { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren(active.mode === 'u' ? 'in $' : 'in u'); modeKey.disabled = false; modeKey.setAttribute('aria-label', active.mode === 'u' ? 'Enter in dollars' : 'Enter in units'); }
+    else if (type === 'money') { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren(active.mode === 'u' ? '$' : 'units'); modeKey.disabled = false; modeKey.setAttribute('aria-label', active.mode === 'u' ? 'Enter in dollars' : 'Enter in units'); }
     else { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren('\u00A0'); modeKey.disabled = true; modeKey.removeAttribute('aria-label'); }
     dotKey.disabled = type === 'odds';
     dblKey.disabled = type === 'odds';

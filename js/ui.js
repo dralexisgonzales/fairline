@@ -356,5 +356,5 @@ export function sheet({ title, body, onOpen, onClose }) {
 export function examplePill() {
   const el = h('span', { class: 'pill pill-example', text: 'Example', hidden: true });
   // all: every value is an example; some: a mix of typed and example values
-  return { el, set: (on, all = true) => { el.hidden = !on; el.textContent = all ? 'Example' : 'Uses example values'; } };
+  return { el, set: (on, all = true) => { el.hidden = !on; el.textContent = all ? 'Example' : 'Part example'; } };
 }

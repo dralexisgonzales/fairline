@@ -64,7 +64,7 @@ export function createSettings(ctx) {
       render();
       ctx.takeKeypad(sh.panel);
       kp.setFields(fieldsList());
-      setTimeout(() => kp.focus(focusOnOpen === 'unit' ? unitF : unitF, focusOnOpen === 'unit'), 280);
+      if (focusOnOpen === 'unit') setTimeout(() => kp.focus(unitF, true), 280); else kp.close();
     },
     onClose: () => { ctx.afterSettingsClose?.(); },
   });

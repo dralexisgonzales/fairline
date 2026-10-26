@@ -49,8 +49,8 @@ export function create(ctx) {
     }
     answer.classList.remove('is-stale'); hadValid = true;
     const r = noVig(a, b);
-    oddsA.set(fmtOdds(r.fairOddsA), fmtOdds(r.fairOddsA, { ascii: true }), fmtProb(r.fairA, 'pct') + ' chance');
-    oddsB.set(fmtOdds(r.fairOddsB), fmtOdds(r.fairOddsB, { ascii: true }), fmtProb(r.fairB, 'pct') + ' chance');
+    oddsA.set(fmtOdds(r.fairOddsA), fmtOdds(r.fairOddsA, { ascii: true }), 'fair \u00B7 ' + fmtProb(r.fairA, 'pct') + ' chance');
+    oddsB.set(fmtOdds(r.fairOddsB), fmtOdds(r.fairOddsB, { ascii: true }), 'fair \u00B7 ' + fmtProb(r.fairB, 'pct') + ' chance');
     if (r.hold < -1e-9) {
       cut.setLabel('No cut'); cut.set(fmtPctSigned(-r.hold, 2), fmtPctSigned(-r.hold, 2), '', 'pos');
       say.set('No cut here: the two chances add up to under 100%, so betting both sides locks in ' + fmtPctSigned(-r.hold, 2) + '. See Hedge, Both sides.');
