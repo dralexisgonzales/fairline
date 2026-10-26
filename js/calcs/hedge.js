@@ -22,6 +22,7 @@ export function create(ctx) {
   // ----- A: hedge an open bet -----
   const aHero = result({ label: 'Bet on the other side', hero: true, mini: 'Bet' });
   const aSay = sentence();
+  aSay.el.classList.add('pane-say');
   const aLocked = result({ label: 'Locked result' });
   const aBreak = result({ label: 'Bet to lose nothing' });
   const aHedge = field({ type: 'odds', label: 'Other side’s odds', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
@@ -91,6 +92,7 @@ export function create(ctx) {
     tilesManual.hidden = !(manualFocused || manualHas);
     tilesManual.classList.toggle('tiles-keep', manualFocused);
     answer.classList.toggle('whatif-focus', manualFocused);
+    answer.classList.toggle('whatif-on', !tilesManual.hidden);
     if (!Number.isFinite(stake) || !Number.isFinite(orig) || !Number.isFinite(hAm) || !(stake > 0)) {
       if (hadA) { answer.classList.add('is-stale'); aHero.setLabel('Waiting for a number'); return; }
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');
@@ -105,7 +107,7 @@ export function create(ctx) {
     aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover your bet fully at ' + fmtOdds(hAm) + ' you would bet');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
-    const unhedged = 'Without the hedge: ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' if your bet wins, ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + ' if it loses.';
+    const unhedged = 'Without it you would be at ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' or ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + '.';
     if (profit) aSay.set('Bet that much and you come out ahead whichever side wins. ' + unhedged);
     else if (even) aSay.set('Bet that much and you get out flat, $0 either way. ' + unhedged);
     else aSay.set('The other side’s odds are too low to lock a profit: covering fully costs you either way. ' + unhedged);
@@ -164,7 +166,7 @@ export function create(ctx) {
     }
     if (r.exists) {
       bSay.set(total > 0
-        ? 'Both bets together return ' + fmtMoney(r.returnTotal) + ' whichever side wins, a ' + fmtPctSigned(r.roi, 2).replace(/^\+/, '') + ' profit. Odds can change, so bet quickly.'
+        ? 'Together they return ' + fmtMoney(r.returnTotal) + ' whichever side wins, a ' + fmtPctSigned(r.roi, 2).replace(/^\+/, '') + ' profit. Place both quickly.'
         : 'Split your money as shown and you get back ' + fmtPctSigned(r.roi, 2) + ' whichever side wins. Add a total to see dollars.');
     } else if (Math.abs(r.roi) < 0.00005) {
       bSay.set('Betting both sides here gets exactly your money back, nothing more.');

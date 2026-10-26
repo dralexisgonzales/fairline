@@ -94,9 +94,9 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       state.ghost = false;
       paint(); onChange(get());
     },
-    toggleMode() {
+    toggleMode(convert = false) {
       if (type === 'odds') { state.sign = state.sign === '-' ? '+' : '-'; state.ghost = false; paint(); onChange(get()); keypad.refresh(); }
-      else if (type === 'money') setMode(state.mode === '$' ? 'u' : '$');
+      else if (type === 'money') setMode(state.mode === '$' ? 'u' : '$', convert);
     },
     setActive(on) {
       el.classList.toggle('is-active', on); if (!on) el.classList.remove('is-fresh');
@@ -115,8 +115,11 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const ans = [...screen.querySelectorAll('.answer')].find((a) => a.offsetParent !== null);
         const topEdge = ans ? ans.getBoundingClientRect().bottom : screen.getBoundingClientRect().top;
         const r = el.getBoundingClientRect(), sr = screen.getBoundingClientRect();
-        if (r.top < topEdge + 24) screen.scrollBy({ top: r.top - topEdge - 24, behavior: 'auto' });
-        else if (r.bottom > sr.bottom - 6) screen.scrollBy({ top: r.bottom - sr.bottom + 6, behavior: 'auto' });
+        const m = document.getElementById('app')?.classList.contains('tight') ? 8 : 18;
+        if (r.top < topEdge + m) screen.scrollBy({ top: r.top - topEdge - m, behavior: 'auto' });
+        // The bottom edge wins: the value being typed must never sit under the keypad.
+        const r2 = el.getBoundingClientRect();
+        if (r2.bottom > sr.bottom - 6) screen.scrollBy({ top: r2.bottom - sr.bottom + 6, behavior: 'auto' });
       }, 40);
     },
     get, set, setLabel, paint, setSuffix, setSub,
@@ -157,11 +160,12 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
   function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && type === 'odds'; }
 
-  function setMode(mode) {
+  function setMode(mode, convert = false) {
     if (state.mode === mode) return;
     const unit = ctx.unitSize();
     if (mode === 'u' && !(unit > 0)) { pendingUnits = true; toast('Set a unit size first', 2200); ctx.openSettings('unit'); return; }
-    // The typed number keeps its digits; only what they mean changes (2 then u is 2u). The other reading shows underneath.
+    // Digits typed just now keep their digits (2 then u is 2u). An amount that was already there keeps its money ($50 becomes 2u).
+    if (convert && unit > 0) { const n = parseNum(state.v); if (Number.isFinite(n)) state.v = trimNum(mode === 'u' ? n / unit : n * unit, 2); }
     state.mode = mode;
     paint(); onChange(get()); keypad.refresh();
   }
@@ -248,6 +252,8 @@ export function segmented({ options, value, onChange, cls = '', label = '' }) {
 }
 
 // ---------- Result: tap to copy ----------
+const FITTERS = new Set();
+export function refitResults() { FITTERS.forEach((f) => f()); }
 export function result({ label, hero = false, cls = '', mini = '' }) {
   const labelEl = h('span', { class: 'res-label', text: label });
   const valueEl = h('span', { class: 'res-value', text: '—' });
@@ -290,10 +296,12 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
     if (hero && valueEl.textContent !== display && display !== '—') { valueEl.classList.remove('tick'); void valueEl.offsetWidth; valueEl.classList.add('tick'); }
     valueEl.textContent = display;
     fitHero();
-    root.classList.toggle('is-long', display.length >= 10);
-    root.classList.toggle('is-xlong', display.length >= 13);
-    root.classList.toggle('is-xxlong', display.length >= 15);
-    root.classList.toggle('is-xxxlong', display.length >= 18);
+    if (!hero) {
+      root.classList.toggle('is-long', display.length >= 10);
+      root.classList.toggle('is-xlong', display.length >= 13);
+      root.classList.toggle('is-xxlong', display.length >= 15);
+      root.classList.toggle('is-xxxlong', display.length >= 18);
+    }
     copy = display === '—' ? null : toAscii(copyValue);
     subEl.textContent = sub || '';
     subEl.hidden = !sub;
@@ -304,6 +312,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
   }
   function setLabel(t) { currentLabel = t; labelEl.textContent = t; root.setAttribute('aria-label', t + ', tap to copy'); }
   set('—');
+  FITTERS.add(fitHero);
   return { root, set, setLabel, setMini: (t) => { root.dataset.mini = t; }, hide: (on) => { root.hidden = !!on; } };
 }
 
@@ -357,10 +366,10 @@ export async function copyText(text) {
 }
 
 let toastTimer = null;
-export function toast(msg, ms = 1300) {
+export function toast(msg, ms = 1300, icon = 'check') {
   let el = document.getElementById('toast');
   if (!el) { el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.append(el); }
-  el.replaceChildren(svg('<path d="M5 12l5 5L20 7"/>', 16), h('span', { text: msg }));
+  el.replaceChildren(svg(icon === 'tip' ? '<circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/>' : '<path d="M5 12l5 5L20 7"/>', 16), h('span', { text: msg }));
   el.classList.add('is-on');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('is-on'), ms);

@@ -60,7 +60,7 @@ export function create(ctx) {
       const bad = Number.isFinite(pv) && pv >= 100;
       probF.setSub(Number.isFinite(pv) && !(pv > 0 && pv < 100) ? 'Use a number above 0 and below 100' : '', bad ? 'is-error' : '');
     }
-    if (state.src === 'odds') oddsF.setSub(''); else if (!Number.isFinite(parseNum(state.prob.v)) || (parseNum(state.prob.v) > 0 && parseNum(state.prob.v) < 100)) probF.setSub('');
+    if (state.src === 'odds') { if (!oddsF.el.classList.contains('is-invalid')) oddsF.setSub(''); } else if (!Number.isFinite(parseNum(state.prob.v)) || (parseNum(state.prob.v) > 0 && parseNum(state.prob.v) < 100)) probF.setSub('');
 
     if (!Number.isFinite(p)) {
       if (hadValid) {
@@ -81,13 +81,13 @@ export function create(ctx) {
       hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am));
       hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) : (cents ? '' : 'decimal odds ' + fmtDecimal(dec)));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
-      if (cents) t = 'On a betting exchange, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
+      if (cents) t = 'On sites that price bets in cents (Novig, Kalshi, Polymarket), ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
       hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance'));
       hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) + ', like ' + fmtOdds(probToAmerican(effectivePrice(p, rate).price)) : 'decimal odds ' + fmtDecimal(dec));
       let t = 'If something wins ' + tidy(fmtProb(p, 'pct')) + ' of the time, these odds are exactly break-even on it.';
-      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. Same thing as these odds. ' + feeLine(p, rate, label);
+      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. These odds say the same. ' + feeLine(p, rate, label);
       say.set(t);
     }
   }

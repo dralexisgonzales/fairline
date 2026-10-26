@@ -1,7 +1,7 @@
 // Fairline v2 bootstrap: keypad-driven shell, tabs, sheets, theme, service worker.
 import * as store from './store.js';
 import { FEE_PRESETS } from './math.js';
-import { h, svg, toast, sheet } from './ui.js';
+import { h, svg, toast, sheet, refitResults } from './ui.js';
 import { createKeypad } from './keypad.js';
 import { createSettings } from './settings.js';
 import * as convert from './calcs/convert.js';
@@ -44,6 +44,7 @@ const ctx = {
   settingsOpen: () => settingsSheet.isOpen(),
   afterSettingsClose: () => { dock.insertBefore(keypad.root, tabs); keypad.close(); renderAll(); },
   takeKeypad: (panel) => { panel.append(keypad.root); },
+  relayout: () => placeDock(true),
   update(patch) {
     Object.assign(settings, patch);
     store.saveSettings(settings);
@@ -88,6 +89,7 @@ function placeDock(decideTight = false) {
     app.classList.remove('tight');
   }
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
+  if (decideTight) refitResults();
   if (screen) screen.classList.toggle('fits', contentSpare(screen) >= -1);
 }
 keypad.onOpenChange((open) => {
@@ -173,7 +175,7 @@ const lastTab = store.load('tab', null);
 switchTo(calcs.some((c) => c.id === lastTab) ? lastTab : 'fairline');
 placeDock(true);
 if (!store.load('hinted2', false)) {
-  setTimeout(() => { toast('Tap a result to copy', 2600); store.save('hinted2', true); }, 1200);
+  setTimeout(() => { toast('Tap a result to copy it', 2600, 'tip'); store.save('hinted2', true); }, 1200);
 }
 window.addEventListener('scroll', () => window.scrollTo(0, 0));
 

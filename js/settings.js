@@ -1,5 +1,5 @@
 // Settings sheet: stakes, appearance, prediction-market fee, data.
-import { h, field, segmented, sheet, parseNum } from './ui.js';
+import { h, field, segmented, sheet, parseNum, disclosure } from './ui.js';
 import { FEE_PRESETS } from './math.js';
 import { fmtMoney, fmtProb } from './format.js';
 import * as store from './store.js';
@@ -20,6 +20,7 @@ export function createSettings(ctx) {
   const customF = field({ type: 'percent', label: 'Custom rate', suffix: '%', placeholder: '5', value: s.feeCustom != null ? String(Number((s.feeCustom * 100).toFixed(3))) : '', maxLen: 6, ctx, keypad: kp, chips: ['3', '4', '5', '6', '7', '10'],
     onChange: (v) => { const n = parseNum(v.v); const c = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0; if (Number.isFinite(n) && c !== n) customF.set(String(c)); ctx.update({ feeCustom: c / 100 }); } });
   const feeNote = h('div', { class: 'note' });
+  const feeDisc = disclosure({ label: 'Fee' }, h('div', { class: 'note', text: 'Novig, Kalshi and Polymarket are betting exchanges that charge a fee per trade. Pick the one you use.' }), feeChips, customF.el, feeNote);
 
   const themeSeg = segmented({ options: [{ id: 'dark', label: 'Dark' }, { id: 'light', label: 'Light' }, { id: 'auto', label: 'Auto' }], value: s.theme, cls: 'seg-full', label: 'Theme', onChange: (v) => ctx.update({ theme: v }) });
 
@@ -44,10 +45,8 @@ export function createSettings(ctx) {
     ),
     h('div', { class: 'section' },
       h('div', { class: 'section-title', text: 'Prediction market fee' }),
-      h('div', { class: 'note', text: 'Novig, Kalshi and Polymarket are betting exchanges that charge a fee per trade. Pick the one you use. Only used in Convert, in cents mode.' }),
-      feeChips,
-      customF.el,
-      feeNote
+      h('div', { class: 'note', text: 'Only used in Convert, in cents mode.' }),
+      feeDisc.root
     ),
     h('div', { class: 'section' },
       h('div', { class: 'section-title', text: 'Your data' }),
@@ -84,6 +83,7 @@ export function createSettings(ctx) {
     customF.el.hidden = st.feePreset !== 'custom';
     const p = ctx.feePreset();
     feeNote.textContent = p.note || '';
+    feeDisc.root.querySelector('.disclosure span').textContent = p.label + (p.rate > 0 ? ' \u00B7 ' + (Math.round(p.rate * 1000) / 10) + '%' : p.id === 'custom' ? ' \u00B7 ' + (Math.round((st.feeCustom || 0) * 1000) / 10) + '%' : ' \u00B7 no fee');
     themeSeg.set(st.theme);
     if (st.unit > 0 && st.bankroll > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + ', which is ' + fmtProb(st.unit / st.bankroll, 'pct', 1) + ' of your bankroll.';
     else if (st.unit > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + '. Add a bankroll to see what share of it a unit is.';

@@ -93,7 +93,8 @@ export function create(ctx) {
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
     legsEl.classList.toggle('two-col', legFields.length >= 4);
-    root.classList.toggle('many-legs', legFields.length >= 4);
+    const many = legFields.length >= 4;
+    if (root.classList.contains('many-legs') !== many) { root.classList.toggle('many-legs', many); if (!root.hidden) setTimeout(() => ctx.relayout?.(), 0); }
     ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost());
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
@@ -107,15 +108,15 @@ export function create(ctx) {
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');
     if (Number.isFinite(stake) && r.offered) {
-      payRes.setLabel('Profit if every leg wins');
+      payRes.setLabel('Profit if all legs win');
       setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake) + ' at the book’s ' + fmtOdds(offeredAm), leadUnits: lead });
       say.set('');
     } else if (Number.isFinite(stake)) {
-      payRes.setLabel('Profit if every leg wins');
-      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake) + ' \u00B7 gets back ' + fmtMoney(r.fairTotal), leadUnits: lead });
+      payRes.setLabel('Profit if all legs win');
+      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake), leadUnits: lead });
       say.set('Every leg must win for it to pay.');
     } else {
-      payRes.setLabel('Profit if every leg wins'); payRes.set('—', null, unit > 0 || state.stake.mode !== 'u' ? 'add a stake' : 'set a unit size');
+      payRes.setLabel('Profit if all legs win'); payRes.set('—', null, unit > 0 || state.stake.mode !== 'u' ? 'add a stake' : 'set a unit size');
       say.set('Every leg must win.');
     }
   }

@@ -13,6 +13,7 @@ const CHIPS = {
 export function createKeypad({ haptic } = {}) {
   let active = null;        // the slot being edited
   let fresh = true;         // first key replaces the old value
+  let typedSinceFocus = false;
   let fields = [];          // slots in the active screen, in order
   let onOpenChange = null;
   const activeListeners = [];
@@ -27,7 +28,7 @@ export function createKeypad({ haptic } = {}) {
     if (active.type === 'odds') {
       const r = modeKey.getBoundingClientRect();
       active.chooseSign(e.clientX < r.left + r.width / 2 ? '-' : '+');
-    } else if (active.type === 'money') active.toggleMode();
+    } else if (active.type === 'money') active.toggleMode(!typedSinceFocus);
     else clear();
   });
   const dotKey = key('.', 'kp-key', () => { if (active?.type === 'odds') clear(); else press('.'); });
@@ -76,7 +77,7 @@ export function createKeypad({ haptic } = {}) {
   function focus(field, reveal = true) {
     if (active && active !== field) { active.setActive(false); active.commit?.(); }
     active = field;
-    fresh = true;
+    fresh = true; typedSinceFocus = false;
     field.setActive(true);
     field.setFresh?.(true);
     renderContext();
@@ -155,13 +156,13 @@ export function createKeypad({ haptic } = {}) {
     if (v === '0' && ch !== '.') v = '';
     if (v.length >= (active.maxLen || 9)) return;
     active.setText(v + ch);
-    setFresh(false);
+    setFresh(false); typedSinceFocus = true;
   }
   function backspace() {
     if (!active) return;
     const v = active.text();          // a fresh slot still deletes one character, not everything
     active.setText(v.slice(0, -1));
-    setFresh(false);
+    setFresh(false); typedSinceFocus = true;
   }
   function clear() { if (!active) return; active.setText(''); setFresh(false); }
   function refresh() { if (active) renderContext(); }
