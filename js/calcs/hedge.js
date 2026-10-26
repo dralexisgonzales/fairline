@@ -24,7 +24,7 @@ export function create(ctx) {
   const aSay = sentence();
   const aLocked = result({ label: 'Locked result' });
   const aBreak = result({ label: 'Break-even bet' });
-  const aHedge = field({ type: 'odds', label: 'Other side’s odds now', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
+  const aHedge = field({ type: 'odds', label: 'Other side now', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
   const aOrig = field({ type: 'odds', label: 'Your bet’s odds', value: state.A.orig, ctx, keypad: kp, onChange: (v) => { state.A.orig = v; render(); persist(); } });
   const aStake = field({ type: 'money', label: 'Your stake', value: state.A.stake, ctx, keypad: kp, onChange: (v) => { state.A.stake = v; render(); persist(); } });
   const aManual = field({ type: 'money', label: 'Hedge amount to try', value: state.A.manual, placeholder: '0', ctx, keypad: kp, onChange: (v) => { state.A.manual = v; render(); persist(); } });
