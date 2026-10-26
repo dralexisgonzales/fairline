@@ -230,11 +230,27 @@ if (!store.load('hinted2', false)) {
 window.addEventListener('scroll', () => window.scrollTo(0, 0));
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((reg) => {
-      let had = !!navigator.serviceWorker.controller;
-      navigator.serviceWorker.addEventListener('controllerchange', () => { if (had) location.reload(); had = true; });
-      reg.update?.();
-    }).catch(() => {});
+  window.addEventListener('load', async () => {
+    const sw = navigator.serviceWorker;
+    let had = !!sw.controller;
+    // A new worker taking over reloads the page once, so the files on screen match the worker serving them.
+    sw.addEventListener('controllerchange', () => {
+      if (had) {
+        let last = 0; try { last = Number(sessionStorage.getItem('fl-sw-reload')) || 0; } catch {}
+        if (Date.now() - last > 10000) { try { sessionStorage.setItem('fl-sw-reload', String(Date.now())); } catch {} location.reload(); }
+      }
+      had = true;
+    });
+    // An older worker that cannot answer a ping (it has no message handler) is unregistered and replaced on this load.
+    if (sw.controller) {
+      const alive = await new Promise((resolve) => {
+        const timer = setTimeout(() => resolve(false), 1500);
+        const onMsg = (e) => { if (e.data && e.data.type === 'pong') { clearTimeout(timer); sw.removeEventListener('message', onMsg); resolve(true); } };
+        sw.addEventListener('message', onMsg);
+        try { sw.controller.postMessage({ type: 'ping' }); } catch { clearTimeout(timer); resolve(false); }
+      });
+      if (!alive) { try { const regs = await sw.getRegistrations(); await Promise.all(regs.map((r) => r.unregister().catch(() => false))); } catch {} }
+    }
+    try { const reg = await sw.register('/sw.js'); reg.update?.().catch?.(() => {}); } catch {}
   });
 }
