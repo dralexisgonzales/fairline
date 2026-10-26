@@ -1,5 +1,5 @@
 // Hedge a bet you already have, or bet both sides at two books.
-import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, examplePill, debounce, svg } from '../ui.js';
+import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, examplePill, debounce, svg, committedBad } from '../ui.js';
 import { hedge, hedgeOutcomes, arb } from '../math.js';
 import { fmtOdds, fmtMoney, fmtUnits, fmtPctSigned, fmtProb } from '../format.js';
 import * as store from '../store.js';
@@ -95,7 +95,8 @@ export function create(ctx) {
     answer.classList.toggle('whatif-focus', manualFocused);
     answer.classList.toggle('whatif-on', !tilesManual.hidden);
     if (!Number.isFinite(stake) || !Number.isFinite(orig) || !Number.isFinite(hAm) || !(stake > 0)) {
-      if (hadA) { answer.classList.add('is-stale'); aHero.setLabel('Waiting for a number'); return; }
+      if (hadA && !committedBad(ctx, aOrig, aHedge)) { answer.classList.add('is-stale'); aHero.setLabel('Waiting for a number'); return; }
+      answer.classList.remove('is-stale');
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');
       aSay.set('Enter your bet’s odds, what you staked, and the other side’s odds now.');
       aLocked.set('—'); aBreak.set('—'); aWinO.set('—'); aWinH.set('—');
@@ -126,7 +127,7 @@ export function create(ctx) {
     if (Number.isFinite(amount) && amount >= 0) {
       const o = hedgeOutcomes(stake, orig, amount, hAm);
       capMain.textContent = 'With ' + (lead && unit > 0 ? fmtUnits(amount / unit) : fmtMoney(amount).replace(/\.00$/, '')) + ' on the other side instead:';
-      capSum.textContent = ' ' + m$(o.ifOriginalWins).replace(/\.00$/, '') + ' if yours wins, ' + m$(o.ifHedgeWins).replace(/\.00$/, '') + ' if not';
+      capSum.textContent = (' ' + m$(o.ifOriginalWins) + ' if yours wins, ' + m$(o.ifHedgeWins) + ' if not').replace(/\u2212(?=[$\d])/g, '\u2212\u2060');
       aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins');
       setMoney(aWinO, o.ifOriginalWins, unit, { signed: true, leadUnits: lead });
       setMoney(aWinH, o.ifHedgeWins, unit, { signed: true, leadUnits: lead });
@@ -143,7 +144,8 @@ export function create(ctx) {
     exB.set([bA, bB, bTotal].some((f) => f.isGhost()), [bA, bB, bTotal].every((f) => f.isGhost()));
     answer.classList.toggle('is-example', [bA, bB, bTotal].every((f) => f.isGhost()));
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
-      if (hadB) { answer.classList.add('is-stale'); bHero.setLabel('Waiting for a number'); return; }
+      if (hadB && !committedBad(ctx, bA, bB)) { answer.classList.add('is-stale'); bHero.setLabel('Waiting for a number'); return; }
+      answer.classList.remove('is-stale');
       bHero.setLabel('Guaranteed profit'); bHero.set('—', null, '');
       bSay.set('Enter one side’s odds at book A and the other side’s odds at book B.');
       bOnA.set('—'); bOnB.set('—');

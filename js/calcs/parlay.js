@@ -104,11 +104,11 @@ export function create(ctx) {
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
     if (!r) {
-      hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—');
+      hero.setLabel('These legs combine to'); hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—');
       say.set('Add the odds of each pick. Every pick has to win.');
       return;
     }
-    hero.setLabel(legs.length < all.length ? 'These ' + legs.length + ' legs combine to' : 'These legs combine to');
+    hero.setLabel(legs.length < all.length ? (legs.length === 1 ? 'Only 1 leg filled in' : 'These ' + legs.length + ' legs combine to') : 'These legs combine to');
     const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' on ' + money(stake))) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) : '');
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub || 'add the book’s parlay odds to compare');
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');

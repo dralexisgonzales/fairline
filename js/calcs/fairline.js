@@ -1,5 +1,5 @@
 // Fair odds: the line with the book's cut removed.
-import { h, field, oddsValue, result, sentence, examplePill, debounce } from '../ui.js';
+import { h, field, oddsValue, result, sentence, examplePill, debounce, committedBad } from '../ui.js';
 import { noVig, toImplied } from '../math.js';
 import { fmtOdds, fmtProb, fmtPctSigned } from '../format.js';
 import * as store from '../store.js';
@@ -43,7 +43,7 @@ export function create(ctx) {
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
       const emptied = !state.a.v || !state.b.v;
-      if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel(lastWasExample ? 'Book’s cut' : 'Before this change'); return; }
+      if (hadValid && !emptied && !committedBad(ctx, fA, fB)) { answer.classList.add('is-stale'); cut.setLabel(lastWasExample ? 'Book’s cut' : 'Before this change'); return; }
       answer.classList.remove('is-stale'); hadValid = false;   // no full line on screen now, so nothing to keep dim
       ex.set(false);
       oddsA.set('—', null, Number.isFinite(a) ? fmtProb(toImplied(a), 'pct') + ' at ' + fmtOdds(a) + ', cut included' : ''); oddsB.set('—', null, Number.isFinite(b) ? fmtProb(toImplied(b), 'pct') + ' at ' + fmtOdds(b) + ', cut included' : ''); cut.setLabel('Book’s cut'); cut.set('—');

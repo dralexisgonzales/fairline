@@ -391,7 +391,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
 .kb-open .screen.vast .answer { margin-top: var(--vast-top, 0px); position: static; padding-bottom: 18px; box-shadow: none; }
-.kb-open .screen.vast .answer::after { display: none; }
+.kb-open .screen.vast .answer::after, .kb-open .screen.fits .answer::after { display: none; }
 .kb-open .screen.slack .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 .kb-open .screen.slack .res-col.res-hero .res-value { font-size: clamp(52px, 15.5vw, 68px); }
 .kb-open .screen.roomy .say { display: block; }
@@ -408,11 +408,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
 .tight.kb-open .tiles-whatif:not(.tiles-keep) .res, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .res { display: none; }
 .cap-sum { display: none; font-weight: 600; color: var(--text); }
-.screen.fold-whatif .tiles-whatif:not(.tiles-keep) .tiles-cap, .tight.kb-open .tiles-whatif:not(.tiles-keep) .tiles-cap { white-space: normal; }
+.screen.fold-whatif .tiles-whatif:not(.tiles-keep) .tiles-cap { white-space: normal; }
 .tight.kb-open .tiles-whatif:not(.tiles-keep) .cap-sum, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .cap-sum { display: inline; }
-.kb-open .screen.trim-answer .answer.whatif-focus .res-hero .res-sub { display: none; }
-.kb-open .screen.trim-cap .answer.whatif-focus .tiles-cap { display: none; }
-.tight.kb-open .answer.whatif-focus .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus .tiles:not(.tiles-whatif) { display: none; }
+.kb-open .screen.trim-answer .answer.whatif-focus.whatif-on .res-hero .res-sub, .kb-open .screen.fold-whatif.trim-answer .res-hero .res-sub { display: none; }
+.kb-open .screen.trim-cap .answer.whatif-focus.whatif-on .tiles-cap, .kb-open .screen.fold-whatif.trim-cap .tiles-whatif:not(.tiles-keep) .tiles-cap { display: none; }
+#app:not(.kb-open) .screen.trim-say .say { display: none; }
+.tight.kb-open .answer.whatif-focus.whatif-on .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus.whatif-on .tiles:not(.tiles-whatif) { display: none; }
 @media (max-height: 740px) { .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; } }
 .fld:focus-visible, .res:focus-visible { outline: none; }
 /* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */

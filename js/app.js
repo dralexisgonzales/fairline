@@ -93,6 +93,9 @@ function placeDock(decideTight = false) {
     // A folded what-if keeps its one-line caption, so the fit is checked again.
     const folded = screen.classList.contains('fold-whatif');
     if (folded && open && contentSpare(screen) < 0) app.classList.add('tight');
+    // Idle: if the screen still overflows after the fold, the sentence goes before the slots do.
+    screen.classList.remove('trim-say');
+    if (!open && contentSpare(screen) < -1) screen.classList.add('trim-say');
     // Growth counts the what-if tiles that could still appear (not a folded one), so their arrival never shrinks anything.
     if (!folded) optional.forEach((e) => { e.hidden = false; });
     if (open) {
@@ -105,7 +108,11 @@ function placeDock(decideTight = false) {
     // The sentence comes back whenever it fits on its own (it steps aside again if the what-if tiles appear).
     if (open && !screen.classList.contains('roomy')) { screen.classList.add('say-fits'); if (contentSpare(screen) < 4) screen.classList.remove('say-fits'); }
     // With a lot of room left, the answer centres in the space instead of leaving a void between it and the slots.
-    if (open && contentSpare(screen) >= 48) { screen.classList.add('vast'); screen.style.setProperty('--vast-top', Math.round(contentSpare(screen) / 2) + 'px'); }
+    // Centre only if the what-if tiles could still appear without pushing the slots down.
+    if (!folded) optional.forEach((e) => { e.hidden = false; });
+    const spareWithOptional = contentSpare(screen);
+    optional.forEach((e) => { e.hidden = true; });
+    if (open && spareWithOptional >= 48) { screen.classList.add('vast'); screen.style.setProperty('--vast-top', Math.round(contentSpare(screen) / 2) + 'px'); }
   } else if (decideTight) {
     app.classList.remove('tight');
   } else if (screen && keypad.isOpen()) {
@@ -115,7 +122,7 @@ function placeDock(decideTight = false) {
     const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
     // Typing a what-if: the reference tiles step aside if the two rows together would push the slots away.
-    const focusing = screen.querySelector('.answer.whatif-focus');
+    const focusing = screen.querySelector('.answer.whatif-focus.whatif-on') || (screen.classList.contains('fold-whatif') ? screen : null);
     screen.classList.remove('fold-ref', 'trim-answer', 'trim-cap');
     // Trim the hero sub first, then the caption; the locked-profit tiles stay unless the overflow is more than a slot row.
     if (focusing && contentSpare(screen) < 0) {

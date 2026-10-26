@@ -16,7 +16,7 @@ export function create(ctx) {
 
   const hero = result({ label: 'Chance to win', hero: true });
   const say = sentence();
-  const modeSeg = segmented({ options: [{ id: 'pct', label: 'Percent' }, { id: 'cents', label: 'Cents' }], value: ctx.probMode(), cls: 'seg-mini', label: 'Show chance as percent or cents', onChange: (m) => { ctx.setProbMode(m); ctx.keypad.focus(probF, false); } });
+  const modeSeg = segmented({ options: [{ id: 'pct', label: 'Percent' }, { id: 'cents', label: 'Cents' }], value: ctx.probMode(), cls: 'seg-mini', label: 'Show chance as percent or cents', onChange: (m) => { ctx.setProbMode(m); if (ctx.keypad.isOpen()) ctx.keypad.focus(probF, false); } });
 
   const oddsF = field({ type: 'odds', label: 'Odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; if (state.src !== 'odds') { state.src = 'odds'; ctx.keypad.setFields([oddsF, probF]); } render(); persist(); } });
   const probF = field({ type: 'percent', label: 'Chance to win', value: state.prob, suffix: '%', placeholder: '\u2014', maxLen: 6, ctx, keypad: ctx.keypad, onChange: (v) => { state.prob = v; if (state.src !== 'prob') { state.src = 'prob'; ctx.keypad.setFields([probF, oddsF]); } render(); persist(); } });
@@ -42,7 +42,7 @@ export function create(ctx) {
     answer.classList.toggle('is-example', oddsF.isGhost() && state.src === 'odds');
     modeSeg.set(ctx.probMode());
     feePill.hidden = !cents;
-    feePill.textContent = (ctx.feePreset().short || 'No fee') + (ctx.feePreset().short && ctx.feeRate() === 0 ? ' \u00B7 no fee' : '');
+    feePill.textContent = ctx.feePreset().short || 'No fee';
     probF.setSuffix(cents ? '¢' : '%');
     probF.setLabel(cents ? 'Price in cents' : 'Chance to win');
     let p = NaN, am = NaN;
@@ -50,7 +50,7 @@ export function create(ctx) {
       am = oddsValue(state.odds);
       p = toImplied(am);
       const feeBox = cents && ctx.feeRate() > 0 && Number.isFinite(p);
-      const boxP = feeBox ? effectivePrice(p, ctx.feeRate()).price : p;
+      const boxP = feeBox ? listedPriceFor(p, ctx.feeRate()) : p;
       probF.set({ v: Number.isFinite(boxP) ? (boxP * 100).toFixed(boxP < 0.01 || boxP > 0.995 ? 2 : 1) : '', ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
       probF.setSub(Number.isFinite(p) ? (ctx.keypad.active() === probF ? 'type to change it' : feeBox ? 'with the fee' : 'calculated') : '');
@@ -71,6 +71,7 @@ export function create(ctx) {
 
     const committedBad = state.src === 'odds' && oddsF.el.classList.contains('is-invalid') && ctx.keypad.active() !== oddsF;
     if (!Number.isFinite(p)) {
+      answer.classList.remove('is-stale');
       if (hadValid && !committedBad) {
         answer.classList.add('is-stale'); hero.setLabel('Waiting for a number');
         if (state.src === 'odds') probF.set({ v: '', ghost: false }); else oddsF.set({ sign: state.odds.sign || '-', v: '', ghost: false });
@@ -87,11 +88,11 @@ export function create(ctx) {
     const label = ctx.feePreset().label;
     if (state.src === 'odds') {
       const feeOn = cents && rate > 0;
-      const shownP = feeOn ? effectivePrice(p, rate).price : p;
+      const shownP = feeOn ? listedPriceFor(p, rate) : p;   // buy at this listed price and, after the fee, you really get these odds
       hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am) + (feeOn ? ' with ' + feeName(label) + ' fee' : ''));
-      hero.set(fmtProb(shownP, cents ? 'cents' : 'pct'), fmtProb(shownP, cents ? 'cents' : 'pct'), feeOn ? fmtProb(p, 'cents') + ' before the fee' : 'decimal odds ' + fmtDecimal(dec));
+      hero.set(fmtProb(shownP, cents ? 'cents' : 'pct'), fmtProb(shownP, cents ? 'cents' : 'pct'), feeOn ? 'you really pay ' + fmtProb(p, 'cents', 1) + ' after the fee' : 'decimal odds ' + fmtDecimal(dec));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
-      if (cents) t = 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + (feeOn ? 'With the fee you really pay ' + fmtProb(shownP, 'cents', 1) + '.' : feeLine(p, rate, label));
+      if (cents) t = 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + (feeOn ? 'With the fee, buy at ' + fmtProb(shownP, 'cents', 1) + ' to really pay ' + fmtProb(p, 'cents', 1) + '.' : feeLine(p, rate, label));
       say.set(t);
     } else {
       // With a fee, the odds you really get are the answer; the raw conversion goes underneath.
@@ -103,6 +104,12 @@ export function create(ctx) {
       if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. ' + (feeOn ? 'With the fee you really pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ', which is ' + fmtOdds(effAm) + '.' : fmtOdds(am) + ' is that same chance written as odds. ' + feeLine(p, rate, label));
       say.set(t);
     }
+  }
+  // The listed price whose all-in cost (price + rate*price*(1-price)) equals q: invert the fee formula.
+  function listedPriceFor(q, rate) {
+    if (!(rate > 0)) return q;
+    const r = rate, disc = (1 + r) * (1 + r) - 4 * r * q;
+    return disc < 0 ? q : ((1 + r) - Math.sqrt(disc)) / (2 * r);
   }
   function feeName(label) { return label === 'Custom' ? 'your' : label.split(' ')[0]; }
   function feeLine(p, rate, label) {

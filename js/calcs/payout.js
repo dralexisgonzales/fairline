@@ -1,5 +1,5 @@
 // Payout: what a bet pays, or what to risk to win a target.
-import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, examplePill, debounce } from '../ui.js';
+import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, examplePill, debounce, committedBad } from '../ui.js';
 import { payoutFromRisk, payoutFromWin, toImplied } from '../math.js';
 import { fmtDecimal, fmtMoney, fmtProb, fmtOdds } from '../format.js';
 import * as store from '../store.js';
@@ -44,7 +44,8 @@ export function create(ctx) {
     const amount = stakeDollars(state.amount, unit);
     const am = oddsValue(state.odds);
     if (!Number.isFinite(amount) || !Number.isFinite(am) || !(amount > 0)) {
-      if (hadValid) { answer.classList.add('is-stale'); hero.setLabel('Waiting for a number'); return; }
+      if (hadValid && !committedBad(ctx, oddsF)) { answer.classList.add('is-stale'); hero.setLabel('Waiting for a number'); return; }
+      answer.classList.remove('is-stale');
       hero.setLabel(state.mode === 'risk' ? 'Profit if it wins' : 'You need to risk'); hero.set('—', null, '');
       say.set(state.mode === 'risk' ? 'Enter what you are risking and the odds.' : 'Enter how much you want to win and the odds.');
       backRes.set('—'); needRes.set('—');

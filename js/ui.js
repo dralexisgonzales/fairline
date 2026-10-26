@@ -124,7 +124,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const ansH = ans && getComputedStyle(ans).position === 'sticky' ? ans.offsetHeight : 0;
         const m = 12;   // clear of the fade under the answer
         const align = Math.max(0, rowTop - ansH - m);               // puts the typed row m px under the sticky answer
-        const need = Math.max(0, rowTop + el.offsetHeight + 8 - ch);  // least scroll that keeps the typed row clear of the keypad edge
+        const need = Math.max(0, rowTop + el.offsetHeight + 24 - ch); // least scroll that keeps the typed row clear of the fade at the keypad edge
         // Land on a row boundary: the highest row that can sit under the answer while the typed row stays above the keypad,
         // so the rows above stay as context and none of them is half shown.
         let target = Math.min(align, Math.max(need, align));
@@ -134,8 +134,6 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
             .filter((e) => e.offsetParent !== null)
             .map((e) => Math.round(e.getBoundingClientRect().top - sr.top + screen.scrollTop)))].sort((a, b) => a - b);
           for (const t of tops) { const cand = Math.max(0, t - ansH - m); if (cand >= need && cand <= align) { target = cand; break; } }
-          // A row boundary that leaves a big gap under the typed row is worse than a row tucked under the answer.
-          if (target - need > 24) target = need;
         } else target = need;
         // Room below the last row so this scroll is always possible (the slots' auto margin absorbs the first of it).
         let os = 0;
@@ -356,6 +354,8 @@ export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto'
 }
 
 // Plain-English line under the answer.
+// A committed value that is not valid (for example odds under 100) reads as no value, not as a half-typed one.
+export function committedBad(ctx, ...fields) { return fields.some((f) => f.el.classList.contains('is-invalid') && ctx.keypad.active() !== f); }
 export function sentence() {
   const el = h('p', { class: 'say' });
   // Keep a minus sign glued to its number so a line never breaks between them.
