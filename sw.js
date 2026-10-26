@@ -1,9 +1,8 @@
 // Fairline service worker: precache the app shell, serve it offline, refresh it in the background.
 // Strategy: cache first for instant opens, then revalidate so the next open has the latest files.
-const VERSION = 'fairline-v2.1.0';
+const VERSION = 'fairline-v2.1.1';
 const SHELL = [
   '/',
-  '/index.html',
   '/manifest.webmanifest',
   '/css/app.css',
   '/js/app.js',
@@ -58,10 +57,10 @@ self.addEventListener('fetch', (event) => {
 
   // App shell navigation: serve the cached page at once, refresh it quietly for next time.
   if (req.mode === 'navigate') {
-    const fresh = revalidate(new Request('/index.html', { cache: 'no-cache' }), '/index.html').catch(() => null);
+    const fresh = revalidate(new Request('/', { cache: 'no-cache' }), '/').catch(() => null);
     event.waitUntil(fresh);
     event.respondWith(
-      caches.match('/index.html').then((hit) => hit || fresh.then((r) => r || Response.error()))
+      caches.match('/').then((hit) => hit || fresh.then((r) => r || Response.error()))
     );
     return;
   }
