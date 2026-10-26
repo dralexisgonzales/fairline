@@ -117,7 +117,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 #app:not(.kb-open) .answer { flex: 1 1 auto; justify-content: center; position: static; }
 #app:not(.kb-open) .res-hero .res-value { font-size: clamp(72px, min(26vw, 12dvh), 112px); }
 .screen.fits .answer { margin-top: auto; }
-#app:not(.kb-open) .res-col.res-hero .res-value { font-size: clamp(60px, min(21vw, 10dvh), 90px); }
+#app:not(.kb-open) .res-col.res-hero .res-value { font-size: clamp(56px, min(19vw, 10dvh), 84px); }
 .screen-head { display: flex; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 8px; }
 .screen-head .spacer { flex: 1; min-width: 4px; }
 .screen-head > * { flex: none; }
@@ -129,11 +129,11 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .legs-list.two-col .leg { grid-template-columns: 1fr 44px; gap: 6px; }
 
 /* Answer pieces */
-.say { margin: 4px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--text-2); min-height: 20px; text-wrap: pretty; }
+.say { margin: 10px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--text-2); min-height: 20px; text-wrap: pretty; }
 .say strong { color: var(--text); font-weight: 600; }
 .answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap { opacity: 0.75; }
 .answer.is-stale .pill:not(.pill-example) { opacity: 0.8; }
-:root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.8; }
+:root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.9; }
 .answer.is-stale .res-hero { opacity: 1; }
 .answer.is-stale .res-hero .res-value { opacity: 0.5; }
 .answer.is-stale .res-hero .res-sub { opacity: 0.75; }
@@ -161,7 +161,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .res.is-xlong .res-value { font-size: 15.5px; }
 .res.is-xxlong .res-value { font-size: 13px; }
 .res.is-xxxlong .res-value { font-size: 11.5px; }
-.res-sub { font-size: 13px; color: var(--text-3); max-width: 100%; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.res-sub { font-size: 13px; color: var(--text-3); max-width: 100%; line-height: 1.25; text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tiles .res { min-height: 58px; }
 .res.is-empty .res-value { color: var(--text-4); font-weight: 400; }
 .res.tone-pos .res-value { color: var(--pos); }
@@ -346,7 +346,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .btn-done { color: var(--gold-text); font-weight: 700; font-size: 17px; min-height: 44px; padding: 0 2px 0 12px; }
 .sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
 .sheet-panel .keypad { flex: none; border-radius: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
-.sheet-panel .keypad + .sheet-body, .sheet-body:has(+ .keypad) { padding-bottom: 12px; -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
+.sheet-panel .keypad:not([hidden]) + .sheet-body, .sheet-body:has(+ .keypad:not([hidden])) { padding-bottom: 12px; }
+.sheet-body { -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
 .sheet-body > * { flex-shrink: 0; }
 .sheet-body::-webkit-scrollbar { display: none; }
 .section { display: flex; flex-direction: column; gap: 10px; }
@@ -385,7 +386,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer .tiles .res-label { font-size: 11px; }
 .kb-open .say { display: none; }
 .kb-open .answer { box-shadow: 0 1px 0 var(--hair); }
-.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
+.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
 .kb-open .screen.vast .answer { margin-top: var(--vast-top, 0px); position: static; padding-bottom: 18px; box-shadow: none; }
@@ -393,6 +394,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.slack .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 .kb-open .screen.slack .res-col.res-hero .res-value { font-size: clamp(52px, 15.5vw, 68px); }
 .kb-open .screen.roomy .say { display: block; }
+.kb-open .screen.roomy .say, .kb-open .screen.say-fits .say { min-height: 41px; }
 .kb-open .screen.say-fits .answer:not(.whatif-on):not(.whatif-focus) .say { display: block; }
 .kb-open .screen.roomy .res-hero:not(.res-col) .res-value { font-size: clamp(64px, min(20vw, 12dvh), 110px); }
 .kb-open .screen.roomy .res-col.res-hero .res-value { font-size: clamp(58px, min(18vw, 10dvh), 90px); }
@@ -403,8 +405,11 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.slack .answer .tiles .res { padding: 8px 12px; }
 .kb-open .slots .note { display: none; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
-.tight.kb-open .tiles-whatif:not(.tiles-keep), .screen.fold-whatif .tiles-whatif:not(.tiles-keep) { display: none; }
-.kb-open .screen.trim-answer .answer.whatif-focus .res-hero .res-sub, .kb-open .screen.trim-answer .answer.whatif-focus .tiles-cap { display: none; }
+.tight.kb-open .tiles-whatif:not(.tiles-keep) .res, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .res { display: none; }
+.cap-sum { display: none; font-weight: 600; color: var(--text); }
+.tight.kb-open .tiles-whatif:not(.tiles-keep) .cap-sum, .screen.fold-whatif .tiles-whatif:not(.tiles-keep) .cap-sum { display: inline; }
+.kb-open .screen.trim-answer .answer.whatif-focus .res-hero .res-sub { display: none; }
+.kb-open .screen.trim-cap .answer.whatif-focus .tiles-cap { display: none; }
 .tight.kb-open .answer.whatif-focus .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus .tiles:not(.tiles-whatif) { display: none; }
 @media (max-height: 740px) { .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; } }
 .fld:focus-visible, .res:focus-visible { outline: none; }
@@ -418,7 +423,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .tight .fld { min-height: 56px; padding: 6px 14px; }
 .tight .fld-value, .tight .fld-sign { font-size: 24px; }
 .tight .fld-compact { min-height: 48px; }
-.tight .slots { padding-bottom: 4px; }
+.tight .slots { padding-bottom: 10px; }
+.tight .answer { padding-bottom: 6px; }
 
 /* Compact mode for short screens (iPhone SE, or a browser tab with chrome) */
 @media (max-height: 740px) {

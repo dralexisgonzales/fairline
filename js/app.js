@@ -84,7 +84,12 @@ function placeDock(decideTight = false) {
     shown.forEach((e) => { e.hidden = true; });
     app.classList.toggle('tight', open && contentSpare(screen) < 0);
     shown.forEach((e) => { e.hidden = false; });
-    optional.forEach((e) => { e.hidden = false; });
+    // A stored what-if that would push the slots under the keypad folds away until that slot is typed.
+    screen.classList.remove('fold-whatif');
+    if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
+    // Growth counts the what-if tiles that could still appear (not a folded one), so their arrival never shrinks anything.
+    const folded = screen.classList.contains('fold-whatif');
+    if (!folded) optional.forEach((e) => { e.hidden = false; });
     if (open) {
       screen.classList.add('slack');
       if (contentSpare(screen) < 4) screen.classList.remove('slack');
@@ -96,9 +101,6 @@ function placeDock(decideTight = false) {
     if (open && !screen.classList.contains('roomy')) { screen.classList.add('say-fits'); if (contentSpare(screen) < 4) screen.classList.remove('say-fits'); }
     // With a lot of room left, the answer centres in the space instead of leaving a void between it and the slots.
     if (open && contentSpare(screen) >= 48) { screen.classList.add('vast'); screen.style.setProperty('--vast-top', Math.round(contentSpare(screen) / 2) + 'px'); }
-    // A stored what-if that would push the slots under the keypad folds away until that slot is typed.
-    screen.classList.remove('fold-whatif');
-    if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
   } else if (decideTight) {
     app.classList.remove('tight');
   } else if (screen && keypad.isOpen()) {
@@ -109,8 +111,13 @@ function placeDock(decideTight = false) {
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
     // Typing a what-if: the reference tiles step aside if the two rows together would push the slots away.
     const focusing = screen.querySelector('.answer.whatif-focus');
-    screen.classList.remove('fold-ref', 'trim-answer');
-    if (focusing && contentSpare(screen) < 0) { screen.classList.add('trim-answer'); if (contentSpare(screen) < 0) screen.classList.add('fold-ref'); }
+    screen.classList.remove('fold-ref', 'trim-answer', 'trim-cap');
+    // Trim the hero sub first, then the caption; the locked-profit tiles stay unless the overflow is more than a slot row.
+    if (focusing && contentSpare(screen) < 0) {
+      screen.classList.add('trim-answer');
+      if (contentSpare(screen) < 0) screen.classList.add('trim-cap');
+      if (contentSpare(screen) < 0) screen.classList.add('fold-ref');
+    }
   }
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   if (decideTight) refitResults();
@@ -148,7 +155,7 @@ const GLOSSARY = [
   ['Bankroll', 'The money you have set aside for betting. A unit is usually 1% to 2% of it.'],
   ['Must win', 'How often a bet at those odds has to win for you to break even over time. Win more often than that and you come out ahead.'],
   ['Decimal odds', 'What $1 turns into if the bet wins, stake included. −110 is 1.91.'],
-  ['Example', 'Grey numbers marked example are there to show how a screen works. Type over them; the answer is only yours once every number is.'],
+  ['Example and Part example', 'Grey numbers marked example show how a screen works. Type over them; the answer is only yours once every number is. Part example means some numbers are still examples.'],
   ['Prediction markets', 'Novig, Kalshi and Polymarket price bets in cents: you pay the price now and get $1 back if it wins. A 62¢ price means a 62% chance.'],
   ['Fee', 'What a prediction market charges when you place a bet, a few cents per $1 at most. Pregame means before the game starts; Novig charges nothing then. Pick where you bet in Settings.'],
 ];

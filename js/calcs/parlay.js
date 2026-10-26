@@ -1,5 +1,5 @@
 // Parlay: odds and payout for a combo bet.
-import { h, field, oddsValue, stakeDollars, result, setMoney, sentence, examplePill, debounce, svg } from '../ui.js';
+import { h, field, oddsValue, stakeDollars, result, setMoney, sentence, examplePill, debounce, svg, toast } from '../ui.js';
 import { parlay } from '../math.js';
 import { fmtOdds, fmtDecimal, fmtProb, fmtPctSigned, fmtMoney, fmtUnits } from '../format.js';
 import * as store from '../store.js';
@@ -32,11 +32,10 @@ export function create(ctx) {
   const addBtn = h('button', { type: 'button', class: 'btn-row', onclick: () => addLeg({ sign: '-', v: '', ghost: false }, true) }, svg('<path d="M12 5v14M5 12h14"/>', 18), 'Add a leg');
   const addHead = h('button', { type: 'button', class: 'pill pill-btn', 'aria-label': 'Add a leg', onclick: () => addLeg({ sign: '-', v: '', ghost: false }, true) }, svg('<path d="M12 5v14M5 12h14"/>', 16), 'Leg');
 
-  function dropQuote() { if (offeredF.text() !== '') { offeredF.set({ sign: '+', v: '', ghost: false }); state.offered = offeredF.get(); } }
+  function dropQuote() { if (offeredF.text() !== '') { offeredF.set({ sign: '+', v: '', ghost: false }); state.offered = offeredF.get(); toast('Book’s odds cleared: the legs changed', 1800, 'tip'); } }
   function addLeg(val, focus = false) {
-    if (legFields.length) dropQuote();   // a book's quote is for one set of legs
     const idx = legFields.length;
-    const f = field({ type: 'odds', label: 'Leg ' + (idx + 1), value: val, ctx, keypad: ctx.keypad, compact: true, onChange: (v) => { state.legs[legFields.indexOf(f)] = v; render(); persist(); } });
+    const f = field({ type: 'odds', label: 'Leg ' + (idx + 1), value: val, ctx, keypad: ctx.keypad, compact: true, onChange: (v) => { const was = state.legs[legFields.indexOf(f)]; if ((was?.v || '') === '' && v.v !== '') dropQuote(); state.legs[legFields.indexOf(f)] = v; render(); persist(); } });
     const removeBtn = h('button', { type: 'button', class: 'leg-remove', 'aria-label': 'Remove leg', onclick: () => removeLeg(f) }, svg('<path d="M6 6l12 12M18 6L6 18"/>', 16));
     const row = h('div', { class: 'leg' }, f.el, removeBtn);
     f.row = row;
@@ -52,7 +51,7 @@ export function create(ctx) {
     const i = legFields.indexOf(f);
     if (i < 0) return;
     const wasActive = ctx.keypad.active() === f;
-    dropQuote();
+    if (f.text() !== '') dropQuote();   // a book's quote is for one set of legs
     legFields.splice(i, 1); state.legs.splice(i, 1); f.row.remove();
     relabel(); render(); persist();
     ctx.keypad.setFields(fieldsList());
@@ -90,7 +89,7 @@ export function create(ctx) {
   function render() {
     const unit = ctx.unitSize();
     const lead = ctx.leadUnits();
-    const money = (d) => (lead && unit > 0 ? fmtUnits(d / unit) : fmtMoney(d));
+    const money = (d) => (lead && unit > 0 ? fmtUnits(d / unit) : fmtMoney(d).replace(/\.00$/, ''));
     const all = state.legs.map(oddsValue);
     const legs = all.filter(Number.isFinite);
     const stake = stakeDollars(state.stake, unit);

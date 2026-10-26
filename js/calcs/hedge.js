@@ -34,7 +34,8 @@ export function create(ctx) {
   kp.onActive(() => { if (state.mode === 'A' && !root.hidden) renderA(); });
   const exA = examplePill();
   const tilesA = h('div', { class: 'tiles' }, aLocked.root, aBreak.root);
-  const manualCap = h('div', { class: 'tiles-cap' });
+  const capMain = h('span'); const capSum = h('span', { class: 'cap-sum' });
+  const manualCap = h('div', { class: 'tiles-cap' }, capMain, capSum);
   const tilesManual = h('div', { class: 'tiles tiles-whatif', hidden: true }, manualCap, aWinO.root, aWinH.root);
 
   const paneA = h('div', { class: 'pane-a' },
@@ -104,14 +105,14 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'Covering at ' + fmtOdds(hAm) + ' loses either way; a full cover is');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'Hedging at ' + fmtOdds(hAm) + ' loses either way; a full hedge is');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const m$ = (d) => (lead && unit > 0 ? fmtUnits(d / unit, { signed: true }) : fmtMoney(d, { signed: true }));
     const unhedged = 'Without the hedge you end up ' + m$(noHedge.ifOriginalWins) + ' or ' + m$(noHedge.ifHedgeWins) + '.';
     if (profit) aSay.set('Bet that much and you come out ahead whichever side wins. ' + unhedged);
     else if (even) aSay.set('Bet that much and you get out flat, $0 either way. ' + unhedged);
-    else aSay.set('At these odds covering your bet loses a little whichever side wins; there is no profit to lock. ' + unhedged);
+    else aSay.set('At these odds hedging loses a little whichever side wins; there is no profit to lock. ' + unhedged);
     aLocked.setLabel(even ? 'Locked result' : profit ? 'Locked profit' : 'Locked loss');
     setMoney(aLocked, r.guaranteed, unit, { signed: true, leadUnits: lead });
     if (r.breakEvenPossible) {
@@ -124,11 +125,12 @@ export function create(ctx) {
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {
       const o = hedgeOutcomes(stake, orig, amount, hAm);
-      manualCap.textContent = 'With ' + (lead && unit > 0 ? fmtUnits(amount / unit) : fmtMoney(amount).replace(/\.00$/, '')) + ' on the other side instead:';
+      capMain.textContent = 'With ' + (lead && unit > 0 ? fmtUnits(amount / unit) : fmtMoney(amount).replace(/\.00$/, '')) + ' on the other side instead:';
+      capSum.textContent = ' ' + m$(o.ifOriginalWins) + ' / ' + m$(o.ifHedgeWins);
       aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins');
       setMoney(aWinO, o.ifOriginalWins, unit, { signed: true, leadUnits: lead });
       setMoney(aWinH, o.ifHedgeWins, unit, { signed: true, leadUnits: lead });
-    } else { manualCap.textContent = 'Try another amount on the other side:'; aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins'); aWinO.set('—', null, 'enter an amount'); aWinH.set('—', null, 'enter an amount'); }
+    } else { capMain.textContent = 'Try another amount on the other side:'; capSum.textContent = ''; aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins'); aWinO.set('—', null, 'enter an amount'); aWinH.set('—', null, 'enter an amount'); }
   }
 
   function renderB() {
@@ -160,10 +162,10 @@ export function create(ctx) {
       bOnA.set(fmtProb(r.shareA, 'pct', 1), fmtProb(r.shareA, 'pct', 1), 'of your total');
       bOnB.set(fmtProb(r.shareB, 'pct', 1), fmtProb(r.shareB, 'pct', 1), 'of your total');
     } else {
-      bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Guaranteed profit on ' + (lead ? fmtUnits(total / unit) : fmtMoney(total)) : 'Guaranteed loss on ' + (lead ? fmtUnits(total / unit) : fmtMoney(total)));
+      bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Guaranteed profit on ' + (lead ? fmtUnits(total / unit) : fmtMoney(total).replace(/\.00$/, '')) : 'Guaranteed loss on ' + (lead ? fmtUnits(total / unit) : fmtMoney(total).replace(/\.00$/, '')));
       setMoney(bHero, r.profit, unit, { signed: true, leadUnits: lead });
-      setMoney(bOnA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total', leadUnits: lead });
-      setMoney(bOnB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total', leadUnits: lead });
+      setMoney(bOnA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of it', leadUnits: lead });
+      setMoney(bOnB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of it', leadUnits: lead });
     }
     if (r.exists) {
       bSay.set(total > 0

@@ -111,6 +111,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     commit() { paint(true); },
     reveal() {
       setTimeout(() => {
+        if (!keypad.isOpen()) return;   // a late reveal after Done must not scroll the idle screen
         const screen = el.closest('.screen, .sheet-body');
         if (!screen) return;
         const ans = [...screen.querySelectorAll('.answer')].find((a) => a.offsetParent !== null);
@@ -121,13 +122,13 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const sr = screen.getBoundingClientRect();
         const rowTop = el.getBoundingClientRect().top - sr.top + screen.scrollTop;   // content coordinate
         const ansH = ans && getComputedStyle(ans).position === 'sticky' ? ans.offsetHeight : 0;
-        const m = 8;
+        const m = 12;   // clear of the fade under the answer
         const align = Math.max(0, rowTop - ansH - m);               // puts the typed row m px under the sticky answer
-        const need = Math.max(0, rowTop + el.offsetHeight + 16 - ch); // least scroll that keeps the typed row clear of the keypad edge
+        const need = Math.max(0, rowTop + el.offsetHeight + 8 - ch);  // least scroll that keeps the typed row clear of the keypad edge
         // Land on a row boundary: the highest row that can sit under the answer while the typed row stays above the keypad,
         // so the rows above stay as context and none of them is half shown.
         let target = Math.min(align, Math.max(need, align));
-        if (screen.classList.contains('sheet-body')) target = need;   // a sheet scrolls only as far as it must
+        if (screen.classList.contains('sheet-body') || !ansH) target = need;   // a sheet, or a centred (non-sticky) answer: scroll only as far as it must
         else if (need <= align) {
           const tops = [...new Set([...screen.querySelectorAll('.slots > .row-2, .slots > .fld, .legs-list > .leg')]
             .filter((e) => e.offsetParent !== null)
@@ -208,7 +209,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       const n = parseNum(state.v);
       const bad = !empty && Number.isFinite(n) && n < 100 && (final || state.v.length >= 3 || !el.classList.contains('is-active'));
       el.classList.toggle('is-invalid', bad);
-      setSub(bad ? 'Odds start at 100' : '', bad ? 'is-error' : '');
+      setSub(bad ? 'Min 100' : '', bad ? 'is-error' : '');
     } else if (type === 'money') {
       const unit = ctx.unitSize();
       if (pendingUnits && !ctx.settingsOpen()) {

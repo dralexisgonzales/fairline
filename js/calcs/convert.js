@@ -80,17 +80,19 @@ export function create(ctx) {
     const rate = ctx.feeRate();
     const label = ctx.feePreset().label;
     if (state.src === 'odds') {
-      hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am));
-      hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), cents && rate > 0 ? 'after ' + feeName(label) + ' fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) : (cents ? '' : 'decimal odds ' + fmtDecimal(dec)));
+      const feeOn = cents && rate > 0;
+      const shownP = feeOn ? effectivePrice(p, rate).price : p;
+      hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am) + (feeOn ? ' with ' + feeName(label) + ' fee' : ''));
+      hero.set(fmtProb(shownP, cents ? 'cents' : 'pct'), fmtProb(shownP, cents ? 'cents' : 'pct'), feeOn ? fmtProb(p, 'cents') + ' before the fee' : 'decimal odds ' + fmtDecimal(dec));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
-      if (cents) t = 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
+      if (cents) t = 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + (feeOn ? 'With the fee you really pay ' + fmtProb(shownP, 'cents', 1) + '.' : feeLine(p, rate, label));
       say.set(t);
     } else {
       // With a fee, the odds you really get are the answer; the raw conversion goes underneath.
       const feeOn = cents && rate > 0;
       const effAm = feeOn ? probToAmerican(effectivePrice(p, rate).price) : am;
       hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance') + (feeOn ? ' with ' + feeName(label) + ' fee' : ''));
-      hero.set(fmtOdds(effAm), fmtOdds(effAm, { ascii: true }), feeOn ? 'you pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ' all in \u00B7 ' + fmtOdds(am) + ' before the fee' : 'decimal odds ' + fmtDecimal(dec));
+      hero.set(fmtOdds(effAm), fmtOdds(effAm, { ascii: true }), feeOn ? 'you pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ' with the fee \u00B7 ' + fmtOdds(am) + ' before it' : 'decimal odds ' + fmtDecimal(dec));
       let t = 'If something wins ' + tidy(fmtProb(p, 'pct')) + ' of the time, these odds are exactly break-even on it.';
       if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. ' + (feeOn ? 'With the fee you really pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ', which is ' + fmtOdds(effAm) + '.' : fmtOdds(am) + ' is that same chance written as odds. ' + feeLine(p, rate, label));
       say.set(t);
