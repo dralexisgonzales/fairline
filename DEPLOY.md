@@ -59,3 +59,7 @@ Open `https://fairline-app.pages.dev` in Chrome, tap the three dots in the top r
 ## Updates
 
 When the app is updated and pushed to GitHub, Cloudflare publishes it within a minute. Your phone picks up the new version the next time or two you open the app. Nothing to install.
+
+## If the app will not open ("Safari cannot open the page")
+
+Versions before 27 October 2026 had a bug in the part of the app that saves it for offline use, which could block the app from opening after an update. That is fixed, but a phone that was already stuck needs one clean start: in iPhone **Settings → Apps → Safari → Advanced → Website Data**, find **pages.dev**, swipe it left and tap **Delete**, then open the app again. This also clears your saved settings and numbers, so enter your unit size and fee once more. After that one time, updates arrive cleanly.
