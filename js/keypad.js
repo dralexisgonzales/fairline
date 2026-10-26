@@ -30,7 +30,7 @@ export function createKeypad({ haptic } = {}) {
     } else if (active.type === 'money') active.toggleMode();
     else clear();
   });
-  const dotKey = key('.', 'kp-key', () => press('.'));
+  const dotKey = key('.', 'kp-key', () => { if (active?.type === 'odds') clear(); else press('.'); });
   const dblKey = key('00', 'kp-key', () => { press('0'); press('0'); });
   const zeroKey = key('0', 'kp-key kp-zero', () => press('0'));
   const nextKey = key('', 'kp-key kp-fn kp-next', () => next(), 'Next');
@@ -72,11 +72,13 @@ export function createKeypad({ haptic } = {}) {
     if (active) renderContext();
   }
 
+  function setFresh(v) { fresh = v; active?.setFresh?.(v); }
   function focus(field, reveal = true) {
     if (active && active !== field) { active.setActive(false); active.commit?.(); }
     active = field;
     fresh = true;
     field.setActive(true);
+    field.setFresh?.(true);
     renderContext();
     if (root.hidden) { root.hidden = false; onOpenChange?.(true); }
     notifyActive();
@@ -102,7 +104,8 @@ export function createKeypad({ haptic } = {}) {
     chipsRow.replaceChildren();
     if (!active) { chipsRow.hidden = true; return; }
     const type = active.type;
-    const chips = active.chips || (type === 'money' ? (active.mode === 'u' ? CHIPS.unit : CHIPS.money) : (CHIPS[type] || []));
+    let chips = active.chips || (type === 'money' ? (active.mode === 'u' ? CHIPS.unit : CHIPS.money) : (CHIPS[type] || []));
+    if (type === 'odds') chips = [...chips].sort((a, b) => (a[0] === active.sign ? 0 : 1) - (b[0] === active.sign ? 0 : 1));
     chips.forEach((c) => {
       const label = type === 'odds' ? (c[0] === '-' ? '−' : '+') + c[1]
         : type === 'money' ? (active.mode === 'u' ? c + 'u' : '$' + c)
@@ -114,7 +117,7 @@ export function createKeypad({ haptic } = {}) {
       b.addEventListener('pointerup', (e) => {
         if (Math.abs(e.clientX - x0) > 8) return;
         if (type === 'odds') active.setRaw({ sign: c[0], v: c[1] }); else active.setRaw(c);
-        fresh = true;
+        setFresh(true);
         haptic?.();
         if (type === 'odds') setTimeout(() => next(), 90);
       });
@@ -128,7 +131,10 @@ export function createKeypad({ haptic } = {}) {
     }
     else if (type === 'money') { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren(active.mode === 'u' ? '$' : 'units'); modeKey.disabled = false; modeKey.setAttribute('aria-label', active.mode === 'u' ? 'Enter in dollars' : 'Enter in units'); }
     else { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren('C'); modeKey.disabled = false; modeKey.setAttribute('aria-label', 'Clear'); }
-    dotKey.disabled = type === 'odds';
+    dotKey.disabled = false;
+    dotKey.replaceChildren(type === 'odds' ? 'C' : '.');
+    dotKey.classList.toggle('kp-fn', type === 'odds');
+    dotKey.setAttribute('aria-label', type === 'odds' ? 'Clear' : 'Decimal point');
     dblKey.disabled = type === 'odds';
     grid.classList.toggle('kp-odds', type === 'odds');
     const visible = fields.filter((f) => f.el.isConnected && f.el.offsetParent !== null);
@@ -144,15 +150,15 @@ export function createKeypad({ haptic } = {}) {
     if (v === '0' && ch !== '.') v = '';
     if (v.length >= (active.maxLen || 9)) return;
     active.setText(v + ch);
-    fresh = false;
+    setFresh(false);
   }
   function backspace() {
     if (!active) return;
     const v = active.text();          // a fresh slot still deletes one character, not everything
     active.setText(v.slice(0, -1));
-    fresh = false;
+    setFresh(false);
   }
-  function clear() { if (!active) return; active.setText(''); fresh = false; }
+  function clear() { if (!active) return; active.setText(''); setFresh(false); }
   function refresh() { if (active) renderContext(); }
 
   return { root, focus, close, next, setFields, refresh, isOpen: () => !root.hidden, active: () => active, onOpenChange: (fn) => { onOpenChange = fn; }, onActive: (fn) => { activeListeners.push(fn); } };

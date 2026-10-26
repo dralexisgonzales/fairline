@@ -72,7 +72,7 @@ export function create(ctx) {
       legsEl,
       h('div', { class: 'row-2' }, stakeF.el, offeredF.el),
       bookSay.el,
-      h('div', { class: 'note', text: 'These odds still include the book\u2019s cut on each leg. To take it out, run each leg through Fair odds first.' })
+      h('div', { class: 'note', text: 'To price it without the book\u2019s cut, run each leg through Fair odds first and enter those odds here.' })
     )
   );
   state.legs.forEach((l) => addLeg(l));
@@ -85,6 +85,7 @@ export function create(ctx) {
     const offeredAm = oddsValue(state.offered);
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
+    legsEl.classList.toggle('two-col', legFields.length >= 4);
     ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost());
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
@@ -95,11 +96,11 @@ export function create(ctx) {
     }
     hero.setLabel('Parlay odds from these legs');
     const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : fmtMoney(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more'))) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') : '');
-    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
+    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub || (Number.isFinite(stake) ? fmtMoney(stake) + ' wins ' + fmtMoney(r.fairProfit) : ''));
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'all of them, together');
     if (Number.isFinite(stake)) {
       setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: ctx.leadUnits() });
-      say.set('Every leg must win. Then ' + fmtMoney(stake) + ' wins ' + fmtMoney(r.fairProfit) + '.');
+      say.set('Every leg must win for it to pay. Each leg still includes its book\u2019s cut.');
     } else {
       payRes.set('—', null, 'add a stake');
       say.set('Every leg must win.');

@@ -94,7 +94,8 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       if (type === 'odds') { state.sign = state.sign === '-' ? '+' : '-'; state.ghost = false; paint(); onChange(get()); keypad.refresh(); }
       else if (type === 'money') setMode(state.mode === '$' ? 'u' : '$');
     },
-    setActive(on) { el.classList.toggle('is-active', on); },
+    setActive(on) { el.classList.toggle('is-active', on); if (!on) el.classList.remove('is-fresh'); },
+    setFresh(on) { el.classList.toggle('is-fresh', !!on && state.v !== ''); },
     commit() { paint(true); },
     reveal() {
       setTimeout(() => {
@@ -155,7 +156,15 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       setSub(bad ? 'Odds start at 100' : '', bad ? 'is-error' : '');
     } else if (type === 'money') {
       const unit = ctx.unitSize();
-      if (pendingUnits && !ctx.settingsOpen()) { pendingUnits = false; if (unit > 0 && state.mode === '$') { setMode('u'); return; } }
+      if (pendingUnits && !ctx.settingsOpen()) {
+        pendingUnits = false;
+        if (unit > 0 && state.mode === '$') {
+          // Finishing a pending switch converts the dollars typed earlier into units.
+          const n = parseNum(state.v);
+          if (Number.isFinite(n)) state.v = trimNum(n / unit, 4);
+          state.mode = 'u'; paint(); onChange(get()); keypad.refresh(); return;
+        }
+      }
       signEl.textContent = '';
       prefixEl.textContent = state.mode === '$' ? '$' : '';
       suffixEl.textContent = state.mode === 'u' ? 'u' : '';
@@ -228,6 +237,16 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
       flashTimer = setTimeout(() => { root.classList.remove('is-copied'); labelEl.textContent = currentLabel; }, 700);
     });
   });
+  let fitHeroTimer = 0;
+  function fitHero() {
+    clearTimeout(fitHeroTimer);
+    fitHeroTimer = setTimeout(() => {
+      valueEl.style.fontSize = '';
+      if (!valueEl.isConnected || valueEl.offsetParent === null) return;
+      const ratio = valueEl.clientWidth / Math.max(1, valueEl.scrollWidth);
+      if (ratio < 1) valueEl.style.fontSize = (parseFloat(getComputedStyle(valueEl).fontSize) * ratio * 0.97) + 'px';
+    }, 0);
+  }
   function fitSub() {
     clearTimeout(fitTimer);
     fitTimer = setTimeout(() => {
@@ -242,6 +261,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
   function set(display, copyValue = display, sub = '', tone = '') {
     if (hero && valueEl.textContent !== display && display !== '—') { valueEl.classList.remove('tick'); void valueEl.offsetWidth; valueEl.classList.add('tick'); }
     valueEl.textContent = display;
+    if (hero) fitHero();
     root.classList.toggle('is-long', display.length >= 10);
     root.classList.toggle('is-xlong', display.length >= 13);
     root.classList.toggle('is-xxlong', display.length >= 15);
@@ -275,7 +295,8 @@ export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto'
 // Plain-English line under the answer.
 export function sentence() {
   const el = h('p', { class: 'say' });
-  return { el, set: (t) => { el.textContent = t || ''; el.hidden = !t; } };
+  // Keep a minus sign glued to its number so a line never breaks between them.
+  return { el, set: (t) => { el.textContent = (t || '').replace(/\u2212(?=[$\d])/g, '\u2212\u2060'); el.hidden = !t; } };
 }
 
 // ---------- Collapsible ----------

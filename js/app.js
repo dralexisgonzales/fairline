@@ -63,8 +63,13 @@ function placeDock() {
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   // Tight: the room left for the answer and slots is small (notched phones, short browsers).
   // Measured without the header fold so it cannot flap: app height minus dock minus a full header.
-  const avail = app.clientHeight - dock.offsetHeight - 52;
-  if (avail < 400) app.classList.add('tight'); else if (avail > 430) app.classList.remove('tight');
+  // Room between a full header (with the phone's top inset) and the dock. Independent of the tight state itself.
+  const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
+  const avail = app.clientHeight - dock.offsetHeight - 52 - sat;
+  app.classList.toggle('tight', avail < 400);
+  const c = calcs.find((x) => x.id === active);
+  const screen = c ? c.root : null;
+  if (screen) screen.classList.toggle('fits', screen.scrollHeight <= screen.clientHeight + 1);
 }
 keypad.onOpenChange((open) => {
   app.classList.toggle('kb-open', open);
@@ -118,8 +123,10 @@ function switchTo(id) {
   c.root.scrollTop = 0;
   const first = c.fields()[0];
   if (first) keypad.focus(first, true);
+  placeDock();
 }
-function renderAll() { calcs.forEach((c) => c.render()); const c = calcs.find((x) => x.id === active); if (c && !settingsSheet.isOpen()) keypad.setFields(c.fields()); }
+function renderAll() { calcs.forEach((c) => c.render()); const c = calcs.find((x) => x.id === active); if (c && !settingsSheet.isOpen()) keypad.setFields(c.fields()); placeDock(); }
+keypad.onActive(() => setTimeout(placeDock, 0));
 
 // ----- Theme -----
 const media = window.matchMedia('(prefers-color-scheme: dark)');

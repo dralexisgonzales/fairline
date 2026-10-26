@@ -75,13 +75,13 @@ export function create(ctx) {
     const label = ctx.feePreset().label;
     if (state.src === 'odds') {
       hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am));
-      hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), '');
+      hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) : (cents ? '' : fmtDecimal(dec) + ' decimal'));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even. In decimal odds that is ' + fmtDecimal(dec) + '.';
       if (cents) t = 'On a prediction market, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: you pay that to win $1. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
       hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance'));
-      hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), '');
+      hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) + ', like ' + fmtOdds(probToAmerican(effectivePrice(p, rate).price)) : fmtDecimal(dec) + ' decimal');
       let t = 'A bet that wins ' + fmtProb(p, 'pct') + ' of the time is fairly priced at these odds. In decimal odds that is ' + fmtDecimal(dec) + '.';
       if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: you pay ' + tidy(fmtProb(p, 'cents')) + ' to win $1. That is the same as these odds. ' + feeLine(p, rate, label);
       say.set(t);
