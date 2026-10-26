@@ -80,9 +80,10 @@ function placeDock(decideTight = false) {
     // growing counts the what-if tiles too, so their arrival never shrinks anything.
     const optional = [...screen.querySelectorAll('.tiles-whatif[hidden]')];
     const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
-    foldable.forEach((e) => { e.hidden = true; });
+    const shown = [...screen.querySelectorAll('.tiles-whatif:not([hidden])')];
+    shown.forEach((e) => { e.hidden = true; });
     app.classList.toggle('tight', open && contentSpare(screen) < 0);
-    foldable.forEach((e) => { e.hidden = false; });
+    shown.forEach((e) => { e.hidden = false; });
     optional.forEach((e) => { e.hidden = false; });
     if (open) {
       screen.classList.add('slack');
@@ -156,6 +157,7 @@ let active = null;
 function switchTo(id) {
   settingsSheet.close(); glossarySheet.close();
   if (active === id) return;
+  const wasOpen = keypad.isOpen() || active === null;
   active = id;
   calcs.forEach((c) => { c.root.hidden = c.id !== id; });
   tabBtns.forEach((b) => { const on = b.dataset.id === id; b.classList.toggle('is-active', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
@@ -165,7 +167,8 @@ function switchTo(id) {
   keypad.setFields(c.fields());
   c.root.scrollTop = 0;
   const first = c.fields()[0];
-  if (first) keypad.focus(first, true);
+  // The keypad keeps its state across tabs: open stays open on the first slot, hidden stays hidden.
+  if (first && wasOpen) keypad.focus(first, true);
   placeDock(true);
 }
 function renderAll() { calcs.forEach((c) => c.render()); const c = calcs.find((x) => x.id === active); if (c && !settingsSheet.isOpen()) keypad.setFields(c.fields()); placeDock(true); }

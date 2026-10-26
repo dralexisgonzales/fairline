@@ -104,7 +104,7 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover it on the other side at ' + fmtOdds(hAm) + ' you would bet');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover it at ' + fmtOdds(hAm) + ' on the other side, bet');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const unhedged = 'Without the hedge you end up ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' or ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + '.';

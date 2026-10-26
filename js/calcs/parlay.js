@@ -54,6 +54,7 @@ export function create(ctx) {
     relabel(); render(); persist();
     ctx.keypad.setFields(fieldsList());
     if (wasActive) ctx.keypad.focus(legFields[Math.max(0, i - 1)]);
+    else { const a = ctx.keypad.active(); if (a) a.reveal?.(); else root.scrollTop = 0; }
   }
   function relabel() {
     legFields.forEach((f, i) => { f.setLabel('Leg ' + (i + 1)); f.row.querySelector('.leg-remove').hidden = legFields.length <= 1; });
@@ -104,7 +105,7 @@ export function create(ctx) {
       say.set('Add the odds of each pick. Every pick has to win.');
       return;
     }
-    hero.setLabel('These legs combine to');
+    hero.setLabel(legs.length < all.length ? 'These ' + legs.length + ' legs combine to' : 'These legs combine to');
     const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' would')) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' would' : '');
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');

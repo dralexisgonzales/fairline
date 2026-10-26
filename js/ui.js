@@ -114,39 +114,34 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const screen = el.closest('.screen, .sheet-body');
         if (!screen) return;
         const ans = [...screen.querySelectorAll('.answer')].find((a) => a.offsetParent !== null);
-        const topEdge = ans ? ans.getBoundingClientRect().bottom : screen.getBoundingClientRect().top;
-        const r = el.getBoundingClientRect(), sr = screen.getBoundingClientRect();
-        const m = document.getElementById('app')?.classList.contains('tight') ? 8 : 18;
-        // When the slots overflow, the row being typed sits right under the answer, so no row above it is ever half shown.
+        // Pure function of layout: where the row sits in the content decides the scroll, never the previous scroll.
         screen.style.setProperty('--overscroll', '0px'); void screen.scrollHeight;
-        const overflow = screen.scrollHeight > screen.clientHeight + 1;
-        if (overflow) {
-          const want = r.top - topEdge - 8;   // just under the answer, so the row above is fully behind it
-          // Room below the last row so the typed row can always sit right under the answer
-          // (the slots' auto margin absorbs the first of it, so top up until the scroll is possible).
-          let os = 0;
-          for (let i = 0; i < 4; i++) {
-            const can = screen.scrollHeight - screen.clientHeight - screen.scrollTop;
-            if (want <= can + 0.5) break;
-            os += Math.ceil(want - can);
-            screen.style.setProperty('--overscroll', os + 'px'); void screen.scrollHeight;
-          }
-          screen.scrollTop = screen.scrollTop + want;
+        const ch = screen.clientHeight;
+        if (screen.scrollHeight <= ch + 1) { screen.scrollTop = 0; return; }   // everything fits: nothing is scrolled under the answer
+        const sr = screen.getBoundingClientRect();
+        const rowTop = el.getBoundingClientRect().top - sr.top + screen.scrollTop;   // content coordinate
+        const ansH = ans && getComputedStyle(ans).position === 'sticky' ? ans.offsetHeight : 0;
+        const m = 8;
+        const align = Math.max(0, rowTop - ansH - m);               // puts the typed row m px under the sticky answer
+        const need = Math.max(0, rowTop + el.offsetHeight + 6 - ch); // least scroll that keeps the typed row above the keypad
+        // Land on a row boundary: the highest row that can sit under the answer while the typed row stays above the keypad,
+        // so the rows above stay as context and none of them is half shown.
+        let target = Math.min(align, Math.max(need, align));
+        if (need <= align) {
+          const tops = [...new Set([...screen.querySelectorAll('.slots > .row-2, .slots > .fld, .legs-list > .leg')]
+            .filter((e) => e.offsetParent !== null)
+            .map((e) => Math.round(e.getBoundingClientRect().top - sr.top + screen.scrollTop)))].sort((a, b) => a - b);
+          for (const t of tops) { const cand = Math.max(0, t - ansH - m); if (cand >= need && cand <= align) { target = cand; break; } }
+        } else target = need;
+        // Room below the last row so this scroll is always possible (the slots' auto margin absorbs the first of it).
+        let os = 0;
+        for (let i = 0; i < 4; i++) {
+          const maxTop = screen.scrollHeight - ch;
+          if (maxTop >= target - 0.5) break;
+          os += Math.ceil(target - maxTop);
+          screen.style.setProperty('--overscroll', os + 'px'); void screen.scrollHeight;
         }
-        else { screen.scrollTop = 0; }   // everything fits: nothing should be scrolled under the answer
-        // The bottom edge wins: the value being typed must never sit under the keypad.
-        // A row half-hidden under the answer looks like a glitch: scroll it fully out of the way when the slot below still fits.
-        const row = el.closest('.row-2, .leg') || el;
-        const prev = row.previousElementSibling;
-        if (prev) {
-          const pr = prev.getBoundingClientRect();
-          if (pr.bottom > topEdge && pr.top < topEdge) {
-            const extra = pr.bottom - topEdge + 2;
-            if (el.getBoundingClientRect().bottom + extra <= sr.bottom - 6) screen.scrollBy({ top: extra, behavior: 'auto' });
-          }
-        }
-        const r2 = el.getBoundingClientRect();
-        if (r2.bottom > sr.bottom - 6) screen.scrollBy({ top: r2.bottom - sr.bottom + 6, behavior: 'auto' });
+        screen.scrollTop = target;
       }, 40);
     },
     get, set, setLabel, paint, setSuffix, setSub,
@@ -202,7 +197,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     el.classList.toggle('is-empty', empty);
     el.classList.toggle('is-ghost', state.ghost && !empty);
     paintLabel();
-    valueEl.textContent = empty ? (placeholder || (type === 'odds' ? '\u2014' : '0')) : (type === 'odds' ? state.v : withCommas(state.v));
+    valueEl.textContent = empty ? (placeholder || '\u2014') : (type === 'odds' ? state.v : withCommas(state.v));
     el.classList.toggle('is-long', !empty && state.v.length >= 8);
     el.classList.toggle('is-xlong', !empty && state.v.length >= 11);
     if (type === 'odds') {
@@ -396,6 +391,7 @@ let toastTimer = null;
 export function toast(msg, ms = 1300, icon = 'check') {
   let el = document.getElementById('toast');
   if (!el) { el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.append(el); }
+  el.classList.toggle('is-tip', icon === 'tip');
   el.replaceChildren(svg(icon === 'tip' ? '<circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/>' : '<path d="M5 12l5 5L20 7"/>', 16), h('span', { text: msg }));
   el.classList.add('is-on');
   clearTimeout(toastTimer);

@@ -125,7 +125,7 @@ export function createKeypad({ haptic } = {}) {
         if (type === 'odds') active.setRaw({ sign: c[0], v: c[1] }); else active.setRaw(c);
         setFresh(true);
         haptic?.();
-        if (type === 'odds') next();   // at once, so a quick Next afterwards cannot skip a slot
+        next();   // every chip moves on at once, so a quick Next afterwards cannot skip a slot
       });
       chipsRow.append(b);
     });

@@ -44,8 +44,8 @@ export function create(ctx) {
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
       const emptied = !state.a.v || !state.b.v;
       if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel('Last full line'); return; }
-      answer.classList.remove('is-stale');
-      oddsA.set('—', null, Number.isFinite(a) ? 'waiting for side B' : 'Enter odds'); oddsB.set('—', null, Number.isFinite(b) ? 'waiting for side A' : 'Enter odds'); cut.set('—');
+      answer.classList.remove('is-stale'); hadValid = false;   // no full line on screen now, so nothing to keep dim
+      oddsA.set('—', null, Number.isFinite(a) ? 'waiting for side B' : ''); oddsB.set('—', null, Number.isFinite(b) ? 'waiting for side A' : ''); cut.setLabel('Book’s cut'); cut.set('—');
       say.set(hadValid ? 'Type the other side to see the odds without the book’s cut.' : 'Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;
     }

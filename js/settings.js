@@ -78,7 +78,7 @@ export function createSettings(ctx) {
     leadToggle.setAttribute('aria-checked', String(!!st.leadUnits));
     feeChips.replaceChildren(...FEE_PRESETS.map((p) => {
       const on = p.id === st.feePreset;
-      const rate = p.rate == null ? '' : p.rate > 0 ? 'up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2 per $1' : 'no fee';
+      const rate = p.rate == null ? 'your rate' : p.rate > 0 ? 'up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2' : 'no fee';
       return h('button', { type: 'button', class: 'chip' + (on ? ' is-on' : ''), role: 'radio', 'aria-checked': String(on), onclick: () => ctx.update({ feePreset: p.id }) }, p.label, rate ? h('small', { text: rate }) : null);
     }));
     customF.el.hidden = st.feePreset !== 'custom';
@@ -86,8 +86,8 @@ export function createSettings(ctx) {
     feeNote.textContent = p.note || '';
     feeDisc.root.querySelector('.disclosure span').textContent = p.label + (p.rate > 0 ? ' \u00B7 up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2 per $1' : p.id === 'custom' ? ' \u00B7 ' + (Math.round((st.feeCustom || 0) * 1000) / 10) + '%' : ' \u00B7 no fee');
     themeSeg.set(st.theme);
-    if (st.unit > 0 && st.bankroll > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + ', which is ' + fmtProb(st.unit / st.bankroll, 'pct', 1) + ' of your bankroll.';
-    else if (st.unit > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + '. Add a bankroll to see what share of it a unit is.';
+    if (st.unit > 0 && st.bankroll > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit).replace(/\.00$/, '') + ', which is ' + fmtProb(st.unit / st.bankroll, 'pct', 1) + ' of your bankroll.';
+    else if (st.unit > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit).replace(/\.00$/, '') + '. Add a bankroll to see what share of it a unit is.';
     else unitNote.textContent = 'Set a unit size and you can type stakes as units anywhere (for example 2u).';
     if (sh.isOpen()) kp.setFields(fieldsList());
   }
