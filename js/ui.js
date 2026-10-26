@@ -75,7 +75,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     h('span', { class: 'fld-row' }, signEl, prefixEl, valueEl, caret, suffixEl),
     subEl
   );
-  el.addEventListener('click', () => keypad.open(api));
+  el.addEventListener('click', () => keypad.focus(api));
 
   let pendingUnits = false;
   const api = {
