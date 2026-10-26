@@ -1,10 +1,10 @@
 // Parlay: odds and payout for a combo bet.
-import { h, field, oddsValue, stakeDollars, result, setMoney, sentence, debounce, svg } from '../ui.js';
+import { h, field, oddsValue, stakeDollars, result, setMoney, sentence, examplePill, debounce, svg } from '../ui.js';
 import { parlay } from '../math.js';
 import { fmtOdds, fmtDecimal, fmtProb, fmtPctSigned, fmtMoney } from '../format.js';
 import * as store from '../store.js';
 
-export const ICON = '<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/>';
+export const ICON = '<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/>';
 
 export function create(ctx) {
   const id = 'parlay';
@@ -22,6 +22,7 @@ export function create(ctx) {
   const payRes = result({ label: 'Profit on your stake' });
   const bookSay = sentence();
   const countPill = h('span', { class: 'pill', text: '2 legs' });
+  const ex = examplePill();
 
   const stakeF = field({ type: 'money', label: 'Stake', value: state.stake, ctx, keypad: ctx.keypad, onChange: (v) => { state.stake = v; render(); persist(); } });
   const offeredF = field({ type: 'odds', label: 'Book’s parlay odds (optional)', value: state.offered, placeholder: '600', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
@@ -41,15 +42,17 @@ export function create(ctx) {
     if (state.legs[idx] == null) state.legs[idx] = val;
     legsEl.append(row);
     relabel(); render(); persist();
-    ctx.keypad.setFields(fieldsList(), false);
+    ctx.keypad.setFields(fieldsList());
     if (focus) ctx.keypad.focus(f);
   }
   function removeLeg(f) {
     if (legFields.length <= 1) return;
     const i = legFields.indexOf(f);
+    const wasActive = ctx.keypad.active() === f;
     legFields.splice(i, 1); state.legs.splice(i, 1); f.row.remove();
     relabel(); render(); persist();
-    ctx.keypad.setFields(fieldsList(), false);
+    ctx.keypad.setFields(fieldsList());
+    if (wasActive) ctx.keypad.focus(legFields[Math.max(0, i - 1)]);
   }
   function relabel() {
     legFields.forEach((f, i) => { f.setLabel('Leg ' + (i + 1)); f.row.querySelector('.leg-remove').hidden = legFields.length <= 1; });
@@ -57,7 +60,7 @@ export function create(ctx) {
   function fieldsList() { return [...legFields, stakeF, offeredF]; }
 
   const answer = h('div', { class: 'answer' },
-    h('div', { class: 'screen-head' }, h('span', { class: 'screen-title', text: 'Parlay' }), countPill),
+    h('div', { class: 'screen-head' }, countPill, h('span', { class: 'spacer' }), ex.el),
     hero.root, say.el,
     h('div', { class: 'tiles' }, chanceRes.root, payRes.root),
     bookSay.el
@@ -65,11 +68,9 @@ export function create(ctx) {
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     answer,
     h('div', { class: 'slots' },
-      h('div', { class: 'slots-pinned' }, h('div', { class: 'row-2' }, stakeF.el, offeredF.el)),
-      h('div', { class: 'slots-scroll' },
-        legsEl, addBtn,
-        h('div', { class: 'note', text: 'Legs multiply as you type them. For true fair odds, run each leg through Fair odds first.' })
-      )
+      legsEl, addBtn,
+      h('div', { class: 'row-2' }, stakeF.el, offeredF.el),
+      h('div', { class: 'note', text: 'These odds still include the book\u2019s cut on each leg. To take it out, run each leg through Fair odds first.' })
     )
   );
   state.legs.forEach((l) => addLeg(l));
@@ -82,6 +83,8 @@ export function create(ctx) {
     const offeredAm = oddsValue(state.offered);
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
+    ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost());
+    answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = (legs.length === all.length ? legs.length : legs.length + ' of ' + all.length) + (all.length === 1 ? ' leg' : ' legs');
     if (!r) {
       hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—'); bookSay.set('');
@@ -89,14 +92,14 @@ export function create(ctx) {
       return;
     }
     hero.setLabel('Parlay odds from these legs');
-    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), '', 'plain');
+    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), '');
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'decimal odds ' + fmtDecimal(r.decimal));
     if (Number.isFinite(stake)) {
       setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: ctx.leadUnits() });
-      say.set('All ' + legs.length + ' must win. That happens about ' + fmtProb(r.prob, 'pct') + ' of the time. ' + fmtMoney(stake) + ' would win ' + fmtMoney(r.fairProfit) + '.');
+      say.set('All ' + legs.length + ' must win for ' + fmtMoney(stake) + ' to pay ' + fmtMoney(r.fairProfit) + '.');
     } else {
       payRes.set('—', null, 'add a stake');
-      say.set('All ' + legs.length + ' must win. That happens about ' + fmtProb(r.prob, 'pct') + ' of the time.');
+      say.set('All ' + legs.length + ' must win.');
     }
     if (r.offered && Number.isFinite(stake)) {
       const e = r.offered.edge;

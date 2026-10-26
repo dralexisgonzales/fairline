@@ -1,5 +1,5 @@
 // Payout: what a bet pays, or what to risk to win a target.
-import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, debounce } from '../ui.js';
+import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, examplePill, debounce } from '../ui.js';
 import { payoutFromRisk, payoutFromWin, toImplied } from '../math.js';
 import { fmtDecimal, fmtMoney, fmtProb, fmtOdds } from '../format.js';
 import * as store from '../store.js';
@@ -21,8 +21,9 @@ export function create(ctx) {
   const amountF = field({ type: 'money', label: 'Risk', value: state.amount, ctx, keypad: ctx.keypad, onChange: (v) => { state.amount = v; render(); persist(); } });
   const oddsF = field({ type: 'odds', label: 'Odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; render(); persist(); } });
 
+  const ex = examplePill();
   const answer = h('div', { class: 'answer' },
-    h('div', { class: 'screen-head' }, h('span', { class: 'screen-title', text: 'Payout' }), modeSeg.root),
+    h('div', { class: 'screen-head' }, modeSeg.root, h('span', { class: 'spacer' }), ex.el),
     hero.root, say.el,
     h('div', { class: 'tiles' }, backRes.root, needRes.root)
   );
@@ -38,6 +39,8 @@ export function create(ctx) {
     modeSeg.set(state.mode);
     amountF.setLabel(state.mode === 'risk' ? 'Risk' : 'I want to win');
     amountF.paint();
+    ex.set(amountF.isGhost() || oddsF.isGhost());
+    answer.classList.toggle('is-example', amountF.isGhost() && oddsF.isGhost());
     const amount = stakeDollars(state.amount, unit);
     const am = oddsValue(state.odds);
     if (!Number.isFinite(amount) || !Number.isFinite(am) || !(amount > 0)) {
@@ -58,7 +61,7 @@ export function create(ctx) {
     } else {
       const r = payoutFromWin(amount, am);
       hero.setLabel('You need to risk');
-      setMoney(hero, r.stake, unit, { tone: 'plain', leadUnits: lead });
+      setMoney(hero, r.stake, unit, { tone: '', leadUnits: lead });
       setMoney(backRes, r.total, unit, { tone: '', sub: 'stake included', leadUnits: lead });
       say.set('To win ' + fmtMoney(amount) + ' at ' + fmtOdds(am) + ', risk ' + fmtMoney(r.stake) + '. You would get ' + fmtMoney(r.total) + ' back in total.');
     }

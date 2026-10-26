@@ -56,7 +56,7 @@ export function debounce(fn, ms = 80) {
 
 // ---------- Field: a tappable value edited with the built-in keypad ----------
 // type: 'odds' (sign + digits), 'money' (dollars or units), 'percent' (decimal with a suffix)
-export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false }) {
+export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false, chips = null }) {
   const state = type === 'odds'
     ? { sign: value?.sign === '+' ? '+' : '-', v: value?.v ?? '', ghost: !!value?.ghost }
     : type === 'money'
@@ -79,7 +79,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
 
   let pendingUnits = false;
   const api = {
-    el, root: el, type, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix,
+    el, root: el, type, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix, chips,
     get mode() { return state.mode; },
     text: () => state.v,
     isGhost: () => state.ghost,
@@ -96,8 +96,19 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     },
     setActive(on) { el.classList.toggle('is-active', on); },
     commit() { paint(true); },
-    reveal() { setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 30); },
+    reveal() {
+      setTimeout(() => {
+        const screen = el.closest('.screen, .sheet-body');
+        if (!screen) return;
+        const ans = screen.querySelector('.answer');
+        const topEdge = ans ? ans.getBoundingClientRect().bottom : screen.getBoundingClientRect().top;
+        const r = el.getBoundingClientRect(), sr = screen.getBoundingClientRect();
+        if (r.top < topEdge + 6) screen.scrollBy({ top: r.top - topEdge - 6, behavior: 'smooth' });
+        else if (r.bottom > sr.bottom - 6) screen.scrollBy({ top: r.bottom - sr.bottom + 6, behavior: 'smooth' });
+      }, 40);
+    },
     get, set, setLabel, paint, setSuffix, setSub,
+    setSign(sign) { if (type === 'odds') { state.sign = sign; paint(); } },
     value: () => (type === 'odds' ? oddsValue(get()) : type === 'money' ? stakeDollars(get(), ctx?.unitSize?.() || 0) : parseNum(state.v)),
   };
 
@@ -113,7 +124,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     paint();
   }
   function setLabel(t) { labelEl.textContent = t; el.setAttribute('aria-label', t); }
-  function setSuffix(s) { suffix = s; api.suffix = s; paint(); }
+  function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
   function setSub(t, cls = '') { subEl.textContent = t || ''; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !t; }
 
   function setMode(mode) {
@@ -162,6 +173,12 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   subEl.addEventListener('click', (e) => { if (subEl.classList.contains('is-link')) { e.stopPropagation(); ctx.openSettings('unit'); } });
   paint();
   return api;
+}
+
+function withCommas(v) {
+  const [i, d] = String(v).split('.');
+  const int = i.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return d != null ? int + '.' + d : int;
 }
 
 export function oddsValue(s) {
@@ -332,5 +349,11 @@ export function sheet({ title, body, onOpen, onClose }) {
     setTimeout(() => { if (!openState) root.hidden = true; }, 260);
     onClose?.();
   }
-  return { root, open, close, isOpen: () => openState, body: bodyEl };
+  return { root, open, close, isOpen: () => openState, body: bodyEl, panel };
+}
+
+// "Example" marker: shown while a screen is still using untouched example values.
+export function examplePill() {
+  const el = h('span', { class: 'pill pill-example', text: 'Example', hidden: true });
+  return { el, set: (on) => { el.hidden = !on; } };
 }

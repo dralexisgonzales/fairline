@@ -1,5 +1,5 @@
 // Fair odds: the line with the book's cut removed.
-import { h, field, oddsValue, result, sentence, debounce } from '../ui.js';
+import { h, field, oddsValue, result, sentence, examplePill, debounce } from '../ui.js';
 import { noVig } from '../math.js';
 import { fmtOdds, fmtProb, fmtPctSigned } from '../format.js';
 import * as store from '../store.js';
@@ -20,9 +20,12 @@ export function create(ctx) {
 
   const fA = field({ type: 'odds', label: 'Side A odds', value: state.a, ctx, keypad: ctx.keypad, onChange: (v) => { state.a = v; render(); persist(); } });
   const fB = field({ type: 'odds', label: 'Side B odds', value: state.b, ctx, keypad: ctx.keypad, onChange: (v) => { state.b = v; render(); persist(); } });
+  // A two-way line usually has a plus side: when B is started from empty and A is minus, default B to plus.
+  fB.el.addEventListener('click', () => { if (fB.text() === '' && state.a.sign === '-') fB.setSign('+'); });
 
+  const ex = examplePill();
   const answer = h('div', { class: 'answer' },
-    h('div', { class: 'screen-head' }, h('span', { class: 'screen-title', text: 'Fair odds · cut removed' }), cut.root),
+    h('div', { class: 'screen-head' }, cut.root, h('span', { class: 'spacer' }), ex.el),
     h('div', { class: 'cols' }, h('div', { class: 'col' }, headA, oddsA.root), h('div', { class: 'col' }, headB, oddsB.root)),
     say.el
   );
@@ -34,6 +37,8 @@ export function create(ctx) {
   let hadValid = false;
   function render() {
     const a = oddsValue(state.a), b = oddsValue(state.b);
+    ex.set(fA.isGhost() || fB.isGhost());
+    answer.classList.toggle('is-example', fA.isGhost() && fB.isGhost());
     headA.textContent = 'Side A' + (Number.isFinite(a) ? ' · ' + fmtOdds(a) : '');
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
@@ -48,10 +53,10 @@ export function create(ctx) {
     oddsB.set(fmtOdds(r.fairOddsB), fmtOdds(r.fairOddsB, { ascii: true }), fmtProb(r.fairB, 'pct') + ' chance');
     if (r.hold < -1e-9) {
       cut.setLabel('No cut'); cut.set(fmtPctSigned(-r.hold, 2), fmtPctSigned(-r.hold, 2), '', 'pos');
-      say.set('These two prices add up to less than 100%. Betting both sides locks in ' + fmtPctSigned(-r.hold, 2) + '. See the Hedge tab, Both sides.');
+      say.set('No cut here: the two chances add up to under 100%, so betting both sides locks in ' + fmtPctSigned(-r.hold, 2) + '. See Hedge, Both sides.');
     } else {
       cut.setLabel('Book’s cut'); cut.set(fmtProb(r.hold, 'pct', 1), fmtProb(r.hold, 'pct', 1), '', r.hold > 0.08 ? 'neg' : '');
-      say.set('The book keeps ' + fmtProb(r.hold, 'pct', 1) + ' of this line. With that cut removed, ' + fmtOdds(a) + ' / ' + fmtOdds(b) + ' is really ' + fmtOdds(r.fairOddsA) + ' / ' + fmtOdds(r.fairOddsB) + '. Side A wins ' + fmtProb(r.fairA, 'pct') + ' of the time.');
+      say.set('The book keeps ' + fmtProb(r.hold, 'pct', 1) + ' of this line. These are the odds with that cut taken out.');
     }
   }
 

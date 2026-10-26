@@ -8,15 +8,16 @@ export function createSettings(ctx) {
   const s = ctx.settings;
   const kp = ctx.keypad;
 
-  const unitF = field({ type: 'percent', label: 'Unit size (your standard bet)', prefix: '$', placeholder: '25', value: s.unit != null ? String(s.unit) : '', maxLen: 9, ctx, keypad: kp,
+  const unitF = field({ type: 'percent', label: 'Unit size', prefix: '$', placeholder: '25', value: s.unit != null ? String(s.unit) : '', maxLen: 9, ctx, keypad: kp, chips: ['5', '10', '20', '25', '50', '100'],
     onChange: (v) => ctx.update({ unit: numOrNull(v.v) }) });
-  const bankF = field({ type: 'percent', label: 'Bankroll (money set aside)', prefix: '$', placeholder: '1000', value: s.bankroll != null ? String(s.bankroll) : '', maxLen: 10, ctx, keypad: kp,
+  const bankF = field({ type: 'percent', label: 'Bankroll', prefix: '$', placeholder: '1000', value: s.bankroll != null ? String(s.bankroll) : '', maxLen: 10, ctx, keypad: kp, chips: ['500', '1000', '2500', '5000', '10000'],
     onChange: (v) => ctx.update({ bankroll: numOrNull(v.v) }) });
+  unitF.setSub('your standard bet'); bankF.setSub('money set aside for betting');
   const unitNote = h('div', { class: 'note' });
   const leadToggle = h('button', { type: 'button', class: 'toggle', role: 'switch', onclick: () => ctx.update({ leadUnits: !ctx.settings.leadUnits }) });
 
   const feeChips = h('div', { class: 'chips', role: 'radiogroup' });
-  const customF = field({ type: 'percent', label: 'Custom rate', suffix: '%', placeholder: '5', value: s.feeCustom != null ? String(Number((s.feeCustom * 100).toFixed(3))) : '', maxLen: 6, ctx, keypad: kp,
+  const customF = field({ type: 'percent', label: 'Custom rate', suffix: '%', placeholder: '5', value: s.feeCustom != null ? String(Number((s.feeCustom * 100).toFixed(3))) : '', maxLen: 6, ctx, keypad: kp, chips: ['3', '4', '5', '6', '7', '10'],
     onChange: (v) => { const n = parseNum(v.v); const c = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0; if (Number.isFinite(n) && c !== n) customF.set(String(c)); ctx.update({ feeCustom: c / 100 }); } });
   const feeNote = h('div', { class: 'note' });
 
@@ -35,14 +36,15 @@ export function createSettings(ctx) {
       h('div', { class: 'section-title', text: 'Your stakes' }),
       h('div', { class: 'row-2' }, unitF.el, bankF.el),
       unitNote,
-      h('div', { class: 'switch-row' }, h('div', {}, h('div', { class: 'lbl', text: 'Show money in units first' }), h('div', { class: 'sub', text: 'Dollars stay underneath' })), leadToggle)
+      h('div', { class: 'switch-row' }, h('div', {}, h('div', { class: 'lbl', text: 'Show money as units first' }), h('div', { class: 'sub', text: 'For example 2u, with $50 underneath' })), leadToggle)
     ),
     h('div', { class: 'section' },
       h('div', { class: 'section-title', text: 'Look' }),
       themeSeg.root
     ),
     h('div', { class: 'section' },
-      h('div', { class: 'section-title', text: 'Prediction market fee (used in Convert, ¢ mode)' }),
+      h('div', { class: 'section-title', text: 'Prediction market fee' }),
+      h('div', { class: 'note', text: 'Only used in Convert when you switch to \u00A2. Pick where you trade.' }),
       feeChips,
       customF.el,
       feeNote
@@ -58,7 +60,12 @@ export function createSettings(ctx) {
   let focusOnOpen = null;
   const sh = sheet({
     title: 'Settings', body,
-    onOpen: () => { render(); if (focusOnOpen === 'unit') setTimeout(() => kp.focus(unitF, true), 280); else kp.setFields(fieldsList(), false); },
+    onOpen: () => {
+      render();
+      ctx.takeKeypad(sh.panel);
+      kp.setFields(fieldsList());
+      setTimeout(() => kp.focus(focusOnOpen === 'unit' ? unitF : unitF, focusOnOpen === 'unit'), 280);
+    },
     onClose: () => { ctx.afterSettingsClose?.(); },
   });
 
@@ -81,7 +88,7 @@ export function createSettings(ctx) {
     if (st.unit > 0 && st.bankroll > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + ', which is ' + fmtProb(st.unit / st.bankroll, 'pct', 1) + ' of your bankroll.';
     else if (st.unit > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + '. Add a bankroll to see what share of it a unit is.';
     else unitNote.textContent = 'Set a unit size and you can type stakes as units anywhere (for example 2u).';
-    if (sh.isOpen()) kp.setFields(fieldsList(), false);
+    if (sh.isOpen()) kp.setFields(fieldsList());
   }
 
   return { root: sh.root, open: (focus) => { focusOnOpen = focus || null; sh.open(); }, close: sh.close, isOpen: sh.isOpen, render };
