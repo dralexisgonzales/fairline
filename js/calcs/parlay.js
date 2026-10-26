@@ -4,7 +4,7 @@ import { parlay } from '../math.js';
 import { fmtOdds, fmtDecimal, fmtProb, fmtPctSigned, fmtMoney } from '../format.js';
 import * as store from '../store.js';
 
-export const ICON = '<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/>';
+export const ICON = '<path d="M10 14a4 4 0 0 1 0-5.7l2.3-2.3a4 4 0 0 1 5.7 5.7l-1.2 1.2"/><path d="M14 10a4 4 0 0 1 0 5.7l-2.3 2.3a4 4 0 0 1-5.7-5.7l1.2-1.2"/>';
 
 export function create(ctx) {
   const id = 'parlay';
@@ -25,12 +25,13 @@ export function create(ctx) {
   const ex = examplePill();
 
   const stakeF = field({ type: 'money', label: 'Stake', value: state.stake, ctx, keypad: ctx.keypad, onChange: (v) => { state.stake = v; render(); persist(); } });
-  const offeredF = field({ type: 'odds', label: 'Book’s parlay odds (optional)', value: state.offered, placeholder: '600', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
+  const offeredF = field({ type: 'odds', label: 'Book’s odds (optional)', value: state.offered, placeholder: '600', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
   offeredF.autoAdvance = false;
 
   const legsEl = h('div', { class: 'legs-list' });
   const legFields = [];
   const addBtn = h('button', { type: 'button', class: 'btn-row', onclick: () => addLeg({ sign: '-', v: '', ghost: false }, true) }, svg('<path d="M12 5v14M5 12h14"/>', 18), 'Add a leg');
+  const addHead = h('button', { type: 'button', class: 'pill pill-btn', 'aria-label': 'Add a leg', onclick: () => addLeg({ sign: '-', v: '', ghost: false }, true) }, svg('<path d="M12 5v14M5 12h14"/>', 16), 'Leg');
 
   function addLeg(val, focus = false) {
     const idx = legFields.length;
@@ -60,16 +61,16 @@ export function create(ctx) {
   function fieldsList() { return [...legFields, stakeF, offeredF]; }
 
   const answer = h('div', { class: 'answer' },
-    h('div', { class: 'screen-head' }, countPill, h('span', { class: 'spacer' }), ex.el),
+    h('div', { class: 'screen-head' }, countPill, addHead, h('span', { class: 'spacer' }), ex.el),
     hero.root, say.el,
-    h('div', { class: 'tiles' }, chanceRes.root, payRes.root),
-    bookSay.el
+    h('div', { class: 'tiles' }, chanceRes.root, payRes.root)
   );
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     answer,
     h('div', { class: 'slots' },
       legsEl, addBtn,
       h('div', { class: 'row-2' }, stakeF.el, offeredF.el),
+      bookSay.el,
       h('div', { class: 'note', text: 'These odds still include the book\u2019s cut on each leg. To take it out, run each leg through Fair odds first.' })
     )
   );
@@ -83,23 +84,24 @@ export function create(ctx) {
     const offeredAm = oddsValue(state.offered);
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
-    ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost());
+    ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost());
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
-    countPill.textContent = (legs.length === all.length ? legs.length : legs.length + ' of ' + all.length) + (all.length === 1 ? ' leg' : ' legs');
+    countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
     if (!r) {
       hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—'); bookSay.set('');
       say.set('Add the odds of each pick. Every pick has to win.');
       return;
     }
     hero.setLabel('Parlay odds from these legs');
-    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), '');
-    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'decimal odds ' + fmtDecimal(r.decimal));
+    const bookSub = r.offered ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.edge) < 0.0005 ? 'the same' : fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more'))) : '';
+    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
+    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), 'if every leg is independent');
     if (Number.isFinite(stake)) {
       setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: ctx.leadUnits() });
-      say.set('All ' + legs.length + ' must win for ' + fmtMoney(stake) + ' to pay ' + fmtMoney(r.fairProfit) + '.');
+      say.set('Every leg must win. Then ' + fmtMoney(stake) + ' wins ' + fmtMoney(r.fairProfit) + '.');
     } else {
       payRes.set('—', null, 'add a stake');
-      say.set('All ' + legs.length + ' must win.');
+      say.set('Every leg must win.');
     }
     if (r.offered && Number.isFinite(stake)) {
       const e = r.offered.edge;

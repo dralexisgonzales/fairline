@@ -59,9 +59,14 @@ const settingsSheet = createSettings(ctx);
 // ----- Layout -----
 calcs.forEach((c) => main.append(c.root));
 dock.insertBefore(keypad.root, tabs);
-function placeDock() { document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px'); }
-keypad.onOpenChange((open) => { app.classList.toggle('kb-open', open); setTimeout(placeDock, 0); });
+function placeDock() {
+  document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
+  // Tight: the room left for the answer and slots is small (notched phones, short browsers).
+  app.classList.toggle('tight', main.clientHeight < 470);
+}
+keypad.onOpenChange((open) => { app.classList.toggle('kb-open', open); setTimeout(() => { placeDock(); keypad.active()?.reveal?.(); }, 0); });
 window.addEventListener('resize', placeDock);
+
 
 const tabBtns = calcs.map((c) =>
   h('button', { type: 'button', class: 'tab', 'data-id': c.id, 'aria-label': c.title, onclick: () => switchTo(c.id) },
@@ -104,8 +109,9 @@ function switchTo(id) {
   const c = calcs.find((x) => x.id === id);
   c.render();
   keypad.setFields(c.fields());
+  c.root.scrollTop = 0;
   const first = c.fields()[0];
-  if (first) keypad.focus(first, false);
+  if (first) keypad.focus(first, true);
 }
 function renderAll() { calcs.forEach((c) => c.render()); const c = calcs.find((x) => x.id === active); if (c && !settingsSheet.isOpen()) keypad.setFields(c.fields()); }
 
@@ -118,6 +124,12 @@ function applyTheme() {
   if (meta) meta.setAttribute('content', t === 'dark' ? '#0b0c0f' : '#f4f2ec');
 }
 media.addEventListener?.('change', () => { if (settings.theme === 'auto') applyTheme(); });
+
+// If the answer block changes height while a slot is focused, keep that slot in view.
+if ('ResizeObserver' in window) {
+  const ro = new ResizeObserver(() => keypad.active()?.reveal?.());
+  document.querySelectorAll('.answer').forEach((el) => ro.observe(el));
+}
 
 // ----- Boot -----
 applyTheme();

@@ -15,11 +15,23 @@ export function createKeypad({ haptic } = {}) {
   let fresh = true;         // first key replaces the old value
   let fields = [];          // slots in the active screen, in order
   let onOpenChange = null;
+  const activeListeners = [];
+  const notifyActive = () => activeListeners.forEach((fn) => { try { fn(active); } catch {} });
 
   const chipsRow = h('div', { class: 'kp-chips', role: 'group', 'aria-label': 'Quick values' });
-  const modeKey = key('', 'kp-key kp-fn kp-mode', () => active?.toggleMode?.());
+  const signMinus = h('span', { class: 'kp-half', text: '\u2212' });
+  const signPlus = h('span', { class: 'kp-half', text: '+' });
+  const modeKey = key('', 'kp-key kp-fn kp-mode', () => {});
+  modeKey.addEventListener('pointerdown', (e) => {
+    if (!active) return;
+    if (active.type === 'odds') {
+      const r = modeKey.getBoundingClientRect();
+      active.chooseSign(e.clientX < r.left + r.width / 2 ? '-' : '+');
+    } else if (active.type === 'money') active.toggleMode();
+  });
   const dotKey = key('.', 'kp-key', () => press('.'));
   const dblKey = key('00', 'kp-key', () => { press('0'); press('0'); });
+  const zeroKey = key('0', 'kp-key kp-zero', () => press('0'));
   const nextKey = key('', 'kp-key kp-fn kp-next', () => next(), 'Next');
   const doneKey = key(svg('<path d="M6 9l6 6 6-6"/>', 22), 'kp-key kp-fn kp-hide', () => close(), 'Hide keypad');
   const grid = h('div', { class: 'kp-grid' },
@@ -29,7 +41,7 @@ export function createKeypad({ haptic } = {}) {
     modeKey,
     key('7', 'kp-key', () => press('7')), key('8', 'kp-key', () => press('8')), key('9', 'kp-key', () => press('9')),
     doneKey,
-    dotKey, key('0', 'kp-key', () => press('0')), dblKey,
+    dotKey, zeroKey, dblKey,
     nextKey
   );
   const root = h('div', { class: 'keypad', hidden: true, role: 'group', 'aria-label': 'Keypad' }, chipsRow, grid);
@@ -55,7 +67,7 @@ export function createKeypad({ haptic } = {}) {
 
   function setFields(list) {
     fields = list;
-    if (active && !fields.includes(active)) { active.setActive(false); active = null; }
+    if (active && !fields.includes(active)) { active.setActive(false); active = null; notifyActive(); }
     if (active) renderContext();
   }
 
@@ -66,16 +78,18 @@ export function createKeypad({ haptic } = {}) {
     field.setActive(true);
     renderContext();
     if (root.hidden) { root.hidden = false; onOpenChange?.(true); }
+    notifyActive();
     if (reveal) field.reveal?.();
   }
 
   function close() {
-    if (active) { active.setActive(false); active.commit?.(); active = null; }
+    if (active) { active.setActive(false); active.commit?.(); active = null; notifyActive(); }
     if (!root.hidden) { root.hidden = true; onOpenChange?.(false); }
   }
 
   function next() {
     if (!active) { if (fields[0]) focus(fields[0]); return; }
+    if (active.noAdvance) { close(); return; }
     const visible = fields.filter((f) => f.el.isConnected && f.el.offsetParent !== null);
     const i = visible.indexOf(active);
     if (i === visible.length - 1) { close(); return; }
@@ -106,11 +120,16 @@ export function createKeypad({ haptic } = {}) {
       chipsRow.append(b);
     });
     chipsRow.hidden = chips.length === 0;
-    if (type === 'odds') { modeKey.replaceChildren('+/−'); modeKey.disabled = false; modeKey.setAttribute('aria-label', 'Switch plus or minus'); }
-    else if (type === 'money') { modeKey.replaceChildren(active.mode === 'u' ? '$' : 'u'); modeKey.disabled = false; modeKey.setAttribute('aria-label', active.mode === 'u' ? 'Enter in dollars' : 'Enter in units'); }
-    else { modeKey.replaceChildren(' '); modeKey.disabled = true; modeKey.removeAttribute('aria-label'); }
+    chipsRow.scrollLeft = 0;
+    if (type === 'odds') {
+      signMinus.classList.toggle('is-on', active.sign === '-'); signPlus.classList.toggle('is-on', active.sign === '+');
+      modeKey.replaceChildren(signMinus, signPlus); modeKey.classList.add('kp-sign'); modeKey.disabled = false; modeKey.setAttribute('aria-label', 'Minus or plus');
+    }
+    else if (type === 'money') { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren(active.mode === 'u' ? 'in $' : 'in u'); modeKey.disabled = false; modeKey.setAttribute('aria-label', active.mode === 'u' ? 'Enter in dollars' : 'Enter in units'); }
+    else { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren('\u00A0'); modeKey.disabled = true; modeKey.removeAttribute('aria-label'); }
     dotKey.disabled = type === 'odds';
     dblKey.disabled = type === 'odds';
+    grid.classList.toggle('kp-odds', type === 'odds');
     const visible = fields.filter((f) => f.el.isConnected && f.el.offsetParent !== null);
     const last = visible.indexOf(active) === visible.length - 1;
     nextKey.replaceChildren(last ? 'Done' : svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 22));
@@ -135,5 +154,5 @@ export function createKeypad({ haptic } = {}) {
   function clear() { if (!active) return; active.setText(''); fresh = false; }
   function refresh() { if (active) renderContext(); }
 
-  return { root, focus, close, next, setFields, refresh, isOpen: () => !root.hidden, active: () => active, onOpenChange: (fn) => { onOpenChange = fn; } };
+  return { root, focus, close, next, setFields, refresh, isOpen: () => !root.hidden, active: () => active, onOpenChange: (fn) => { onOpenChange = fn; }, onActive: (fn) => { activeListeners.push(fn); } };
 }

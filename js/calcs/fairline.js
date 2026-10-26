@@ -37,7 +37,7 @@ export function create(ctx) {
   let hadValid = false;
   function render() {
     const a = oddsValue(state.a), b = oddsValue(state.b);
-    ex.set(fA.isGhost() || fB.isGhost());
+    ex.set(fA.isGhost() || fB.isGhost(), fA.isGhost() && fB.isGhost());
     answer.classList.toggle('is-example', fA.isGhost() && fB.isGhost());
     headA.textContent = 'Side A' + (Number.isFinite(a) ? ' · ' + fmtOdds(a) : '');
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
@@ -56,7 +56,7 @@ export function create(ctx) {
       say.set('No cut here: the two chances add up to under 100%, so betting both sides locks in ' + fmtPctSigned(-r.hold, 2) + '. See Hedge, Both sides.');
     } else {
       cut.setLabel('Book’s cut'); cut.set(fmtProb(r.hold, 'pct', 1), fmtProb(r.hold, 'pct', 1), '', r.hold > 0.08 ? 'neg' : '');
-      say.set('The book keeps ' + fmtProb(r.hold, 'pct', 1) + ' of this line. These are the odds with that cut taken out.');
+      say.set('The book keeps ' + fmtProb(r.hold, 'pct', 1) + ' of this line' + (r.hold > 0.08 ? ', which is steep' : '') + '. These are the odds with that cut taken out.');
     }
   }
 

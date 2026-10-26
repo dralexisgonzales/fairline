@@ -16,7 +16,7 @@ export function create(ctx) {
   const backRes = result({ label: 'You get back' });
   const needRes = result({ label: 'Must win this often' });
   const modeSeg = segmented({ options: [{ id: 'risk', label: 'I’m risking' }, { id: 'win', label: 'I want to win' }], value: state.mode, cls: 'seg-mini', label: 'Enter the risk or the target win',
-    onChange: (m) => { state.mode = m; render(); persist(); } });
+    onChange: (m) => { state.mode = m; render(); persist(); ctx.keypad.focus(amountF, false); } });
 
   const amountF = field({ type: 'money', label: 'Risk', value: state.amount, ctx, keypad: ctx.keypad, onChange: (v) => { state.amount = v; render(); persist(); } });
   const oddsF = field({ type: 'odds', label: 'Odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; render(); persist(); } });
@@ -39,7 +39,7 @@ export function create(ctx) {
     modeSeg.set(state.mode);
     amountF.setLabel(state.mode === 'risk' ? 'Risk' : 'I want to win');
     amountF.paint();
-    ex.set(amountF.isGhost() || oddsF.isGhost());
+    ex.set(amountF.isGhost() || oddsF.isGhost(), amountF.isGhost() && oddsF.isGhost());
     answer.classList.toggle('is-example', amountF.isGhost() && oddsF.isGhost());
     const amount = stakeDollars(state.amount, unit);
     const am = oddsValue(state.odds);
@@ -57,7 +57,7 @@ export function create(ctx) {
       hero.setLabel('Profit if it wins');
       setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', leadUnits: lead });
       setMoney(backRes, r.total, unit, { tone: '', sub: 'stake included', leadUnits: lead });
-      say.set('Risk ' + fmtMoney(amount) + ' at ' + fmtOdds(am) + ': win ' + fmtMoney(r.profit) + ' and get ' + fmtMoney(r.total) + ' back in total. Decimal odds ' + fmtDecimal(r.decimal) + '.');
+      say.set('Risk ' + fmtMoney(amount) + ' at ' + fmtOdds(am) + ': win ' + fmtMoney(r.profit) + ' and get ' + fmtMoney(r.total) + ' back in total.');
     } else {
       const r = payoutFromWin(amount, am);
       hero.setLabel('You need to risk');

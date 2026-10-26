@@ -19,8 +19,9 @@ export function create(ctx) {
 
   const oddsF = field({ type: 'odds', label: 'American odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; state.src = 'odds'; render(); persist(); } });
   const probF = field({ type: 'percent', label: 'Chance to win', value: state.prob, suffix: '%', placeholder: '52.4', maxLen: 6, ctx, keypad: ctx.keypad, onChange: (v) => { state.prob = v; state.src = 'prob'; render(); persist(); } });
-  oddsF.el.addEventListener('click', () => { if (state.src !== 'odds') { state.src = 'odds'; render(); persist(); } });
-  probF.el.addEventListener('click', () => { if (state.src !== 'prob') { state.src = 'prob'; render(); persist(); } });
+  oddsF.noAdvance = true; probF.noAdvance = true;
+  oddsF.el.addEventListener('click', () => { if (state.src !== 'odds') { state.src = 'odds'; render(); persist(); ctx.keypad.setFields([oddsF, probF]); } });
+  probF.el.addEventListener('click', () => { if (state.src !== 'prob') { state.src = 'prob'; render(); persist(); ctx.keypad.setFields([probF, oddsF]); } });
 
   const ex = examplePill();
   const answer = h('div', { class: 'answer' },
@@ -35,7 +36,7 @@ export function create(ctx) {
   let hadValid = false;
   function render() {
     const cents = ctx.probMode() === 'cents';
-    ex.set(oddsF.isGhost() || probF.isGhost());
+    ex.set(oddsF.isGhost() || probF.isGhost(), true);
     answer.classList.toggle('is-example', oddsF.isGhost() && state.src === 'odds');
     modeSeg.set(ctx.probMode());
     probF.setSuffix(cents ? '¢' : '%');
@@ -46,6 +47,7 @@ export function create(ctx) {
       p = toImplied(am);
       probF.set({ v: trim(p * 100, p < 0.01 || p > 0.995 ? 2 : 1), ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
+      probF.setSub(Number.isFinite(p) ? 'worked out from the odds' : '');
     } else {
       const pv = parseNum(state.prob.v);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
@@ -53,10 +55,11 @@ export function create(ctx) {
       const txt = Number.isFinite(am) ? fmtOdds(am, { ascii: true }) : '';
       oddsF.set(txt ? { sign: txt.startsWith('-') ? '-' : '+', v: txt.slice(1), ghost: false } : { sign: '-', v: '', ghost: false });
       oddsF.el.classList.add('is-computed'); probF.el.classList.remove('is-computed');
+      oddsF.setSub(Number.isFinite(am) ? 'worked out from the chance' : '');
       const bad = Number.isFinite(pv) && pv >= 100;
       probF.setSub(Number.isFinite(pv) && !(pv > 0 && pv < 100) ? 'Use a number above 0 and below 100' : '', bad ? 'is-error' : '');
     }
-    if (state.src === 'odds') probF.setSub('');
+    if (state.src === 'odds') oddsF.setSub(''); else if (!Number.isFinite(parseNum(state.prob.v)) || (parseNum(state.prob.v) > 0 && parseNum(state.prob.v) < 100)) probF.setSub('');
 
     if (!Number.isFinite(p)) {
       if (hadValid) { answer.classList.add('is-stale'); return; }
@@ -72,21 +75,21 @@ export function create(ctx) {
     if (state.src === 'odds') {
       hero.setLabel(cents ? 'Price this implies' : 'Chance to win this implies');
       hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), '');
-      let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even. Decimal odds ' + fmtDecimal(dec) + '.';
-      if (cents) t = fmtOdds(am) + ' is the same as a ' + fmtProb(p, 'cents') + ' contract. ' + feeLine(p, rate, label);
+      let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even. In decimal odds that is ' + fmtDecimal(dec) + '.';
+      if (cents) t = fmtOdds(am) + ' is the same as paying ' + fmtProb(p, 'cents') + ' for a contract that pays $1 if it wins. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
-      hero.setLabel('Odds for a ' + fmtProb(p, cents ? 'cents' : 'pct') + (cents ? ' price' : ' chance'));
+      hero.setLabel('Odds for a ' + fmtProb(p, cents ? 'cents' : 'pct').replace(/\.0(?=[%\u00A2])/, '') + (cents ? ' price' : ' chance'));
       hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), '');
-      let t = 'A bet that wins ' + fmtProb(p, 'pct') + ' of the time is fairly priced at these odds (' + fmtDecimal(dec) + ' decimal).';
-      if (cents) t = 'A ' + fmtProb(p, 'cents') + ' contract pays $1 if it wins, like a bet at these odds. ' + feeLine(p, rate, label);
+      let t = 'A bet that wins ' + fmtProb(p, 'pct') + ' of the time is fairly priced at these odds. In decimal odds that is ' + fmtDecimal(dec) + '.';
+      if (cents) t = 'Paying ' + fmtProb(p, 'cents') + ' for a contract that pays $1 if it wins is a ' + fmtProb(p, 'pct') + ' chance, the same as these odds. ' + feeLine(p, rate, label);
       say.set(t);
     }
   }
   function feeLine(p, rate, label) {
-    if (!(rate > 0)) return label + ' charges no fee on this, so the price you see is what you pay.';
+    if (!(rate > 0)) return label + ' charges no fee here, so what you see is what you pay.';
     const eff = effectivePrice(p, rate);
-    return label + ' adds a ' + fmtCentsExact(eff.fee) + ' fee, so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ').';
+    return label + ' adds a ' + fmtCentsExact(eff.fee) + ' fee, so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
   }
 
   return { id, title: 'Convert', tab: 'Convert', icon: ICON, root, render, fields: () => (state.src === 'odds' ? [oddsF, probF] : [probF, oddsF]) };

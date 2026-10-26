@@ -56,7 +56,7 @@ export function debounce(fn, ms = 80) {
 
 // ---------- Field: a tappable value edited with the built-in keypad ----------
 // type: 'odds' (sign + digits), 'money' (dollars or units), 'percent' (decimal with a suffix)
-export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false, chips = null }) {
+export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false, chips = null, noAdvance = false }) {
   const state = type === 'odds'
     ? { sign: value?.sign === '+' ? '+' : '-', v: value?.v ?? '', ghost: !!value?.ghost }
     : type === 'money'
@@ -79,7 +79,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
 
   let pendingUnits = false;
   const api = {
-    el, root: el, type, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix, chips,
+    el, root: el, type, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix, chips, noAdvance,
     get mode() { return state.mode; },
     text: () => state.v,
     isGhost: () => state.ghost,
@@ -103,12 +103,14 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const ans = screen.querySelector('.answer');
         const topEdge = ans ? ans.getBoundingClientRect().bottom : screen.getBoundingClientRect().top;
         const r = el.getBoundingClientRect(), sr = screen.getBoundingClientRect();
-        if (r.top < topEdge + 6) screen.scrollBy({ top: r.top - topEdge - 6, behavior: 'smooth' });
-        else if (r.bottom > sr.bottom - 6) screen.scrollBy({ top: r.bottom - sr.bottom + 6, behavior: 'smooth' });
+        if (r.top < topEdge + 6) screen.scrollBy({ top: r.top - topEdge - 6, behavior: 'auto' });
+        else if (r.bottom > sr.bottom - 6) screen.scrollBy({ top: r.bottom - sr.bottom + 6, behavior: 'auto' });
       }, 40);
     },
     get, set, setLabel, paint, setSuffix, setSub,
     setSign(sign) { if (type === 'odds') { state.sign = sign; paint(); } },
+    chooseSign(sign) { if (type === 'odds') { state.sign = sign; state.ghost = false; paint(); onChange(get()); keypad.refresh(); } },
+    get sign() { return state.sign; },
     value: () => (type === 'odds' ? oddsValue(get()) : type === 'money' ? stakeDollars(get(), ctx?.unitSize?.() || 0) : parseNum(state.v)),
   };
 
@@ -130,12 +132,8 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   function setMode(mode) {
     if (state.mode === mode) return;
     const unit = ctx.unitSize();
-    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; ctx.openSettings('unit'); return; }
-    const n = parseNum(state.v);
-    if (Number.isFinite(n) && unit > 0) {
-      if (mode === 'u') { const text = state.v; state.v = trimNum(n / unit, 4); state.exact = { text, unitsText: state.v, unit }; }
-      else { const ex = state.exact; state.v = ex && ex.unitsText === state.v && ex.unit === unit ? ex.text : trimNum(n * unit, 2); state.exact = null; }
-    }
+    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; toast('Set your unit size first, then this box will switch to units', 2600); ctx.openSettings('unit'); return; }
+    // The typed number keeps its digits; only what they mean changes (2 then u is 2u). The other reading shows underneath.
     state.mode = mode;
     paint(); onChange(get()); keypad.refresh();
   }
@@ -144,7 +142,9 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     const empty = state.v === '';
     el.classList.toggle('is-empty', empty);
     el.classList.toggle('is-ghost', state.ghost && !empty);
-    valueEl.textContent = empty ? (placeholder || '0') : state.v;
+    valueEl.textContent = empty ? (placeholder || (type === 'odds' ? '\u2014' : '0')) : (type === 'odds' ? state.v : withCommas(state.v));
+    el.classList.toggle('is-long', !empty && state.v.length >= 8);
+    el.classList.toggle('is-xlong', !empty && state.v.length >= 11);
     if (type === 'odds') {
       signEl.textContent = state.sign === '-' ? '−' : '+';
       signEl.classList.toggle('is-plus', state.sign === '+');
@@ -355,5 +355,6 @@ export function sheet({ title, body, onOpen, onClose }) {
 // "Example" marker: shown while a screen is still using untouched example values.
 export function examplePill() {
   const el = h('span', { class: 'pill pill-example', text: 'Example', hidden: true });
-  return { el, set: (on) => { el.hidden = !on; } };
+  // all: every value is an example; some: a mix of typed and example values
+  return { el, set: (on, all = true) => { el.hidden = !on; el.textContent = all ? 'Example' : 'Uses example values'; } };
 }
