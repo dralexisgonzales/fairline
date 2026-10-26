@@ -28,7 +28,7 @@ export function create(ctx) {
   const aHedge = field({ type: 'odds', label: 'Other side’s odds', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
   const aOrig = field({ type: 'odds', label: 'Your odds', value: state.A.orig, ctx, keypad: kp, onChange: (v) => { state.A.orig = v; render(); persist(); } });
   const aStake = field({ type: 'money', label: 'Your stake', value: state.A.stake, ctx, keypad: kp, onChange: (v) => { state.A.stake = v; render(); persist(); } });
-  const aManual = field({ type: 'money', label: 'Try another amount', value: state.A.manual, placeholder: '0', hint: 'optional', ctx, keypad: kp, onChange: (v) => { state.A.manual = v; render(); persist(); } });
+  const aManual = field({ type: 'money', label: 'Try another amount', value: state.A.manual, hint: 'optional', ctx, keypad: kp, onChange: (v) => { state.A.manual = v; render(); persist(); } });
   const aWinO = result({ label: 'If your bet wins' });
   const aWinH = result({ label: 'If the other side wins' });
   kp.onActive(() => { if (state.mode === 'A' && !root.hidden) renderA(); });
@@ -166,7 +166,7 @@ export function create(ctx) {
     }
     if (r.exists) {
       bSay.set(total > 0
-        ? 'Together they return ' + fmtMoney(r.returnTotal) + ' whichever side wins, a ' + fmtPctSigned(r.roi, 2).replace(/^\+/, '') + ' profit. Place both quickly.'
+        ? 'Together they return ' + fmtMoney(r.returnTotal) + ' whichever side wins, a ' + fmtPctSigned(r.roi, 2).replace(/^\+/, '') + ' profit. Place both before the odds move.'
         : 'Split your money as shown and you get back ' + fmtPctSigned(r.roi, 2) + ' whichever side wins. Add a total to see dollars.');
     } else if (Math.abs(r.roi) < 0.00005) {
       bSay.set('Betting both sides here gets exactly your money back, nothing more.');

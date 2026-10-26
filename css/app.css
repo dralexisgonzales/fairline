@@ -111,6 +111,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 }
 .screen::-webkit-scrollbar { display: none; }
 .screen::after { content: ""; flex: none; height: var(--overscroll, 0px); }
+.kb-open .screen { -webkit-mask-image: linear-gradient(#000 calc(100% - 14px), transparent); mask-image: linear-gradient(#000 calc(100% - 14px), transparent); }
+.kb-open .screen.fits { -webkit-mask-image: none; mask-image: none; }
 .answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 -20px; padding: 8px 20px 12px; background: var(--bg); display: flex; flex-direction: column; }
 #app:not(.kb-open) .answer { flex: 1 1 auto; justify-content: center; position: static; }
 #app:not(.kb-open) .res-hero .res-value { font-size: clamp(72px, min(26vw, 12dvh), 112px); }
@@ -129,16 +131,18 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* Answer pieces */
 .say { margin: 4px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--text-2); min-height: 20px; text-wrap: pretty; }
 .say strong { color: var(--text); font-weight: 600; }
-.answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap, .answer.is-stale .pill:not(.pill-example) { opacity: 0.55; }
+.answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap { opacity: 0.55; }
+.answer.is-stale .pill:not(.pill-example) { opacity: 0.75; }
 :root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.65; }
 .answer.is-stale .res-hero { opacity: 1; }
-.answer.is-stale .res-hero .res-value, .answer.is-stale .res-hero .res-sub { opacity: 0.5; }
+.answer.is-stale .res-hero .res-value { opacity: 0.5; }
+.answer.is-stale .res-hero .res-sub { opacity: 0.7; }
 .answer.is-stale .say { display: none !important; }
 :root[data-theme="light"] .answer.is-stale .res-hero { opacity: 1; }
 :root[data-theme="light"] .answer.is-stale .res-hero .res-value, :root[data-theme="light"] .answer.is-stale .res-hero .res-sub { opacity: 0.92; }
 .answer.is-stale .res-hero .res-label { color: var(--text); }
 .answer.is-example .res-hero .res-value { opacity: 0.9; }
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; align-items: start; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .tiles-1 { grid-template-columns: 1fr; }
 .tiles-cap { grid-column: 1 / -1; flex-basis: 100%; font-size: 12.5px; font-weight: 500; color: var(--text-2); margin-bottom: -2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -235,7 +239,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld.is-computed.is-empty .fld-value, .fld.is-computed.is-empty .fld-sign { color: var(--text-4); font-weight: 400; }
 .fld.is-invalid { box-shadow: inset 0 0 0 1.5px var(--neg); }
 .fld-sub { font-size: 13px; color: var(--text-3); }
-.fld-money .fld-sub, .fld-percent .fld-sub { min-height: 17px; }
+.fld-money .fld-sub, .fld-percent .fld-sub, .fld.has-hint .fld-sub { min-height: 17px; }
 /* Tight: the money sub line (= 4u) sits beside the value, so a row is one line unless it has to wrap */
 .tight .fld-money { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; }
 .tight .fld-money .fld-label { flex-basis: 100%; }
@@ -248,7 +252,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* Slot rows with a trailing action (parlay legs) */
 .leg { display: grid; grid-template-columns: 1fr 44px; gap: 8px; align-items: stretch; }
-.leg-remove { border-radius: var(--r); display: grid; place-items: center; color: var(--text-3); background: var(--s1); box-shadow: var(--slot-shadow); }
+.leg-remove { border-radius: var(--r); display: grid; place-items: center; color: var(--text-4); background: transparent; }
 .leg-remove:active { color: var(--neg); background: var(--neg-soft); }
 .btn-row { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: var(--r); width: 100%; background: var(--s1); color: var(--text); font-weight: 600; font-size: 15px; box-shadow: var(--slot-shadow); }
 .btn-row:active { background: var(--s2); }
@@ -279,7 +283,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kp-chip:active { background: var(--s3); }
 .kp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .kp-key {
-  height: clamp(44px, 6.2dvh, 54px); border-radius: var(--r-key); background: var(--key); color: var(--text);
+  height: clamp(44px, 5.8dvh, 54px); border-radius: var(--r-key); background: var(--key); color: var(--text);
   font-family: var(--font-num); font-size: 26px; font-weight: 400; display: grid; place-items: center;
   transition: transform .06s, background .06s;
 }
@@ -327,7 +331,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .sheet:not(.is-open) { pointer-events: none; }
 .sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); opacity: 0; transition: opacity .2s; }
 .sheet-panel {
-  position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - env(safe-area-inset-top) - 24px);
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - env(safe-area-inset-top) - 58px);
   display: flex; flex-direction: column; max-width: 560px; margin: 0 auto;
   background: var(--sheet); border-radius: 24px 24px 0 0; box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.35);
   transform: translateY(105%); transition: transform .26s cubic-bezier(.2, .9, .3, 1.05);
@@ -399,7 +403,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .slots .note { display: none; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
 .tight.kb-open .tiles-whatif:not(.tiles-keep), .kb-open .screen.fold-whatif .tiles-whatif:not(.tiles-keep) { display: none; }
-.tight.kb-open .answer.whatif-focus .tiles:not(.tiles-whatif) { display: none; }
+.tight.kb-open .answer.whatif-focus .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus .tiles:not(.tiles-whatif) { display: none; }
 @media (max-height: 740px) { .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; } }
 .fld:focus-visible, .res:focus-visible { outline: none; }
 /* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */
@@ -412,6 +416,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .tight .fld { min-height: 56px; padding: 6px 14px; }
 .tight .fld-value, .tight .fld-sign { font-size: 24px; }
 .tight .fld-compact { min-height: 48px; }
+.tight .slots { padding-bottom: 4px; }
 
 /* Compact mode for short screens (iPhone SE, or a browser tab with chrome) */
 @media (max-height: 740px) {

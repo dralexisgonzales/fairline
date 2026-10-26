@@ -98,7 +98,7 @@ function placeDock(decideTight = false) {
     if (open && contentSpare(screen) >= 48) screen.classList.add('vast');
     // A stored what-if that would push the slots under the keypad folds away until that slot is typed.
     screen.classList.remove('fold-whatif');
-    if (open && foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
+    if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
   } else if (decideTight) {
     app.classList.remove('tight');
   } else if (screen && keypad.isOpen()) {
@@ -107,6 +107,10 @@ function placeDock(decideTight = false) {
     if (!screen.classList.contains('slack') && !screen.classList.contains('keep-tiles')) { screen.classList.add('keep-tiles'); if (contentSpare(screen) < 4) screen.classList.remove('keep-tiles'); }
     const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
     if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
+    // Typing a what-if: the reference tiles step aside if the two rows together would push the slots away.
+    const focusing = screen.querySelector('.answer.whatif-focus');
+    screen.classList.remove('fold-ref');
+    if (focusing && contentSpare(screen) < 0) screen.classList.add('fold-ref');
   }
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   if (decideTight) refitResults();

@@ -78,7 +78,7 @@ export function createSettings(ctx) {
     leadToggle.setAttribute('aria-checked', String(!!st.leadUnits));
     feeChips.replaceChildren(...FEE_PRESETS.map((p) => {
       const on = p.id === st.feePreset;
-      const rate = p.rate == null ? 'your rate' : p.rate > 0 ? 'up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2' : 'no fee';
+      const rate = p.rate == null ? 'your rate' : p.rate > 0 ? 'up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2 per $1' : 'no fee';
       return h('button', { type: 'button', class: 'chip' + (on ? ' is-on' : ''), role: 'radio', 'aria-checked': String(on), onclick: () => ctx.update({ feePreset: p.id }) }, p.label, rate ? h('small', { text: rate }) : null);
     }));
     customF.el.hidden = st.feePreset !== 'custom';

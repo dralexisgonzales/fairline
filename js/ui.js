@@ -72,7 +72,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   const suffixEl = h('span', { class: 'fld-affix fld-suffix' });
   const caret = h('span', { class: 'fld-caret', 'aria-hidden': 'true' });
   const subEl = h('span', { class: 'fld-sub' });
-  const el = h('button', { type: 'button', class: 'fld fld-' + type + (compact ? ' fld-compact' : ''), 'aria-label': label },
+  const el = h('button', { type: 'button', class: 'fld fld-' + type + (compact ? ' fld-compact' : '') + (hint ? ' has-hint' : ''), 'aria-label': label },
     labelEl,
     h('span', { class: 'fld-row' }, signEl, prefixEl, valueEl, caret, suffixEl),
     subEl
@@ -123,7 +123,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const ansH = ans && getComputedStyle(ans).position === 'sticky' ? ans.offsetHeight : 0;
         const m = 8;
         const align = Math.max(0, rowTop - ansH - m);               // puts the typed row m px under the sticky answer
-        const need = Math.max(0, rowTop + el.offsetHeight + 6 - ch); // least scroll that keeps the typed row above the keypad
+        const need = Math.max(0, rowTop + el.offsetHeight + 16 - ch); // least scroll that keeps the typed row clear of the keypad edge
         // Land on a row boundary: the highest row that can sit under the answer while the typed row stays above the keypad,
         // so the rows above stay as context and none of them is half shown.
         let target = Math.min(align, Math.max(need, align));
@@ -180,7 +180,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   // The tag is re-checked whenever the slot is laid out (first paint, tab switch, resize, two-column legs).
   if ('ResizeObserver' in window) new ResizeObserver(() => { if (state.ghost && state.v !== '' && tagEl.hidden) { tagEl.hidden = false; } fitTag(); }).observe(el);
   function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
-  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && !(type === 'money' && ctx?.unitSize?.() > 0) && type !== 'percent'; }
+  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && !hint && !(type === 'money' && ctx?.unitSize?.() > 0) && type !== 'percent'; }
 
   function setMode(mode, convert = false) {
     if (state.mode === mode) return;

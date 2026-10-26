@@ -34,7 +34,7 @@ export function create(ctx) {
     h('div', { class: 'slots' }, h('div', { class: 'row-2' }, fA.el, fB.el))
   );
 
-  let hadValid = false;
+  let hadValid = false, lastWasExample = true;
   function render() {
     const a = oddsValue(state.a), b = oddsValue(state.b);
     ex.set(fA.isGhost() || fB.isGhost(), fA.isGhost() && fB.isGhost());
@@ -43,13 +43,14 @@ export function create(ctx) {
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
       const emptied = !state.a.v || !state.b.v;
-      if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel('Last full line'); return; }
+      if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel(lastWasExample ? 'Book’s cut' : 'Last full line'); return; }
       answer.classList.remove('is-stale'); hadValid = false;   // no full line on screen now, so nothing to keep dim
-      oddsA.set('—', null, Number.isFinite(a) ? 'waiting for side B' : ''); oddsB.set('—', null, Number.isFinite(b) ? 'waiting for side A' : ''); cut.setLabel('Book’s cut'); cut.set('—');
-      say.set(hadValid ? 'Type the other side to see the odds without the book’s cut.' : 'Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
+      ex.set(false);
+      oddsA.set('—', null, ''); oddsB.set('—', null, ''); cut.setLabel('Book’s cut'); cut.set('—');
+      say.set(Number.isFinite(a) || Number.isFinite(b) ? 'Type the other side too to see the odds without the book’s cut.' : 'Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;
     }
-    answer.classList.remove('is-stale'); hadValid = true;
+    answer.classList.remove('is-stale'); hadValid = true; lastWasExample = fA.isGhost() && fB.isGhost();
     const r = noVig(a, b);
     oddsA.set(fmtOdds(r.fairOddsA), fmtOdds(r.fairOddsA, { ascii: true }), 'fair \u00B7 ' + fmtProb(r.fairA, 'pct') + ' chance');
     oddsB.set(fmtOdds(r.fairOddsB), fmtOdds(r.fairOddsB, { ascii: true }), 'fair \u00B7 ' + fmtProb(r.fairB, 'pct') + ' chance');
