@@ -248,6 +248,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .tight .fld-money .fld-label, .tight .fld.has-hint .fld-label { flex-basis: 100%; }
 .tight .fld-money .fld-sub, .tight .fld.has-hint .fld-sub { margin-left: auto; min-height: 0; }
 .tight .fld-money .fld-sub:empty, .tight .fld.has-hint .fld-sub:empty { display: none; }
+.fld { position: relative; }
+.tight .fld.sub-aside .fld-sub { position: absolute; visibility: hidden; pointer-events: none; }
 .fld-sub.is-error { color: var(--neg); }
 .fld-sub.is-link { color: var(--gold-text); font-weight: 600; }
 .fld-compact { min-height: 54px; padding: 7px 14px; }

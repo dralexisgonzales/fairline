@@ -100,6 +100,7 @@ export function create(ctx) {
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');
       aSay.set(committedBad(ctx, aOrig, aHedge) ? 'Odds start at 100: fix the slot marked in red.' : 'Enter your bet’s odds, what you staked, and the other side’s odds now.');
       aLocked.set('—'); aBreak.set('—'); aWinO.set('—'); aWinH.set('—');
+      if (manualHas) { capMain.textContent = 'With ' + (lead && unit > 0 ? fmtUnits(stakeDollars(state.A.manual, unit) / unit) : fmtMoney(stakeDollars(state.A.manual, unit)).replace(/\.00$/, '')) + ' on the other side instead:'; capSum.textContent = ''; }   // no stale what-if next to a dash
       return;
     }
     answer.classList.remove('is-stale'); hadA = true;

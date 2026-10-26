@@ -119,7 +119,8 @@ export function create(ctx) {
     const everyLeg = all.length === 1 ? 'Add a second leg to make it a parlay.' : 'Every leg must win for it to pay.';
     const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than ' + (fmtOdds(offeredAm) === fmtOdds(r.american) ? 'these legs' : fmtOdds(r.american)) + ' on ' + money(stake))) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) : '');
     const huge = r.american >= 1e6;   // beyond any book's cap, so the exact figure is noise
-    hero.set(huge ? 'over +1,000,000' : fmtOdds(r.american), huge ? 'over +1000000' : fmtOdds(r.american, { ascii: true }), huge ? 'no book pays odds this long' : bookSub || 'add the book’s parlay odds to compare');
+    hero.set(huge ? 'over +1,000,000' : fmtOdds(r.american), huge ? 'over +1000000' : fmtOdds(r.american, { ascii: true }), huge ? 'no book pays odds this long' : all.length === 1 ? 'the odds you typed, unchanged' : bookSub || 'add the book’s parlay odds to compare');
+    if (huge) { chanceRes.set('—', null, 'next to none'); payRes.setLabel('Profit if all legs win'); payRes.set('—', null, 'no book pays this'); say.set(everyLeg); return; }
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');
     if (Number.isFinite(stake) && r.offered) {
       payRes.setLabel('At book’s ' + fmtOdds(offeredAm));
