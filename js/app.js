@@ -74,11 +74,15 @@ function placeDock(decideTight = false) {
   if (decideTight && screen) {
     // Optional tile rows (the hedge what-if) count as present, so showing them later never forces a size change.
     app.classList.remove('tight');
-    screen.classList.remove('slack', 'roomy', 'keep-tiles');
+    screen.classList.remove('slack', 'roomy', 'keep-tiles', 'say-fits', 'vast');
     const open = keypad.isOpen();
-    // Tight looks at what is on screen now; growing counts the what-if tiles too, so their arrival never shrinks anything.
-    app.classList.toggle('tight', open && contentSpare(screen) < 0);
+    // Tight looks at what must be on screen (the what-if tiles count only while that slot is being typed);
+    // growing counts the what-if tiles too, so their arrival never shrinks anything.
     const optional = [...screen.querySelectorAll('.tiles-whatif[hidden]')];
+    const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
+    foldable.forEach((e) => { e.hidden = true; });
+    app.classList.toggle('tight', open && contentSpare(screen) < 0);
+    foldable.forEach((e) => { e.hidden = false; });
     optional.forEach((e) => { e.hidden = false; });
     if (open) {
       screen.classList.add('slack');
@@ -88,10 +92,9 @@ function placeDock(decideTight = false) {
     }
     optional.forEach((e) => { e.hidden = true; });
     // The sentence comes back whenever it fits on its own (it steps aside again if the what-if tiles appear).
-    screen.classList.remove('say-fits', 'vast');
     if (open && !screen.classList.contains('roomy')) { screen.classList.add('say-fits'); if (contentSpare(screen) < 4) screen.classList.remove('say-fits'); }
     // With a lot of room left, the answer sits just above the slots, close to the thumb, instead of leaving a void between them.
-    if (open && contentSpare(screen) >= 120) screen.classList.add('vast');
+    if (open && contentSpare(screen) >= 72) screen.classList.add('vast');
   } else if (decideTight) {
     app.classList.remove('tight');
   }

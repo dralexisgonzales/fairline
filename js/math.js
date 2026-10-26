@@ -155,12 +155,12 @@ export function effectivePrice(price, rate) {
 
 export const FEE_PRESETS = [
   { id: 'novig', label: 'Novig pregame', short: 'Novig', rate: 0, note: 'No fee on bets placed before the game starts.' },
-  { id: 'novig-live', label: 'Novig live', short: 'Novig live', rate: 0.06, note: 'In-game bets: a small fee, at most 1.5\u00A2 per $1 contract (at a 50\u00A2 price).' },
-  { id: 'novig-parlay', label: 'Novig parlay', short: 'Novig parlay', rate: 0.10, note: 'Parlays: a fee of at most 2.5\u00A2 per $1 contract, already built into the price you see.' },
-  { id: 'kalshi', label: 'Kalshi', short: 'Kalshi', rate: 0.07, note: 'At most 1.75\u00A2 per $1 contract (at a 50\u00A2 price); each order is rounded up to the next cent.' },
-  { id: 'poly-sports', label: 'Polymarket sports', short: 'Polymarket', rate: 0.03, note: 'At most 0.75\u00A2 per $1 contract (at a 50\u00A2 price).' },
-  { id: 'poly-pft', label: 'Polymarket politics', short: 'Polymarket', rate: 0.04, note: 'At most 1\u00A2 per $1 contract (at a 50\u00A2 price).' },
-  { id: 'poly-crypto', label: 'Polymarket crypto', short: 'Polymarket', rate: 0.07, note: 'At most 1.75\u00A2 per $1 contract (at a 50\u00A2 price).' },
+  { id: 'novig-live', label: 'Novig live', short: 'Novig live', rate: 0.06, note: 'In-game bets: a small fee, at most 1.5\u00A2 per $1 (biggest at a 50\u00A2 price, smaller near 0 or 100).' },
+  { id: 'novig-parlay', label: 'Novig parlay', short: 'Novig parlay', rate: 0.10, note: 'Parlays: a fee of at most 2.5\u00A2 per $1, already built into the price you see.' },
+  { id: 'kalshi', label: 'Kalshi', short: 'Kalshi', rate: 0.07, note: 'At most 1.75\u00A2 per $1 (biggest at a 50\u00A2 price, smaller near 0 or 100). Kalshi rounds each order up to the next cent.' },
+  { id: 'poly-sports', label: 'Polymarket sports', short: 'Polymarket', rate: 0.03, note: 'At most 0.75\u00A2 per $1 (biggest at a 50\u00A2 price, smaller near 0 or 100).' },
+  { id: 'poly-pft', label: 'Polymarket politics', short: 'Polymarket', rate: 0.04, note: 'At most 1\u00A2 per $1 (biggest at a 50\u00A2 price, smaller near 0 or 100).' },
+  { id: 'poly-crypto', label: 'Polymarket crypto', short: 'Polymarket', rate: 0.07, note: 'At most 1.75\u00A2 per $1 (biggest at a 50\u00A2 price, smaller near 0 or 100).' },
   { id: 'none', label: 'None', short: '', rate: 0, note: 'No fee applied.' },
-  { id: 'custom', label: 'Custom', short: 'custom', rate: null, note: 'Your own rate. The fee is rate \u00D7 price \u00D7 (1 \u2212 price) per $1 contract.' },
+  { id: 'custom', label: 'Custom', short: 'custom', rate: null, note: 'Your own rate. The fee is rate \u00D7 price \u00D7 (1 \u2212 price) per $1, so it is biggest at a 50\u00A2 price.' },
 ];

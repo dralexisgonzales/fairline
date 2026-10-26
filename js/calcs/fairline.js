@@ -43,7 +43,7 @@ export function create(ctx) {
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
       if (hadValid) { answer.classList.add('is-stale'); cut.setLabel('From the last full line'); return; }
-      oddsA.set('—', null, 'Enter odds'); oddsB.set('—', null, 'Enter odds'); cut.set('—');
+      oddsA.set('—', null, Number.isFinite(a) ? 'waiting for side B' : 'Enter odds'); oddsB.set('—', null, Number.isFinite(b) ? 'waiting for side A' : 'Enter odds'); cut.set('—');
       say.set('Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;
     }
@@ -55,8 +55,9 @@ export function create(ctx) {
       cut.setLabel('No cut'); cut.set(fmtPctSigned(-r.hold, 2), fmtPctSigned(-r.hold, 2), '', 'pos');
       say.set('No cut here: the two chances add up to under 100%, so betting both sides locks in ' + fmtPctSigned(-r.hold, 2) + '. See Hedge, Both sides.');
     } else {
-      cut.setLabel('Book’s cut'); cut.set(fmtProb(r.hold, 'pct', 1), fmtProb(r.hold, 'pct', 1), '', r.hold > 0.08 ? 'neg' : '');
-      say.set('These are the odds with the book’s cut taken out.' + (r.hold > 0.08 ? ' The cut on this line is steep.' : ''));
+      const partial = fA.isGhost() !== fB.isGhost();
+      cut.setLabel('Book’s cut'); cut.set(fmtProb(r.hold, 'pct', 1), fmtProb(r.hold, 'pct', 1), '', r.hold > 0.08 && !partial ? 'neg' : '');
+      say.set(partial ? 'Type the other side too; this still uses the example for it.' : 'These are the odds with the book’s cut taken out.' + (r.hold > 0.08 ? ' The cut on this line is steep.' : ''));
     }
   }
 

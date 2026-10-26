@@ -60,6 +60,7 @@ export function create(ctx) {
   }
   function fieldsList() { return [...legFields, stakeF, offeredF]; }
   // A leg added and left blank is removed when the keypad closes, so the count never says "1 blank" for nothing.
+  ctx.keypad.onActive((a) => { root.classList.toggle('stake-active', a === stakeF || a === offeredF); });
   let tidying = false;
   ctx.keypad.onActive((a) => {
     if (a || root.hidden || tidying || legFields.length <= 2) return;
@@ -92,8 +93,8 @@ export function create(ctx) {
     const offeredAm = oddsValue(state.offered);
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
-    legsEl.classList.toggle('two-col', legFields.length >= 4);
-    const many = legFields.length >= 4;
+    legsEl.classList.toggle('two-col', legFields.length >= 2);
+    const many = legFields.length >= 3;
     if (root.classList.contains('many-legs') !== many) { root.classList.toggle('many-legs', many); if (!root.hidden) setTimeout(() => ctx.relayout?.(), 0); }
     ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost());
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
@@ -105,11 +106,11 @@ export function create(ctx) {
     }
     hero.setLabel('These legs combine to');
     const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' would')) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' would' : '');
-    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub || (legs.length < all.length ? 'from the ' + legs.length + ' legs filled in' : ''));
+    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');
     if (Number.isFinite(stake) && r.offered) {
-      payRes.setLabel('Profit at the book’s ' + fmtOdds(offeredAm));
-      setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake) + ' if all legs win', leadUnits: lead });
+      payRes.setLabel('At book’s ' + fmtOdds(offeredAm));
+      setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'profit on ' + money(stake) + ' if all legs win', leadUnits: lead });
       say.set('');
     } else if (Number.isFinite(stake)) {
       payRes.setLabel('Profit if all legs win');

@@ -112,9 +112,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .screen::-webkit-scrollbar { display: none; }
 .answer { position: sticky; top: 0; z-index: 2; flex: none; margin: 0 -20px; padding: 8px 20px 12px; background: var(--bg); display: flex; flex-direction: column; }
 #app:not(.kb-open) .answer { flex: 1 1 auto; justify-content: center; position: static; }
-#app:not(.kb-open) .res-hero .res-value { font-size: clamp(60px, min(20vw, 11dvh), 92px); }
+#app:not(.kb-open) .res-hero .res-value { font-size: clamp(64px, min(21vw, 11dvh), 96px); }
 .screen.fits .answer { margin-top: auto; }
-#app:not(.kb-open) .res-col.res-hero .res-value { font-size: clamp(50px, min(17vw, 9dvh), 76px); }
+#app:not(.kb-open) .res-col.res-hero .res-value { font-size: clamp(58px, min(19vw, 10dvh), 84px); }
 .screen-head { display: flex; align-items: center; gap: 8px; min-height: 40px; margin-bottom: 8px; }
 .screen-head .spacer { flex: 1; min-width: 4px; }
 .screen-head > * { flex: none; }
@@ -123,7 +123,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .legs-list { display: flex; flex-direction: column; gap: 10px; }
 .legs-list.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.legs-list.two-col .leg { grid-template-columns: 1fr 44px; gap: 4px; }
+.legs-list.two-col .leg { grid-template-columns: 1fr 44px; gap: 6px; }
 
 /* Answer pieces */
 .say { margin: 4px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--text-2); min-height: 20px; text-wrap: pretty; }
@@ -132,7 +132,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 :root[data-theme="light"] .answer.is-stale .res, :root[data-theme="light"] .answer.is-stale .say { opacity: 0.65; }
 .answer.is-stale .res-hero { opacity: 1; }
 .answer.is-stale .res-hero .res-value, .answer.is-stale .res-hero .res-sub { opacity: 0.5; }
-.answer.is-stale .say { display: none; }
+.answer.is-stale .say { display: none !important; }
+:root[data-theme="light"] .answer.is-stale .res-hero { opacity: 1; }
+:root[data-theme="light"] .answer.is-stale .res-hero .res-value, :root[data-theme="light"] .answer.is-stale .res-hero .res-sub { opacity: 0.7; }
 .answer.is-stale .res-hero .res-label { color: var(--text); }
 .answer.is-example .res-hero .res-value { opacity: 0.9; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
@@ -225,6 +227,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld.is-ghost .fld-value, .fld.is-ghost .fld-sign { color: var(--text-3); }
 .fld.is-active.is-fresh .fld-row { background: var(--gold-sel); border-radius: 6px; padding: 0 5px; margin: 0 -5px; }
 .fld.is-computed { background: transparent; box-shadow: inset 0 0 0 1px var(--hair); }
+.fld.is-computed.is-active { box-shadow: inset 0 0 0 1.5px var(--gold); }
+.fld.is-computed.is-active .fld-value, .fld.is-computed.is-active .fld-sign { color: var(--text); }
 .fld.is-computed .fld-value, .fld.is-computed .fld-sign { color: var(--text-2); }
 .fld.is-computed.is-empty .fld-value, .fld.is-computed.is-empty .fld-sign { color: var(--text-4); font-weight: 400; }
 .fld.is-invalid { box-shadow: inset 0 0 0 1.5px var(--neg); }
@@ -298,10 +302,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* Toast: above the dock, never over the answer */
 #toast {
-  position: fixed; left: 104px; right: 96px; margin: 0 auto; width: max-content; max-width: calc(100vw - 200px); top: calc(var(--sat) + 8px); z-index: 90;
+  position: fixed; left: 100px; right: 92px; margin: 0 auto; width: max-content; max-width: calc(100vw - 192px); top: calc(var(--sat) + 8px); z-index: 90;
   display: inline-flex; align-items: center; gap: 8px;
   transform: translateY(-6px); opacity: 0; pointer-events: none;
-  padding: 8px 14px 8px 11px; border-radius: 999px;
+  padding: 8px 12px 8px 10px; border-radius: 999px;
   background: var(--s2); color: var(--text); font-size: 14px; font-weight: 600;
   box-shadow: var(--pop-shadow); transition: opacity .16s, transform .16s; white-space: nowrap; text-align: left; line-height: 1.25;
 }
@@ -335,7 +339,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .section-title { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .note { font-size: 13px; color: var(--text-3); line-height: 1.4; }
 .about { font-size: 12px; color: var(--text-3); }
-.chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chips { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 8px; }
 .chips .chip:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .chip { min-height: 48px; line-height: 1.15; padding: 6px 13px; border-radius: 12px; background: var(--s2); color: var(--text-2); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; text-align: left; }
 .chip.is-on { background: var(--s3); color: var(--text); box-shadow: inset 0 0 0 1.5px var(--gold); }
@@ -370,7 +374,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
-.kb-open .screen.vast .answer { margin-top: auto; position: static; padding-bottom: 18px; }
+.kb-open .screen.vast .answer { margin-top: auto; position: static; padding-bottom: 18px; box-shadow: none; }
+.kb-open .screen.vast .answer::after { display: none; }
 .kb-open .screen.slack .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 .kb-open .screen.slack .res-col.res-hero .res-value { font-size: clamp(52px, 15.5vw, 68px); }
 .kb-open .screen.roomy .say { display: block; }
@@ -378,7 +383,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.roomy .res-hero:not(.res-col) .res-value { font-size: clamp(64px, 20vw, 92px); }
 .kb-open .screen.roomy .res-col.res-hero .res-value { font-size: clamp(58px, 18vw, 76px); }
 /* Many legs on a tight screen: spare room brings the tiles back rather than a bigger hero */
-.tight.kb-open .screen.many-legs.slack .res-hero .res-value { font-size: clamp(40px, 12vw, 52px); }
+.tight.kb-open .screen.many-legs.slack .res-hero .res-value { font-size: clamp(44px, 13vw, 56px); }
 .kb-open .screen.slack .answer .tiles .res-value { font-size: 20px; }
 .kb-open .screen.slack .answer .tiles .res-sub { display: -webkit-box; }
 .kb-open .screen.slack .answer .tiles .res { padding: 8px 12px; }
@@ -389,7 +394,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; }
 .fld:focus-visible, .res:focus-visible { outline: none; }
 /* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */
-.tight.kb-open .screen.many-legs:not(.slack):not(.keep-tiles) .tiles { display: none; }
+.tight.kb-open .screen.many-legs:not(.slack):not(.keep-tiles):not(.stake-active) .tiles { display: none; }
 /* Tight: little room between the header and the keypad (notched phones). Only sizes shrink; nothing folds. */
 .tight .answer { padding: 4px 20px 10px; }
 .tight .screen-head { min-height: 36px; margin-bottom: 6px; }

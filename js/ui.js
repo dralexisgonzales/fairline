@@ -119,6 +119,16 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const m = document.getElementById('app')?.classList.contains('tight') ? 8 : 18;
         if (r.top < topEdge + m) screen.scrollBy({ top: r.top - topEdge - m, behavior: 'auto' });
         // The bottom edge wins: the value being typed must never sit under the keypad.
+        // A row half-hidden under the answer looks like a glitch: scroll it fully out of the way when the slot below still fits.
+        const row = el.closest('.row-2, .leg') || el;
+        const prev = row.previousElementSibling;
+        if (prev) {
+          const pr = prev.getBoundingClientRect();
+          if (pr.bottom > topEdge && pr.top < topEdge) {
+            const extra = pr.bottom - topEdge + 2;
+            if (el.getBoundingClientRect().bottom + extra <= sr.bottom - 6) screen.scrollBy({ top: extra, behavior: 'auto' });
+          }
+        }
         const r2 = el.getBoundingClientRect();
         if (r2.bottom > sr.bottom - 6) screen.scrollBy({ top: r2.bottom - sr.bottom + 6, behavior: 'auto' });
       }, 40);

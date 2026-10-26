@@ -115,7 +115,7 @@ export function createKeypad({ haptic } = {}) {
     chips.forEach((c) => {
       const label = type === 'odds' ? (c[0] === '-' ? '−' : '+') + c[1]
         : type === 'money' ? (active.mode === 'u' ? c + 'u' : '$' + c)
-        : (active.prefix || '') + c + (active.suffix || '');
+        : (active.prefix || '') + (/^\d+$/.test(c) ? Number(c).toLocaleString('en-US') : c) + (active.suffix || '');
       const b = h('button', { type: 'button', class: 'kp-chip', text: label });
       // Apply on release, and only if the finger did not swipe (the strip scrolls sideways).
       let x0 = 0;

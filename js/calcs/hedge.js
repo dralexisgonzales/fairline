@@ -53,7 +53,7 @@ export function create(ctx) {
   const bOnB = result({ label: 'Put on book B' });
   const bA = field({ type: 'odds', label: 'Book A', value: state.B.a, ctx, keypad: kp, onChange: (v) => { state.B.a = v; render(); persist(); } });
   const bB = field({ type: 'odds', label: 'Book B', value: state.B.b, ctx, keypad: kp, onChange: (v) => { state.B.b = v; render(); persist(); } });
-  bB.el.addEventListener('click', () => { if (bB.text() === '' && state.B.a.sign === '-') bB.setSign('+'); });
+  kp.onActive((f) => { if (f === bB && (bB.text() === '' || bB.isGhost()) && !bA.isGhost() && state.B.a.sign === '-' && bB.sign === '-') { bB.setSign('+'); state.B.b = bB.get(); render(); kp.refresh(); } });
   const exB = examplePill();
   const bTotal = field({ type: 'money', label: 'Total to split', value: state.B.total, ctx, keypad: kp, onChange: (v) => { state.B.total = v; render(); persist(); } });
   const modeSegB = segmented({ options: [{ id: 'A', label: 'Hedge a bet' }, { id: 'B', label: 'Both sides' }], value: state.mode, cls: 'seg-mini', label: 'Mode',
@@ -104,13 +104,13 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover your bet fully at ' + fmtOdds(hAm) + ' you would bet');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover your bet on the other side at ' + fmtOdds(hAm) + ' you would bet');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const unhedged = 'Without the hedge you end up ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' or ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + '.';
     if (profit) aSay.set('Bet that much and you come out ahead whichever side wins. ' + unhedged);
     else if (even) aSay.set('Bet that much and you get out flat, $0 either way. ' + unhedged);
-    else aSay.set('The other side’s odds are too low to lock a profit: covering fully costs you either way. ' + unhedged);
+    else aSay.set('At these odds covering your bet loses a little whichever side wins; there is no profit to lock. ' + unhedged);
     aLocked.setLabel(even ? 'Locked result' : profit ? 'Locked profit' : 'Locked loss');
     setMoney(aLocked, r.guaranteed, unit, { signed: true, leadUnits: lead });
     if (r.breakEvenPossible) {
@@ -118,7 +118,7 @@ export function create(ctx) {
       setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: 'your worst case becomes $0', unitsFirst: false, leadUnits: lead });
     } else {
       aBreak.setLabel('Bet to lose nothing');
-      aBreak.set('Not possible', 'Not possible', 'at these odds', '');
+      aBreak.set('Not possible', 'Not possible', 'no amount gets you out flat', '');
     }
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {
