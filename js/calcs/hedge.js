@@ -86,7 +86,9 @@ export function create(ctx) {
     exA.set([aHedge, aOrig, aStake].some((f) => f.isGhost()), [aHedge, aOrig, aStake].every((f) => f.isGhost()));
     answer.classList.toggle('is-example', [aHedge, aOrig, aStake].every((f) => f.isGhost()));
     const manualFocused = kp.active() === aManual;
-    tilesManual.hidden = !manualFocused; tilesA.hidden = manualFocused;
+    const manualHas = Number.isFinite(stakeDollars(state.A.manual, unit)) && stakeDollars(state.A.manual, unit) >= 0;
+    tilesManual.hidden = !(manualFocused || manualHas); tilesA.hidden = manualFocused;
+    tilesManual.classList.toggle('tiles-keep', manualFocused);
     if (!Number.isFinite(stake) || !Number.isFinite(orig) || !Number.isFinite(hAm) || !(stake > 0)) {
       if (hadA) { answer.classList.add('is-stale'); return; }
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');

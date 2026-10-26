@@ -251,7 +251,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
     subEl.hidden = !sub;
     if (sub && !hero) fitSub();
     root.classList.toggle('is-empty', display === '—');
-    root.classList.remove('tone-pos', 'tone-neg', 'tone-accent');
+    root.classList.remove('tone-pos', 'tone-neg', 'tone-accent', 'tone-muted');
     if (tone) root.classList.add('tone-' + tone);
   }
   function setLabel(t) { currentLabel = t; if (!root.classList.contains('is-copied')) labelEl.textContent = t; root.setAttribute('aria-label', t + ', tap to copy'); }

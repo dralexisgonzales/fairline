@@ -28,6 +28,7 @@ export function createKeypad({ haptic } = {}) {
       const r = modeKey.getBoundingClientRect();
       active.chooseSign(e.clientX < r.left + r.width / 2 ? '-' : '+');
     } else if (active.type === 'money') active.toggleMode();
+    else clear();
   });
   const dotKey = key('.', 'kp-key', () => press('.'));
   const dblKey = key('00', 'kp-key', () => { press('0'); press('0'); });
@@ -126,7 +127,7 @@ export function createKeypad({ haptic } = {}) {
       modeKey.replaceChildren(signMinus, signPlus); modeKey.classList.add('kp-sign'); modeKey.disabled = false; modeKey.setAttribute('aria-label', 'Minus or plus');
     }
     else if (type === 'money') { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren(active.mode === 'u' ? '$' : 'units'); modeKey.disabled = false; modeKey.setAttribute('aria-label', active.mode === 'u' ? 'Enter in dollars' : 'Enter in units'); }
-    else { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren('\u00A0'); modeKey.disabled = true; modeKey.removeAttribute('aria-label'); }
+    else { modeKey.classList.remove('kp-sign'); modeKey.replaceChildren('C'); modeKey.disabled = false; modeKey.setAttribute('aria-label', 'Clear'); }
     dotKey.disabled = type === 'odds';
     dblKey.disabled = type === 'odds';
     grid.classList.toggle('kp-odds', type === 'odds');

@@ -8,9 +8,9 @@ export function createSettings(ctx) {
   const s = ctx.settings;
   const kp = ctx.keypad;
 
-  const unitF = field({ type: 'percent', label: 'Unit size', prefix: '$', placeholder: '25', value: s.unit != null ? String(s.unit) : '', maxLen: 9, ctx, keypad: kp, chips: ['5', '10', '20', '25', '50', '100'],
+  const unitF = field({ type: 'percent', label: 'Unit size', prefix: '$', placeholder: '\u2014', value: s.unit != null ? String(s.unit) : '', maxLen: 9, ctx, keypad: kp, chips: ['5', '10', '20', '25', '50', '100'],
     onChange: (v) => ctx.update({ unit: numOrNull(v.v) }) });
-  const bankF = field({ type: 'percent', label: 'Bankroll', prefix: '$', placeholder: '1000', value: s.bankroll != null ? String(s.bankroll) : '', maxLen: 10, ctx, keypad: kp, chips: ['500', '1000', '2500', '5000', '10000'],
+  const bankF = field({ type: 'percent', label: 'Bankroll', prefix: '$', placeholder: '\u2014', value: s.bankroll != null ? String(s.bankroll) : '', maxLen: 10, ctx, keypad: kp, chips: ['500', '1000', '2500', '5000', '10000'],
     onChange: (v) => ctx.update({ bankroll: numOrNull(v.v) }) });
   unitF.setSub('your standard bet'); bankF.setSub('money set aside for betting');
   const unitNote = h('div', { class: 'note' });

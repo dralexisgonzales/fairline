@@ -48,7 +48,7 @@ export function create(ctx) {
       p = toImplied(am);
       probF.set({ v: trim(p * 100, p < 0.01 || p > 0.995 ? 2 : 1), ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
-      probF.setSub(Number.isFinite(p) ? 'from the odds box' : '');
+      probF.setSub(Number.isFinite(p) ? 'calculated' : '');
     } else {
       const pv = parseNum(state.prob.v);
       p = pv > 0 && pv < 100 ? pv / 100 : NaN;
@@ -56,7 +56,7 @@ export function create(ctx) {
       const txt = Number.isFinite(am) ? fmtOdds(am, { ascii: true }) : '';
       oddsF.set(txt ? { sign: txt.startsWith('-') ? '-' : '+', v: txt.slice(1), ghost: false } : { sign: '-', v: '', ghost: false });
       oddsF.el.classList.add('is-computed'); probF.el.classList.remove('is-computed');
-      oddsF.setSub(Number.isFinite(am) ? (cents ? 'from the price box' : 'from the chance box') : '');
+      oddsF.setSub(Number.isFinite(am) ? 'calculated' : '');
       const bad = Number.isFinite(pv) && pv >= 100;
       probF.setSub(Number.isFinite(pv) && !(pv > 0 && pv < 100) ? 'Use a number above 0 and below 100' : '', bad ? 'is-error' : '');
     }

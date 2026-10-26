@@ -69,7 +69,7 @@ export function create(ctx) {
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true },
     answer,
     h('div', { class: 'slots' },
-      legsEl, addBtn,
+      legsEl,
       h('div', { class: 'row-2' }, stakeF.el, offeredF.el),
       bookSay.el,
       h('div', { class: 'note', text: 'These odds still include the book\u2019s cut on each leg. To take it out, run each leg through Fair odds first.' })
