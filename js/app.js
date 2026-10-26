@@ -65,8 +65,11 @@ function placeDock() {
   // Measured without the header fold so it cannot flap: app height minus dock minus a full header.
   // Room between a full header (with the phone's top inset) and the dock. Independent of the tight state itself.
   const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
+  // Measure the dock at its full size so the decision never depends on the tight state itself.
+  app.classList.remove('tight');
   const avail = app.clientHeight - dock.offsetHeight - 52 - sat;
   app.classList.toggle('tight', avail < 460);
+  document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   const c = calcs.find((x) => x.id === active);
   const screen = c ? c.root : null;
   if (screen) {
@@ -77,7 +80,9 @@ function placeDock() {
     screen.classList.toggle('fits', slack >= -1);
     // Grow the answer only when there is clearly room; keep it until the room is nearly gone (no flapping).
     const grown = screen.classList.contains('slack');
-    screen.classList.toggle('slack', keypad.isOpen() && (grown ? slack >= 24 : slack >= 96));
+    screen.classList.toggle('slack', keypad.isOpen() && (grown ? slack >= 8 : slack >= 60));
+    const roomy = screen.classList.contains('roomy');
+    screen.classList.toggle('roomy', keypad.isOpen() && screen.classList.contains('slack') && (roomy ? slack >= 36 : slack >= 150));
   }
 }
 keypad.onOpenChange((open) => {

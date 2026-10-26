@@ -45,7 +45,7 @@ export function create(ctx) {
     if (state.src === 'odds') {
       am = oddsValue(state.odds);
       p = toImplied(am);
-      probF.set({ v: trim(p * 100, p < 0.01 || p > 0.995 ? 2 : 1), ghost: false });
+      probF.set({ v: Number.isFinite(p) ? (p * 100).toFixed(p < 0.01 || p > 0.995 ? 2 : 1) : '', ghost: false });
       probF.el.classList.add('is-computed'); oddsF.el.classList.remove('is-computed');
       probF.setSub(Number.isFinite(p) ? 'calculated' : '');
     } else {
@@ -62,7 +62,7 @@ export function create(ctx) {
     if (state.src === 'odds') oddsF.setSub(''); else if (!Number.isFinite(parseNum(state.prob.v)) || (parseNum(state.prob.v) > 0 && parseNum(state.prob.v) < 100)) probF.setSub('');
 
     if (!Number.isFinite(p)) {
-      if (hadValid) { answer.classList.add('is-stale'); return; }
+      if (hadValid) { answer.classList.add('is-stale'); hero.setLabel('Waiting for a number'); return; }
       hero.setLabel(state.src === 'odds' ? (cents ? 'Price' : 'Chance to win') : 'American odds');
       hero.set('—', null, '');
       say.set(state.src === 'odds' ? 'Type odds like \u2212110 or +150.' : (cents ? 'Type a price in cents, like 62.' : 'Type a chance like 52.4.'));
@@ -87,9 +87,9 @@ export function create(ctx) {
     }
   }
   function feeLine(p, rate, label) {
-    if (!(rate > 0)) return label === 'Novig pregame' ? 'On Novig there is no fee before the game starts, so that is all you pay.' : (label === 'None' ? '' : 'On ' + label + ' there is no fee here, so that is all you pay.');
+    if (!(rate > 0)) return label === 'Novig pregame' ? 'No fee on Novig before the game starts.' : (label === 'None' ? '' : 'No fee on ' + label + ' here.');
     const eff = effectivePrice(p, rate);
-    return 'On ' + label + ' the fee adds ' + fmtCentsExact(eff.fee) + ', so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
+    return (label === 'Custom' ? 'Your custom fee adds ' : 'On ' + label + ' the fee adds ') + fmtCentsExact(eff.fee) + ', so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
   }
 
   return { id, title: 'Convert', tab: 'Convert', icon: ICON, root, render, fields: () => (state.src === 'odds' ? [oddsF, probF] : [probF, oddsF]) };

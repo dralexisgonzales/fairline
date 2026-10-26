@@ -63,7 +63,9 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       ? { v: value?.v ?? '', mode: value?.mode === 'u' ? 'u' : '$', exact: null, ghost: !!value?.ghost }
       : { v: (typeof value === 'object' && value !== null) ? (value.v ?? '') : (value ?? ''), ghost: !!(value && value.ghost) };
 
-  const labelEl = h('span', { class: 'fld-label', text: label });
+  const labelTextEl = h('span', { class: 'fld-label-text', text: label });
+  const tagEl = h('span', { class: 'fld-tag', text: '\u00B7 example', hidden: true });
+  const labelEl = h('span', { class: 'fld-label' }, labelTextEl, tagEl);
   const signEl = h('span', { class: 'fld-sign' });
   const prefixEl = h('span', { class: 'fld-affix' });
   const valueEl = h('span', { class: 'fld-value' });
@@ -96,7 +98,14 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       if (type === 'odds') { state.sign = state.sign === '-' ? '+' : '-'; state.ghost = false; paint(); onChange(get()); keypad.refresh(); }
       else if (type === 'money') setMode(state.mode === '$' ? 'u' : '$');
     },
-    setActive(on) { el.classList.toggle('is-active', on); if (!on) el.classList.remove('is-fresh'); },
+    setActive(on) {
+      el.classList.toggle('is-active', on); if (!on) el.classList.remove('is-fresh');
+      // Units first: an untouched example stake is offered in units, so typing 2 means 2u.
+      if (on && type === 'money' && state.ghost && state.mode === '$' && ctx?.leadUnits?.() && ctx.unitSize() > 0) {
+        const n = parseNum(state.v);
+        if (Number.isFinite(n)) { state.v = trimNum(n / ctx.unitSize(), 4); state.mode = 'u'; paint(); onChange(get()); keypad.refresh(); }
+      }
+    },
     setFresh(on) { el.classList.toggle('is-fresh', !!on && state.v !== ''); },
     commit() { paint(true); },
     reveal() {
@@ -129,9 +138,18 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     paint();
   }
   function setLabel(t) { labelText = t; paintLabel(); el.setAttribute('aria-label', t); }
-  function paintLabel() { labelEl.textContent = labelText + (state.ghost && state.v !== '' ? ' \u00B7 example' : ''); }
+  let tagTimer = 0;
+  function paintLabel() {
+    labelTextEl.textContent = labelText;
+    const show = state.ghost && state.v !== '';
+    tagEl.hidden = !show;
+    if (!show) return;
+    // If the name and the tag do not both fit, the name wins and the tag steps aside (the Example pill still shows).
+    clearTimeout(tagTimer);
+    tagTimer = setTimeout(() => { if (!tagEl.hidden && labelEl.isConnected && labelEl.scrollWidth > labelEl.clientWidth + 1) tagEl.hidden = true; }, 0);
+  }
   function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
-  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && type !== 'money'; }
+  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && type === 'odds'; }
 
   function setMode(mode) {
     if (state.mode === mode) return;
@@ -265,7 +283,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
   function set(display, copyValue = display, sub = '', tone = '') {
     if (hero && valueEl.textContent !== display && display !== '—') { valueEl.classList.remove('tick'); void valueEl.offsetWidth; valueEl.classList.add('tick'); }
     valueEl.textContent = display;
-    if (hero) fitHero();
+    fitHero();
     root.classList.toggle('is-long', display.length >= 10);
     root.classList.toggle('is-xlong', display.length >= 13);
     root.classList.toggle('is-xxlong', display.length >= 15);

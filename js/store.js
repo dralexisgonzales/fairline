@@ -1,5 +1,6 @@
 // Tiny persistence layer over localStorage. Everything stays on the device.
-const PREFIX = 'fairline:';
+const TESTER = new URLSearchParams(location.search).get('tester');
+const PREFIX = 'fairline:' + (TESTER ? TESTER + ':' : '');
 
 export function load(key, fallback) {
   try {

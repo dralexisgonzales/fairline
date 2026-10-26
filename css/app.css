@@ -9,7 +9,7 @@
   --text: #f5f3ee;
   --text-2: #a5a39b;
   --text-3: #8a8982;
-  --text-4: #8f8e86;
+  --text-4: #807f78;
   --gold: #e8b84a;
   --gold-text: #e8b84a;
   --gold-ink: #1b1400;
@@ -66,6 +66,7 @@
 :root[data-theme="light"] .seg { background: var(--s2); }
 :root[data-theme="light"] .seg-btn.is-on { background: #ffffff; box-shadow: 0 1px 2px rgba(20,19,15,.12); }
 :root[data-theme="light"] .chip.is-on { background: #ffffff; }
+:root[data-theme="light"] .kp-half.is-on { background: #ffffff; box-shadow: 0 1px 2px rgba(20,19,15,.15); }
 
 /* Reset and shell */
 *, *::before, *::after { box-sizing: border-box; }
@@ -127,13 +128,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .legs-list { display: flex; flex-direction: column; gap: 10px; }
 .legs-list.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.legs-list.two-col .leg { grid-template-columns: 1fr 40px; gap: 4px; }
+.legs-list.two-col .leg { grid-template-columns: 1fr 44px; gap: 4px; }
 
 /* Answer pieces */
 .say { margin: 4px 0 0; font-size: 14.5px; line-height: 1.4; color: var(--text-2); min-height: 20px; }
 .say strong { color: var(--text); font-weight: 600; }
-.answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .pill:not(.pill-example) { opacity: 0.65; }
-.answer.is-stale .res-hero:not(.res-col) .res-label::after { content: " · finish the numbers to update"; color: var(--text-3); font-weight: 400; }
+.answer.is-stale .res, .answer.is-stale .say, .answer.is-stale .tiles-cap, .answer.is-stale .pill:not(.pill-example) { opacity: 0.5; }
+.answer.is-stale .res-hero { opacity: 0.65; }
+.answer.is-stale .res-hero .res-label { color: var(--text); }
 .answer.is-example .res-hero .res-value { opacity: 0.9; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .tiles-1 { grid-template-columns: 1fr; }
@@ -196,7 +198,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .res-pill .res-value { font-size: 14px; font-weight: 700; }
 .res-pill .res-sub { display: none; }
 .pill-example { color: var(--text-3); background: transparent; box-shadow: inset 0 0 0 1px var(--hair-2); font-weight: 500; }
-.pill-btn { color: var(--text); gap: 4px; padding: 0 12px 0 10px; box-shadow: var(--slot-shadow); }
+.pill-btn { color: var(--text); gap: 4px; min-height: 44px; padding: 0 12px 0 10px; box-shadow: var(--slot-shadow); }
 .pill-btn:active { background: var(--s2); }
 
 /* Slots (fields) */
@@ -209,25 +211,31 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .fld:active { transform: scale(0.985); }
 .fld.is-active { box-shadow: inset 0 0 0 1.5px var(--gold); background: var(--s1); }
 :root[data-theme="dark"] .fld.is-active { background: var(--s2); }
-.fld-label { font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.fld-label { display: flex; gap: 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; color: var(--text-2); white-space: nowrap; max-width: 100%; }
+.fld-label-text { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.fld-tag { flex: none; color: var(--text-3); font-weight: 500; }
+.legs-list.two-col .fld-tag { display: none; }
 .fld-row { display: inline-flex; align-items: baseline; gap: 1px; max-width: 100%; font-variant-numeric: proportional-nums; }
 .fld-value, .fld-sign { font-family: var(--font-num); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap; }
 .fld.is-long .fld-value, .fld.is-long .fld-sign { font-size: 22px; }
 .fld.is-xlong .fld-value, .fld.is-xlong .fld-sign { font-size: 17px; }
 .fld-affix { font-size: 18px; font-weight: 600; color: var(--text-3); align-self: baseline; }
-.fld-suffix { padding-left: 3px; }
+.fld-suffix { padding-left: 1px; }
 .fld-caret { width: 0; height: 26px; margin-left: 0; border-radius: 1px; background: var(--gold); opacity: 0; align-self: center; }
 .fld.is-active .fld-caret { width: 2px; margin-left: 3px; opacity: 1; animation: blink 1.1s steps(2, start) infinite; }
 @keyframes blink { to { visibility: hidden; } }
 .fld.is-empty .fld-value, .fld.is-empty .fld-sign { color: var(--text-4); }
+.fld.is-empty .fld-value { opacity: .55; }
 .fld.is-empty:not(.is-active) .fld-sign { display: none; }
+.fld.is-active.is-empty .fld-value { display: none; }
 .fld.is-ghost .fld-value, .fld.is-ghost .fld-sign { color: var(--text-3); }
 .fld.is-active.is-fresh .fld-row { background: var(--gold-sel); border-radius: 6px; padding: 0 5px; margin: 0 -5px; }
 .fld.is-computed { background: transparent; box-shadow: inset 0 0 0 1px var(--hair); }
 .fld.is-computed .fld-value, .fld.is-computed .fld-sign { color: var(--text-2); }
+.fld.is-computed.is-empty .fld-value, .fld.is-computed.is-empty .fld-sign { color: var(--text-4); font-weight: 400; }
 .fld.is-invalid { box-shadow: inset 0 0 0 1.5px var(--neg); }
 .fld-sub { font-size: 13px; color: var(--text-3); }
-.fld-money .fld-sub { min-height: 17px; }
+.fld-money .fld-sub, .fld-percent .fld-sub { min-height: 17px; }
 .fld-sub.is-error { color: var(--neg); }
 .fld-sub.is-link { color: var(--gold-text); font-weight: 600; }
 .fld-compact { min-height: 54px; padding: 7px 14px; }
@@ -262,7 +270,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .keypad { padding: 8px 12px 10px; background: var(--kp-bg); border-top: 1px solid var(--hair); }
 .kp-chips { display: flex; gap: 8px; overflow-x: auto; padding: 0 24px 8px 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
 .kp-chips::-webkit-scrollbar { display: none; }
-.kp-chip { flex: none; height: 40px; padding: 0 14px; border-radius: 999px; background: var(--key); color: var(--text); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--hair); }
+.kp-chip { flex: none; height: 44px; padding: 0 14px; border-radius: 999px; background: var(--key); color: var(--text); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--hair); }
 .kp-chip:active { background: var(--s3); }
 .kp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .kp-key {
@@ -296,14 +304,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 /* Toast: above the dock, never over the answer */
 #toast {
-  position: fixed; left: 0; right: 0; margin: 0 auto; width: max-content; top: calc(var(--sat) + 58px); z-index: 90;
+  position: fixed; left: 104px; right: 96px; margin: 0 auto; width: max-content; max-width: 100%; top: calc(var(--sat) + 8px); z-index: 90;
   display: inline-flex; align-items: center; gap: 8px;
   transform: translateY(-6px); opacity: 0; pointer-events: none;
   padding: 8px 14px 8px 11px; border-radius: 999px;
   background: var(--s2); color: var(--text); font-size: 14px; font-weight: 600;
-  box-shadow: var(--pop-shadow); transition: opacity .16s, transform .16s; white-space: normal; text-align: left; line-height: 1.25; max-width: min(calc(100vw - 150px), 300px);
+  box-shadow: var(--pop-shadow); transition: opacity .16s, transform .16s; white-space: nowrap; text-align: left; line-height: 1.25;
 }
 #toast svg { color: var(--pos); flex: none; }
+#toast span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 #toast.is-on { opacity: 1; transform: none; }
 
 /* Sheets: full height, above the dock; Settings carries the keypad inside its panel */
@@ -323,8 +332,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 4px; touch-action: none; box-shadow: 0 1px 0 var(--hair); position: relative; z-index: 1; }
 .sheet-title { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 .btn-done { color: var(--gold-text); font-weight: 700; font-size: 17px; min-height: 44px; padding: 0 2px 0 12px; }
-.sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 4px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
+.sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 12px 20px calc(env(safe-area-inset-bottom) + 20px); display: flex; flex-direction: column; gap: 22px; }
 .sheet-panel .keypad { flex: none; border-radius: 0; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
+.sheet-panel .kp-key { height: 48px; }
 .sheet-panel .keypad + .sheet-body, .sheet-body:has(+ .keypad) { padding-bottom: 12px; }
 .sheet-body > * { flex-shrink: 0; }
 .sheet-body::-webkit-scrollbar { display: none; }
@@ -363,20 +373,27 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer .tiles .res-label { font-size: 11px; }
 .kb-open .say { display: none; }
 .kb-open .answer { box-shadow: 0 1px 0 var(--hair); }
-.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 14px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
+.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 22px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
-.kb-open .screen.slack .res-hero:not(.is-long) .res-value { font-size: clamp(60px, 17vw, 76px); }
-.kb-open .screen.slack .res-col.res-hero:not(.is-long) .res-value { font-size: clamp(46px, 13vw, 58px); }
+.kb-open .screen.slack .res-hero:not(.is-long) .res-value { font-size: clamp(60px, 18vw, 80px); }
+.kb-open .screen.slack .res-col.res-hero:not(.is-long) .res-value { font-size: clamp(52px, 15.5vw, 68px); }
+.kb-open .screen.roomy .say { display: block; }
+.kb-open .screen.roomy .answer .tiles { display: grid; }
+.kb-open .screen.roomy .answer .tiles .res { padding: 10px 14px; }
+.kb-open .screen.roomy .answer .tiles .res-value { font-size: 22px; }
+.kb-open .screen.roomy .answer .tiles .res-label { font-size: 12px; }
 .kb-open .screen.slack .answer .tiles .res-value { font-size: 20px; }
 .kb-open .screen.slack .answer .tiles .res-sub { display: -webkit-box; }
 .kb-open .screen.slack .answer .tiles .res { padding: 8px 12px; }
 .kb-open .slots .note { display: none; }
 /* On a tight screen the what-if tiles step aside while another slot is being typed, so that slot stays on screen */
 .tight.kb-open .tiles-whatif:not(.tiles-keep) { display: none; }
+/* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */
+.tight.kb-open .screen.many-legs .tiles { display: none; }
 /* Tight: little room between the header and the keypad (notched phones). Only sizes shrink; nothing folds. */
 .tight .kp-key { height: clamp(44px, 5.6dvh, 50px); }
-.tight .kp-chip { height: 36px; }
+.tight .kp-chip { height: 40px; }
 .tight .kp-chips { padding-bottom: 6px; }
 .tight .keypad { padding: 6px 12px 8px; }
 .tight .answer { padding: 4px 20px 10px; }
@@ -393,7 +410,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
   :root { --tab-h: 50px; }
   .keypad { padding: 6px 12px 8px; }
   .kp-chips { padding-bottom: 6px; }
-  .kp-chip { height: 34px; }
+  .kp-chip { height: 40px; }
   .kp-grid { gap: 6px; }
   .answer { padding: 4px 20px 10px; }
   .screen-head { min-height: 36px; margin-bottom: 6px; }

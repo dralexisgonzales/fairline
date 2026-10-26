@@ -37,14 +37,14 @@ export function create(ctx) {
     const unit = ctx.unitSize();
     const lead = ctx.leadUnits();
     modeSeg.set(state.mode);
-    amountF.setLabel(state.mode === 'risk' ? 'Risk' : 'I want to win');
+    amountF.setLabel(state.mode === 'risk' ? 'Risk' : 'To win');
     amountF.paint();
     ex.set(amountF.isGhost() || oddsF.isGhost(), amountF.isGhost() && oddsF.isGhost());
     answer.classList.toggle('is-example', amountF.isGhost() && oddsF.isGhost());
     const amount = stakeDollars(state.amount, unit);
     const am = oddsValue(state.odds);
     if (!Number.isFinite(amount) || !Number.isFinite(am) || !(amount > 0)) {
-      if (hadValid) { answer.classList.add('is-stale'); return; }
+      if (hadValid) { answer.classList.add('is-stale'); hero.setLabel('Waiting for a number'); return; }
       hero.setLabel(state.mode === 'risk' ? 'Profit if it wins' : 'You need to risk'); hero.set('—', null, '');
       say.set(state.mode === 'risk' ? 'Enter what you are risking and the odds.' : 'Enter how much you want to win and the odds.');
       backRes.set('—'); needRes.set('—');
@@ -52,19 +52,20 @@ export function create(ctx) {
     }
     answer.classList.remove('is-stale'); hadValid = true;
     needRes.set(fmtProb(toImplied(am), 'pct'), fmtProb(toImplied(am), 'pct'), 'of the time to break even at ' + fmtOdds(am));
-    const why = am < 0 ? 'At ' + fmtOdds(am) + ', you risk ' + fmtMoney(-am) + ' to win $100.' : 'At ' + fmtOdds(am) + ', you risk $100 to win ' + fmtMoney(am) + '.';
+    const whole = (n) => fmtMoney(n).replace(/\.00$/, '');
+    const why = am < 0 ? fmtOdds(am) + ' means risking ' + whole(-am) + ' for every $100 of profit.' : fmtOdds(am) + ' means ' + whole(am) + ' of profit for every $100 risked.';
     if (state.mode === 'risk') {
       const r = payoutFromRisk(amount, am);
       hero.setLabel('Profit if it wins');
       setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', leadUnits: lead });
       setMoney(backRes, r.total, unit, { tone: '', sub: 'stake included', leadUnits: lead });
-      say.set(why + ' Win, and your stake comes back with the profit.');
+      say.set(why);
     } else {
       const r = payoutFromWin(amount, am);
       hero.setLabel('You need to risk');
       setMoney(hero, r.stake, unit, { tone: '', leadUnits: lead });
       setMoney(backRes, r.total, unit, { tone: '', sub: 'stake included', leadUnits: lead });
-      say.set(why + ' Win, and your stake comes back with the profit.');
+      say.set(why);
     }
   }
 

@@ -143,7 +143,7 @@ export function createKeypad({ haptic } = {}) {
     dblKey.disabled = type === 'odds';
     grid.classList.toggle('kp-odds', type === 'odds');
     const visible = fields.filter((f) => f.el.isConnected && f.el.offsetParent !== null);
-    const last = visible.indexOf(active) === visible.length - 1;
+    const last = active.noAdvance || visible.indexOf(active) === visible.length - 1;
     nextKey.replaceChildren(last ? 'Done' : svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 22));
     nextKey.setAttribute('aria-label', last ? 'Done' : 'Next field');
   }

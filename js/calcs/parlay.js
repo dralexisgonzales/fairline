@@ -20,12 +20,11 @@ export function create(ctx) {
   const say = sentence();
   const chanceRes = result({ label: 'Chance all legs hit' });
   const payRes = result({ label: 'Profit on your stake' });
-  const bookSay = sentence();
   const countPill = h('span', { class: 'pill', text: '2 legs' });
   const ex = examplePill();
 
   const stakeF = field({ type: 'money', label: 'Stake', value: state.stake, ctx, keypad: ctx.keypad, onChange: (v) => { state.stake = v; render(); persist(); } });
-  const offeredF = field({ type: 'odds', label: 'Book’s parlay odds', value: state.offered, placeholder: '600', hint: 'optional', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
+  const offeredF = field({ type: 'odds', label: 'Book’s parlay odds', value: state.offered, hint: 'optional', ctx, keypad: ctx.keypad, onChange: (v) => { state.offered = v; render(); persist(); } });
   offeredF.autoAdvance = false;
 
   const legsEl = h('div', { class: 'legs-list' });
@@ -49,6 +48,7 @@ export function create(ctx) {
   function removeLeg(f) {
     if (legFields.length <= 1) return;
     const i = legFields.indexOf(f);
+    if (i < 0) return;
     const wasActive = ctx.keypad.active() === f;
     legFields.splice(i, 1); state.legs.splice(i, 1); f.row.remove();
     relabel(); render(); persist();
@@ -59,6 +59,14 @@ export function create(ctx) {
     legFields.forEach((f, i) => { f.setLabel('Leg ' + (i + 1)); f.row.querySelector('.leg-remove').hidden = legFields.length <= 1; });
   }
   function fieldsList() { return [...legFields, stakeF, offeredF]; }
+  // A leg added and left blank is removed when the keypad closes, so the count never says "1 blank" for nothing.
+  let tidying = false;
+  ctx.keypad.onActive((a) => {
+    if (a || root.hidden || tidying || legFields.length <= 2) return;
+    tidying = true;
+    try { legFields.filter((f) => f.text() === '' && !f.isGhost()).forEach((f) => { if (legFields.length > 2) removeLeg(f); }); }
+    finally { tidying = false; }
+  });
 
   const answer = h('div', { class: 'answer' },
     h('div', { class: 'screen-head' }, countPill, addHead, h('span', { class: 'spacer' }), ex.el),
@@ -69,9 +77,7 @@ export function create(ctx) {
     answer,
     h('div', { class: 'slots' },
       legsEl,
-      h('div', { class: 'row-2' }, stakeF.el, offeredF.el),
-      bookSay.el,
-      h('div', { class: 'note', text: 'To price it without the book\u2019s cut, run each leg through Fair odds first and enter those odds here.' })
+      h('div', { class: 'row-2' }, stakeF.el, offeredF.el)
     )
   );
   state.legs.forEach((l) => addLeg(l));
@@ -87,39 +93,30 @@ export function create(ctx) {
     const r = legs.length ? parlay(legs, Number.isFinite(stake) ? stake : 0, offeredAm) : null;
     stakeF.paint();
     legsEl.classList.toggle('two-col', legFields.length >= 4);
+    root.classList.toggle('many-legs', legFields.length >= 4);
     ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost());
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
     if (!r) {
-      hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—'); bookSay.set('');
+      hero.set('—', null, ''); chanceRes.set('—'); payRes.set('—');
       say.set('Add the odds of each pick. Every pick has to win.');
       return;
     }
     hero.setLabel('These legs add up to');
-    const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more'))) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') : '');
-    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub || (Number.isFinite(stake) ? money(stake) + ' wins ' + money(r.fairProfit) : ''));
+    const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than that')) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than that' : '');
+    hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
     chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 ? 'about 1 in ' + Math.round(1 / r.prob) : '');
     if (Number.isFinite(stake) && r.offered) {
       payRes.setLabel('Profit at book’s ' + fmtOdds(offeredAm));
       setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.offered.total), leadUnits: lead });
-      say.set('Every leg must win for it to pay. The book pays its own odds, not the ones the legs add up to.');
+      say.set('Every leg must win for it to pay. The book pays its own odds, not what the legs add up to.');
     } else if (Number.isFinite(stake)) {
       payRes.setLabel('Profit on your stake');
       setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: lead });
-      say.set('Every leg must win for it to pay. Add the book’s parlay odds below to compare.');
+      say.set('Every leg must win for it to pay. Enter the book’s parlay odds to see how its price compares.');
     } else {
-      payRes.setLabel('Profit on your stake'); payRes.set('—', null, 'add a stake');
+      payRes.setLabel('Profit on your stake'); payRes.set('—', null, unit > 0 || state.stake.mode !== 'u' ? 'add a stake' : 'set a unit size');
       say.set('Every leg must win.');
-    }
-    if (r.offered && Number.isFinite(stake)) {
-      const e = r.offered.edge;
-      const gap = r.offered.payoutGap;
-      const pct = fmtPctSigned(Math.abs(e), 1).replace(/^[+−]/, '');
-      bookSay.set('The book’s ' + fmtOdds(offeredAm) + ' would pay ' + fmtMoney(r.offered.profit) + '. These legs add up to ' + fmtOdds(r.american) + ', which would pay ' + fmtMoney(r.fairProfit) + ', so the book pays ' + (Math.abs(gap) < 0.005 ? 'exactly that.' : fmtMoney(Math.abs(gap)) + (gap < 0 ? ' less' : ' more') + ' (' + pct + (gap < 0 ? ' worse' : ' better') + ' value).'));
-    } else if (r.offered) {
-      bookSay.set('The book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(r.offered.edge, 1) + ' versus what these legs add up to. Add a stake to see dollars.');
-    } else {
-      bookSay.set('');
     }
   }
 
