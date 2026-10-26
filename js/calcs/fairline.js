@@ -47,7 +47,9 @@ export function create(ctx) {
       if (hadValid && !emptied && !committedBad(ctx, fA, fB)) { answer.classList.add('is-stale'); cut.setLabel(lastWasExample ? 'Book’s cut' : 'Before this change'); return; }
       answer.classList.remove('is-stale'); hadValid = false;   // no full line on screen now, so nothing to keep dim
       ex.set(false);
-      oddsA.set('—', null, Number.isFinite(a) ? fmtProb(toImplied(a), 'pct') + ' at ' + fmtOdds(a) + ', cut included' : ''); oddsB.set('—', null, Number.isFinite(b) ? fmtProb(toImplied(b), 'pct') + ' at ' + fmtOdds(b) + ', cut included' : ''); cut.setLabel('Book’s cut'); cut.set('—');
+      // One side's chance shows under its dash only while the other side is not being typed (a half-typed line reads lopsided otherwise).
+      const typing = ctx.keypad.active();
+      oddsA.set('—', null, Number.isFinite(a) && typing !== fB ? fmtProb(toImplied(a), 'pct') + ' at ' + fmtOdds(a) + ', cut included' : ''); oddsB.set('—', null, Number.isFinite(b) && typing !== fA ? fmtProb(toImplied(b), 'pct') + ' at ' + fmtOdds(b) + ', cut included' : ''); cut.setLabel('Book’s cut'); cut.set('—');
       say.set(committedBad(ctx, fA, fB) ? 'Odds start at 100: fix the side marked in red.' : Number.isFinite(a) || Number.isFinite(b) ? 'Type the other side too to see the odds without the book’s cut.' : 'Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;
     }

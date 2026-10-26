@@ -48,7 +48,7 @@ export function create(ctx) {
       if (hadValid && !committedBad(ctx, oddsF)) { answer.classList.add('is-stale'); hero.setLabel('Waiting for a number'); return; }
       answer.classList.remove('is-stale');
       hero.setLabel(state.mode === 'risk' ? 'Profit if it wins' : 'You need to risk'); hero.set('—', null, '');
-      say.set(committedBad(ctx, oddsF) ? 'Odds start at 100: type something like \u2212110 or +150.' : state.mode === 'risk' ? 'Enter what you are risking and the odds.' : 'Enter how much you want to win and the odds.');
+      say.set(committedBad(ctx, oddsF) ? 'Odds start at 100: fix the odds marked in red.' : state.mode === 'risk' ? 'Enter what you are risking and the odds.' : 'Enter how much you want to win and the odds.');
       backRes.set('—'); needRes.set('—');
       return;
     }

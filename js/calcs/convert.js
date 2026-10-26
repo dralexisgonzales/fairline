@@ -93,7 +93,7 @@ export function create(ctx) {
       hero.set(fmtProb(shownP, cents ? 'cents' : 'pct'), fmtProb(shownP, cents ? 'cents' : 'pct'), feeOn ? 'you really pay ' + fmtProb(p, 'cents', 1) + ' after the fee' : 'decimal odds ' + fmtDecimal(dec));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
       if (cents) t = feeOn
-        ? 'On ' + feeName(label) + ', buy at ' + fmtProb(shownP, 'cents', 1) + ': with the fee you really pay ' + fmtProb(p, 'cents', 1) + ', which is ' + fmtOdds(am) + '. You get $1 back if it wins.'
+        ? 'On ' + feeName(label) + ', buy at ' + fmtProb(shownP, 'cents', 1) + ': with the fee you really pay ' + fmtProb(p, 'cents', 1) + ', which works out to ' + fmtOdds(am) + '. You get $1 back if it wins.'
         : 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
@@ -103,7 +103,7 @@ export function create(ctx) {
       hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance') + (feeOn ? ' with ' + feeName(label) + ' fee' : ''));
       hero.set(fmtOdds(effAm), fmtOdds(effAm, { ascii: true }), feeOn ? 'you pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ' with the fee \u00B7 ' + fmtOdds(am) + ' before it' : 'decimal odds ' + fmtDecimal(dec));
       let t = 'If something wins ' + tidy(fmtProb(p, 'pct')) + ' of the time, these odds are exactly break-even on it.';
-      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. ' + (feeOn ? 'With the fee you really pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ', which is ' + fmtOdds(effAm) + '.' : fmtOdds(am) + ' is that same chance written as odds. ' + feeLine(p, rate, label));
+      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. ' + (feeOn ? 'With the fee you really pay ' + fmtProb(effectivePrice(p, rate).price, 'cents', 1) + ', which works out to ' + fmtOdds(effAm) + '.' : fmtOdds(am) + ' is that same chance written as odds. ' + feeLine(p, rate, label));
       say.set(t);
     }
   }

@@ -144,7 +144,7 @@ keypad.onOpenChange((open) => {
   if (!open) { const c = calcs.find((x) => x.id === active); if (c) { c.root.scrollTop = 0; c.root.style.setProperty('--overscroll', '0px'); } }
   setTimeout(() => { placeDock(true); keypad.active()?.reveal?.(); }, 0);
 });
-window.addEventListener('resize', () => placeDock(true));
+window.addEventListener('resize', () => { placeDock(true); keypad.active()?.reveal?.(); });
 
 
 const tabBtns = calcs.map((c) =>

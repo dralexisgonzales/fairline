@@ -28,7 +28,7 @@ export function createKeypad({ haptic } = {}) {
     if (active.type === 'odds') {
       const r = modeKey.getBoundingClientRect();
       active.chooseSign(e.clientX < r.left + r.width / 2 ? '-' : '+');
-    } else if (active.type === 'money') active.toggleMode(!typedSinceFocus);
+    } else if (active.type === 'money') { active.toggleMode(!typedSinceFocus); reReveal(); }   // the row may change height
     else clear();
   });
   const dotKey = key('.', 'kp-key', () => { if (active?.type === 'odds') clear(); else press('.'); });

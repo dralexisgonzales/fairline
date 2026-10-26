@@ -137,7 +137,19 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
           const tops = [...new Set([...screen.querySelectorAll('.slots > .row-2, .slots > .fld, .legs-list > .leg')]
             .filter((e) => e.offsetParent !== null)
             .map((e) => Math.round(e.getBoundingClientRect().top - sr.top + screen.scrollTop)))].sort((a, b) => a - b);
-          for (const t of tops) { const cand = Math.max(0, t - ansH - m); if (cand >= need && cand <= align) { target = cand; break; } }
+          // The last row takes a boundary only if it leaves at most 30px blank under it, or if the least scroll would
+          // leave less than half a row showing under the answer (a sliver). A mostly visible row stays as a scroll cue.
+          const maxTop0 = screen.scrollHeight - ch;
+          const cands = tops.map((t) => Math.max(0, t - ansH - m)).filter((c) => c >= need && c <= align);
+          const first = cands[0];
+          let sliver = false;
+          if (lastRow && first != null && first > maxTop0 + 30) {
+            const edge = need + ansH;   // content coordinate of the answer's bottom at the least scroll
+            const rows2 = [...screen.querySelectorAll('.slots > .row-2, .legs-list > .leg')].filter((e) => e.offsetParent !== null);
+            sliver = rows2.some((r) => { const top = r.getBoundingClientRect().top - sr.top + screen.scrollTop, h = r.offsetHeight; return top < edge && top + h > edge + 2 && top + h - edge < h / 2; });
+          }
+          if (first != null && (!lastRow || first <= maxTop0 + 30 || sliver)) target = first;
+          else if (lastRow) target = need;
         } else target = need;
         // Room below the last row so this scroll is always possible (the slots' auto margin absorbs the first of it).
         let os = 0;
@@ -402,6 +414,7 @@ export function toast(msg, ms = 1300, icon = 'check') {
   let el = document.getElementById('toast');
   if (!el) { el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.append(el); }
   el.classList.toggle('is-tip', icon === 'tip');
+  el.classList.toggle('is-wide', icon === 'tip' || msg.length > 17);   // a long toast drops under the header instead of covering the wordmark
   el.replaceChildren(svg(icon === 'tip' ? '<circle cx="12" cy="12" r="9"/><path d="M12 8v.5M12 11v5"/>' : '<path d="M5 12l5 5L20 7"/>', 16), h('span', { text: msg }));
   el.classList.add('is-on');
   clearTimeout(toastTimer);

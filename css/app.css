@@ -324,7 +324,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 }
 #toast svg { color: var(--pos); flex: none; }
 #toast.is-tip svg { color: var(--text-2); }
-#toast.is-tip { left: 12px; right: 12px; max-width: none; top: calc(var(--sat) + 60px); }
+#toast.is-wide { left: 12px; right: 12px; max-width: none; top: calc(var(--sat) + 60px); }
 #toast span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 #toast.is-on { opacity: 1; transform: none; }
 
@@ -396,6 +396,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.slack .res-hero .res-value { font-size: clamp(60px, 18vw, 80px); }
 .kb-open .screen.slack .res-col.res-hero .res-value { font-size: clamp(52px, 15.5vw, 68px); }
 .kb-open .screen.roomy .say { display: block; }
+/* A dash answer is short, so its one-line explanation fits beside the keypad. */
+#app.kb-open .answer:has(.res-hero.is-empty):not(.is-stale) .say { display: block; }
 .kb-open .screen.roomy .say, .kb-open .screen.say-fits .say { min-height: 41px; }
 .kb-open .screen.say-fits .answer:not(.whatif-on):not(.whatif-focus) .say { display: block; }
 .kb-open .screen.roomy .res-hero:not(.res-col) .res-value { font-size: clamp(64px, min(20vw, 12dvh), 110px); }
@@ -437,7 +439,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 /* Compact mode for short screens (iPhone SE, or a browser tab with chrome) */
 @media (max-height: 740px) {
   .top { min-height: 44px; padding-top: env(safe-area-inset-top); padding-bottom: 0; }
-  #toast { top: calc(var(--sat) + 5px); }
+  #toast:not(.is-wide) { top: calc(var(--sat) + 5px); }
   :root { --tab-h: 50px; }
   .tabs { padding: 0 8px max(env(safe-area-inset-bottom), 0px); }
   .keypad { padding: 4px 12px 6px; }
