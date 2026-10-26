@@ -69,7 +69,7 @@ export function create(ctx) {
   });
 
   const answer = h('div', { class: 'answer' },
-    h('div', { class: 'screen-head' }, countPill, addHead, h('span', { class: 'spacer' }), ex.el),
+    h('div', { class: 'screen-head' }, addHead, countPill, h('span', { class: 'spacer' }), ex.el),
     hero.root, say.el,
     h('div', { class: 'tiles' }, chanceRes.root, payRes.root)
   );
@@ -102,20 +102,20 @@ export function create(ctx) {
       say.set('Add the odds of each pick. Every pick has to win.');
       return;
     }
-    hero.setLabel('These legs add up to');
-    const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than that')) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than that' : '');
+    hero.setLabel('These legs combine to');
+    const bookSub = r.offered && Number.isFinite(stake) ? ('Book’s ' + fmtOdds(offeredAm) + ' pays ' + (Math.abs(r.offered.payoutGap) < 0.005 ? 'the same' : money(Math.abs(r.offered.payoutGap)) + (r.offered.payoutGap < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' would')) : (r.offered ? 'Book’s ' + fmtOdds(offeredAm) + ' pays ' + fmtPctSigned(Math.abs(r.offered.edge), 1).replace(/^[+−]/, '') + (r.offered.edge < 0 ? ' less' : ' more') + ' than ' + fmtOdds(r.american) + ' would' : '');
     hero.set(fmtOdds(r.american), fmtOdds(r.american, { ascii: true }), bookSub);
-    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 ? 'about 1 in ' + Math.round(1 / r.prob) : '');
+    chanceRes.set(fmtProb(r.prob, 'pct'), fmtProb(r.prob, 'pct'), r.prob > 0 && r.prob < 0.5 && 1 / r.prob < 1e6 ? 'about 1 in ' + Math.round(1 / r.prob).toLocaleString('en-US') : '');
     if (Number.isFinite(stake) && r.offered) {
-      payRes.setLabel('Profit at book’s ' + fmtOdds(offeredAm));
-      setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.offered.total), leadUnits: lead });
-      say.set('Every leg must win for it to pay. The book pays its own odds, not what the legs add up to.');
+      payRes.setLabel('Profit if every leg wins');
+      setMoney(payRes, r.offered.profit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake) + ' at the book’s ' + fmtOdds(offeredAm), leadUnits: lead });
+      say.set('');
     } else if (Number.isFinite(stake)) {
-      payRes.setLabel('Profit on your stake');
-      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'gets back ' + fmtMoney(r.fairTotal), leadUnits: lead });
-      say.set('Every leg must win for it to pay. Enter the book’s parlay odds to see how its price compares.');
+      payRes.setLabel('Profit if every leg wins');
+      setMoney(payRes, r.fairProfit, unit, { signed: true, tone: 'pos', sub: 'on ' + money(stake) + ' \u00B7 gets back ' + fmtMoney(r.fairTotal), leadUnits: lead });
+      say.set('Every leg must win for it to pay.');
     } else {
-      payRes.setLabel('Profit on your stake'); payRes.set('—', null, unit > 0 || state.stake.mode !== 'u' ? 'add a stake' : 'set a unit size');
+      payRes.setLabel('Profit if every leg wins'); payRes.set('—', null, unit > 0 || state.stake.mode !== 'u' ? 'add a stake' : 'set a unit size');
       say.set('Every leg must win.');
     }
   }

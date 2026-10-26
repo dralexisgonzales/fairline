@@ -100,10 +100,10 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     },
     setActive(on) {
       el.classList.toggle('is-active', on); if (!on) el.classList.remove('is-fresh');
-      // Units first: an untouched example stake is offered in units, so typing 2 means 2u.
-      if (on && type === 'money' && state.ghost && state.mode === '$' && ctx?.leadUnits?.() && ctx.unitSize() > 0) {
+      // Units first: a stake you tap is offered in units, so typing 2 means 2u (the $ key switches back for one entry).
+      if (on && type === 'money' && state.mode === '$' && ctx?.leadUnits?.() && ctx.unitSize() > 0) {
         const n = parseNum(state.v);
-        if (Number.isFinite(n)) { state.v = trimNum(n / ctx.unitSize(), 4); state.mode = 'u'; paint(); onChange(get()); keypad.refresh(); }
+        if (Number.isFinite(n)) { state.v = trimNum(n / ctx.unitSize(), 2); state.mode = 'u'; paint(); onChange(get()); keypad.refresh(); }
       }
     },
     setFresh(on) { el.classList.toggle('is-fresh', !!on && state.v !== ''); },
@@ -112,10 +112,10 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
       setTimeout(() => {
         const screen = el.closest('.screen, .sheet-body');
         if (!screen) return;
-        const ans = screen.querySelector('.answer');
+        const ans = [...screen.querySelectorAll('.answer')].find((a) => a.offsetParent !== null);
         const topEdge = ans ? ans.getBoundingClientRect().bottom : screen.getBoundingClientRect().top;
         const r = el.getBoundingClientRect(), sr = screen.getBoundingClientRect();
-        if (r.top < topEdge + 6) screen.scrollBy({ top: r.top - topEdge - 6, behavior: 'auto' });
+        if (r.top < topEdge + 24) screen.scrollBy({ top: r.top - topEdge - 24, behavior: 'auto' });
         else if (r.bottom > sr.bottom - 6) screen.scrollBy({ top: r.bottom - sr.bottom + 6, behavior: 'auto' });
       }, 40);
     },
@@ -146,15 +146,21 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     if (!show) return;
     // If the name and the tag do not both fit, the name wins and the tag steps aside (the Example pill still shows).
     clearTimeout(tagTimer);
-    tagTimer = setTimeout(() => { if (!tagEl.hidden && labelEl.isConnected && labelEl.scrollWidth > labelEl.clientWidth + 1) tagEl.hidden = true; }, 0);
+    tagTimer = setTimeout(fitTag, 0);
   }
+  function fitTag() {
+    if (tagEl.hidden || !labelEl.isConnected || el.offsetParent === null) return;
+    if (labelTextEl.scrollWidth > labelTextEl.clientWidth + 1) tagEl.hidden = true;
+  }
+  // The tag is re-checked whenever the slot is laid out (first paint, tab switch, resize, two-column legs).
+  if ('ResizeObserver' in window) new ResizeObserver(() => { if (state.ghost && state.v !== '' && tagEl.hidden) { tagEl.hidden = false; } fitTag(); }).observe(el);
   function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
   function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && type === 'odds'; }
 
   function setMode(mode) {
     if (state.mode === mode) return;
     const unit = ctx.unitSize();
-    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; toast('Set your unit size first, then this box will switch to units', 2600); ctx.openSettings('unit'); return; }
+    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; toast('Set a unit size first', 2200); ctx.openSettings('unit'); return; }
     // The typed number keeps its digits; only what they mean changes (2 then u is 2u). The other reading shows underneath.
     state.mode = mode;
     paint(); onChange(get()); keypad.refresh();
@@ -183,7 +189,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         if (unit > 0 && state.mode === '$') {
           // Finishing a pending switch converts the dollars typed earlier into units.
           const n = parseNum(state.v);
-          if (Number.isFinite(n)) state.v = trimNum(n / unit, 4);
+          if (Number.isFinite(n)) state.v = trimNum(n / unit, 2);
           state.mode = 'u'; paint(); onChange(get()); keypad.refresh(); return;
         }
       }
@@ -305,7 +311,7 @@ export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto'
   if (!Number.isFinite(dollars)) { res.set('—'); return; }
   const lead = leadUnits && unitSize > 0;
   const display = lead ? fmtUnits(dollars / unitSize, { signed }) : fmtMoney(dollars, { signed });
-  const copy = lead ? fmtUnits(dollars / unitSize, { signed, ascii: true }) : fmtMoney(dollars, { signed, ascii: true });
+  const copy = fmtMoney(dollars, { signed, ascii: true });   // a betslip wants dollars, whichever reads first
   const parts = [];
   const u = lead ? fmtMoney(dollars, { signed }) : (unitSize > 0 ? fmtUnits(dollars / unitSize, { signed }) : '');
   if (unitsFirst) { if (u) parts.push(u); if (sub) parts.push(sub); } else { if (sub) parts.push(sub); if (u) parts.push(u); }

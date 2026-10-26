@@ -59,38 +59,43 @@ const settingsSheet = createSettings(ctx);
 // ----- Layout -----
 calcs.forEach((c) => main.append(c.root));
 dock.insertBefore(keypad.root, tabs);
-function placeDock() {
-  document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
-  // Tight: the room left for the answer and slots is small (notched phones, short browsers).
-  // Measured without the header fold so it cannot flap: app height minus dock minus a full header.
-  // Room between a full header (with the phone's top inset) and the dock. Independent of the tight state itself.
-  const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
-  // Measure the dock at its full size so the decision never depends on the tight state itself.
-  app.classList.remove('tight');
-  const avail = app.clientHeight - dock.offsetHeight - 52 - sat;
-  app.classList.toggle('tight', avail < 460);
-  document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
+function contentSpare(screen) {
+  // Room left after the answer block and the slots (the screen itself always fills, so scrollHeight says nothing).
+  const parts = [...screen.querySelectorAll('.answer, .slots')].filter((e) => e.offsetParent !== null);
+  return screen.clientHeight - parts.reduce((a, e) => a + e.offsetHeight, 0);
+}
+// Sizes are decided on keypad open/close, tab switch, resize and settings changes, each time from scratch
+// (every size class off, then each tier added only if the grown layout still fits). Between those moments
+// the sizes stay put, so moving from slot to slot never changes the keypad or the answer.
+function placeDock(decideTight = false) {
   const c = calcs.find((x) => x.id === active);
   const screen = c ? c.root : null;
-  if (screen) {
-    // Content height: the answer block plus the slots (the screen itself always fills, so scrollHeight says nothing).
-    const parts = [...screen.querySelectorAll('.answer, .slots')].filter((e) => e.offsetParent !== null);
-    const used = parts.reduce((a, e) => a + e.offsetHeight, 0);
-    const slack = screen.clientHeight - used;
-    screen.classList.toggle('fits', slack >= -1);
-    // Grow the answer only when there is clearly room; keep it until the room is nearly gone (no flapping).
-    const grown = screen.classList.contains('slack');
-    screen.classList.toggle('slack', keypad.isOpen() && (grown ? slack >= 8 : slack >= 60));
-    const roomy = screen.classList.contains('roomy');
-    screen.classList.toggle('roomy', keypad.isOpen() && screen.classList.contains('slack') && (roomy ? slack >= 36 : slack >= 150));
+  if (decideTight && screen) {
+    // Optional tile rows (the hedge what-if) count as present, so showing them later never forces a size change.
+    const optional = [...screen.querySelectorAll('.tiles-whatif[hidden]')];
+    optional.forEach((e) => { e.hidden = false; });
+    app.classList.remove('tight');
+    screen.classList.remove('slack', 'roomy');
+    const open = keypad.isOpen();
+    app.classList.toggle('tight', open && contentSpare(screen) < 0);
+    if (open) {
+      screen.classList.add('slack');
+      if (contentSpare(screen) < 4) screen.classList.remove('slack');
+      else { screen.classList.add('roomy'); if (contentSpare(screen) < 4) screen.classList.remove('roomy'); }
+    }
+    optional.forEach((e) => { e.hidden = true; });
+  } else if (decideTight) {
+    app.classList.remove('tight');
   }
+  document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
+  if (screen) screen.classList.toggle('fits', contentSpare(screen) >= -1);
 }
 keypad.onOpenChange((open) => {
   app.classList.toggle('kb-open', open);
   if (!open) { const c = calcs.find((x) => x.id === active); if (c) c.root.scrollTop = 0; }
-  setTimeout(() => { placeDock(); keypad.active()?.reveal?.(); }, 0);
+  setTimeout(() => { placeDock(true); keypad.active()?.reveal?.(); }, 0);
 });
-window.addEventListener('resize', placeDock);
+window.addEventListener('resize', () => placeDock(true));
 
 
 const tabBtns = calcs.map((c) =>
@@ -140,10 +145,10 @@ function switchTo(id) {
   c.root.scrollTop = 0;
   const first = c.fields()[0];
   if (first) keypad.focus(first, true);
-  placeDock();
+  placeDock(true);
 }
-function renderAll() { calcs.forEach((c) => c.render()); const c = calcs.find((x) => x.id === active); if (c && !settingsSheet.isOpen()) keypad.setFields(c.fields()); placeDock(); }
-keypad.onActive(() => setTimeout(placeDock, 0));
+function renderAll() { calcs.forEach((c) => c.render()); const c = calcs.find((x) => x.id === active); if (c && !settingsSheet.isOpen()) keypad.setFields(c.fields()); placeDock(true); }
+keypad.onActive(() => setTimeout(() => placeDock(false), 0));
 
 // ----- Theme -----
 const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -166,7 +171,7 @@ applyTheme();
 calcs.forEach((c) => c.render());
 const lastTab = store.load('tab', null);
 switchTo(calcs.some((c) => c.id === lastTab) ? lastTab : 'fairline');
-placeDock();
+placeDock(true);
 if (!store.load('hinted2', false)) {
   setTimeout(() => { toast('Tap a result to copy', 2600); store.save('hinted2', true); }, 1200);
 }

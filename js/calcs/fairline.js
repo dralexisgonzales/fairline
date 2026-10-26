@@ -56,7 +56,7 @@ export function create(ctx) {
       say.set('No cut here: the two chances add up to under 100%, so betting both sides locks in ' + fmtPctSigned(-r.hold, 2) + '. See Hedge, Both sides.');
     } else {
       cut.setLabel('Book’s cut'); cut.set(fmtProb(r.hold, 'pct', 1), fmtProb(r.hold, 'pct', 1), '', r.hold > 0.08 ? 'neg' : '');
-      say.set('The book keeps ' + fmtProb(r.hold, 'pct', 1) + ' of this line' + (r.hold > 0.08 ? ', which is steep' : '') + '. These are the odds with that cut taken out.');
+      say.set('These are the odds with the book’s cut taken out.' + (r.hold > 0.08 ? ' The cut on this line is steep.' : ''));
     }
   }
 

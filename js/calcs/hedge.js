@@ -17,7 +17,7 @@ export function create(ctx) {
   const kp = ctx.keypad;
 
   const modeSeg = segmented({ options: [{ id: 'A', label: 'Hedge a bet' }, { id: 'B', label: 'Both sides' }], value: state.mode, cls: 'seg-mini', label: 'Mode',
-    onChange: (m) => { state.mode = m; render(); persist(); kp.setFields(fieldsList()); kp.focus(fieldsList()[0], false); } });
+    onChange: (m) => { state.mode = m; root.scrollTop = 0; render(); persist(); kp.setFields(fieldsList()); kp.focus(fieldsList()[0], false); } });
 
   // ----- A: hedge an open bet -----
   const aHero = result({ label: 'Bet on the other side', hero: true, mini: 'Bet' });
@@ -56,7 +56,7 @@ export function create(ctx) {
   const exB = examplePill();
   const bTotal = field({ type: 'money', label: 'Total to split', value: state.B.total, ctx, keypad: kp, onChange: (v) => { state.B.total = v; render(); persist(); } });
   const modeSegB = segmented({ options: [{ id: 'A', label: 'Hedge a bet' }, { id: 'B', label: 'Both sides' }], value: state.mode, cls: 'seg-mini', label: 'Mode',
-    onChange: (m) => { state.mode = m; render(); persist(); kp.setFields(fieldsList()); kp.focus(fieldsList()[0], false); } });
+    onChange: (m) => { state.mode = m; root.scrollTop = 0; render(); persist(); kp.setFields(fieldsList()); kp.focus(fieldsList()[0], false); } });
 
   const paneB = h('div', { class: 'pane-b' },
     h('div', { class: 'answer' },
@@ -90,6 +90,7 @@ export function create(ctx) {
     const manualHas = Number.isFinite(stakeDollars(state.A.manual, unit)) && stakeDollars(state.A.manual, unit) >= 0;
     tilesManual.hidden = !(manualFocused || manualHas);
     tilesManual.classList.toggle('tiles-keep', manualFocused);
+    answer.classList.toggle('whatif-focus', manualFocused);
     if (!Number.isFinite(stake) || !Number.isFinite(orig) || !Number.isFinite(hAm) || !(stake > 0)) {
       if (hadA) { answer.classList.add('is-stale'); aHero.setLabel('Waiting for a number'); return; }
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');
@@ -105,9 +106,9 @@ export function create(ctx) {
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const unhedged = 'Without the hedge: ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' if your bet wins, ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + ' if it loses.';
-    if (profit) aSay.set('Bet that and you come out ahead whichever side wins. ' + unhedged);
-    else if (even) aSay.set('Bet that and you get out flat, $0 either way. ' + unhedged);
-    else aSay.set('The other side is too short to lock a profit: covering fully costs you either way. ' + unhedged);
+    if (profit) aSay.set('Bet that much and you come out ahead whichever side wins. ' + unhedged);
+    else if (even) aSay.set('Bet that much and you get out flat, $0 either way. ' + unhedged);
+    else aSay.set('The other side’s odds are too low to lock a profit: covering fully costs you either way. ' + unhedged);
     aLocked.setLabel(even ? 'Locked result' : profit ? 'Locked profit' : 'Locked loss');
     setMoney(aLocked, r.guaranteed, unit, { signed: true, leadUnits: lead });
     if (r.breakEvenPossible) {
@@ -148,8 +149,8 @@ export function create(ctx) {
     const sumText = fmtProb(r.sum, 'pct', 2);
     const sA = Math.round(r.stakeA * 100) / 100;
     const sB = Math.round(((Number.isFinite(total) ? total : 0) - sA) * 100) / 100;
-    bOnA.setLabel('Book A \u00B7 ' + fmtOdds(a));
-    bOnB.setLabel('Book B \u00B7 ' + fmtOdds(b));
+    bOnA.setLabel('Bet at book A \u00B7 ' + fmtOdds(a));
+    bOnB.setLabel('Bet at book B \u00B7 ' + fmtOdds(b));
     if (!(total > 0)) {
       bHero.setLabel(r.exists ? 'Guaranteed return' : 'Guaranteed loss');
       bHero.set(fmtPctSigned(r.roi, 2), fmtPctSigned(r.roi, 2), '', r.exists ? 'pos' : 'neg');
@@ -158,12 +159,12 @@ export function create(ctx) {
     } else {
       bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Guaranteed profit on ' + fmtMoney(total) : 'Guaranteed loss on ' + fmtMoney(total));
       setMoney(bHero, r.profit, unit, { signed: true, leadUnits: lead });
-      setMoney(bOnA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of it', leadUnits: lead });
-      setMoney(bOnB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of it', leadUnits: lead });
+      setMoney(bOnA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of the total', leadUnits: lead });
+      setMoney(bOnB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of the total', leadUnits: lead });
     }
     if (r.exists) {
       bSay.set(total > 0
-        ? 'The two books disagree enough that both bets together return ' + fmtMoney(r.returnTotal) + ' whichever side wins (' + fmtPctSigned(r.roi, 2) + '). Odds can change, so place both bets quickly.'
+        ? 'Both bets together return ' + fmtMoney(r.returnTotal) + ' whichever side wins, a ' + fmtPctSigned(r.roi, 2).replace(/^\+/, '') + ' profit. Odds can change, so bet quickly.'
         : 'Split your money as shown and you get back ' + fmtPctSigned(r.roi, 2) + ' whichever side wins. Add a total to see dollars.');
     } else if (Math.abs(r.roi) < 0.00005) {
       bSay.set('Betting both sides here gets exactly your money back, nothing more.');
