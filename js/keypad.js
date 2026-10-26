@@ -114,7 +114,7 @@ export function createKeypad({ haptic } = {}) {
     if (type === 'odds') chips = [...chips].sort((a, b) => (a[0] === active.sign ? 0 : 1) - (b[0] === active.sign ? 0 : 1));
     chips.forEach((c) => {
       const label = type === 'odds' ? (c[0] === '-' ? '−' : '+') + c[1]
-        : type === 'money' ? (active.mode === 'u' ? c + 'u' : '$' + c)
+        : type === 'money' ? (active.mode === 'u' ? c + 'u' : '$' + (/^\d+$/.test(c) ? Number(c).toLocaleString('en-US') : c))
         : (active.prefix || '') + (/^\d+$/.test(c) ? Number(c).toLocaleString('en-US') : c) + (active.suffix || '');
       const b = h('button', { type: 'button', class: 'kp-chip', text: label });
       // Apply on release, and only if the finger did not swipe (the strip scrolls sideways).
@@ -149,6 +149,8 @@ export function createKeypad({ haptic } = {}) {
     nextKey.setAttribute('aria-label', last ? 'Done' : 'Next field');
   }
 
+  let revealTimer = 0;
+  const reReveal = () => { clearTimeout(revealTimer); revealTimer = setTimeout(() => active?.reveal?.(), 60); };
   function press(ch) {
     if (!active) return;
     let v = fresh ? '' : active.text();
@@ -156,15 +158,15 @@ export function createKeypad({ haptic } = {}) {
     if (v === '0' && ch !== '.') v = '';
     if (v.length >= (active.maxLen || 9)) return;
     active.setText(v + ch);
-    setFresh(false); typedSinceFocus = true;
+    setFresh(false); typedSinceFocus = true; reReveal();
   }
   function backspace() {
     if (!active) return;
     const v = active.text();          // a fresh slot still deletes one character, not everything
     active.setText(v.slice(0, -1));
-    setFresh(false); typedSinceFocus = true;
+    setFresh(false); typedSinceFocus = true; reReveal();
   }
-  function clear() { if (!active) return; active.setText(''); setFresh(false); }
+  function clear() { if (!active) return; active.setText(''); setFresh(false); reReveal(); }
   function refresh() { if (active) renderContext(); }
 
   return { root, focus, close, next, setFields, refresh, isOpen: () => !root.hidden, active: () => active, onOpenChange: (fn) => { onOpenChange = fn; }, onActive: (fn) => { activeListeners.push(fn); } };

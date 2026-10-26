@@ -94,7 +94,7 @@ export function create(ctx) {
   function feeLine(p, rate, label) {
     if (!(rate > 0)) return label === 'Novig pregame' ? 'No fee on Novig before the game starts.' : (label === 'None' ? '' : 'No fee on ' + label + ' here.');
     const eff = effectivePrice(p, rate);
-    return (label === 'Custom' ? 'Your custom fee adds ' : 'Your fee setting is ' + label + ': the fee adds ') + fmtCentsExact(eff.fee) + ', so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
+    return (label === 'Custom' ? 'Your custom fee adds ' : 'Your fee setting is ' + label + ': the fee adds ') + fmtCentsExact(eff.fee) + ' per $1.';
   }
 
   return { id, title: 'Convert', tab: 'Convert', icon: ICON, root, render, fields: () => (state.src === 'odds' ? [oddsF, probF] : [probF, oddsF]) };

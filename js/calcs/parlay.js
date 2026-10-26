@@ -96,7 +96,7 @@ export function create(ctx) {
     legsEl.classList.toggle('two-col', legFields.length >= 2);
     const many = legFields.length >= 3;
     if (root.classList.contains('many-legs') !== many) { root.classList.toggle('many-legs', many); if (!root.hidden) setTimeout(() => ctx.relayout?.(), 0); }
-    ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost());
+    ex.set(legFields.some((f) => f.isGhost()) || stakeF.isGhost(), legFields.every((f) => f.isGhost()) && stakeF.isGhost() && !Number.isFinite(offeredAm));
     answer.classList.toggle('is-example', legFields.every((f) => f.isGhost()));
     countPill.textContent = all.length + (all.length === 1 ? ' leg' : ' legs') + (legs.length < all.length ? ', ' + (all.length - legs.length) + ' blank' : '');
     if (!r) {

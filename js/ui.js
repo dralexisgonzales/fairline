@@ -117,7 +117,23 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         const topEdge = ans ? ans.getBoundingClientRect().bottom : screen.getBoundingClientRect().top;
         const r = el.getBoundingClientRect(), sr = screen.getBoundingClientRect();
         const m = document.getElementById('app')?.classList.contains('tight') ? 8 : 18;
-        if (r.top < topEdge + m) screen.scrollBy({ top: r.top - topEdge - m, behavior: 'auto' });
+        // When the slots overflow, the row being typed sits right under the answer, so no row above it is ever half shown.
+        screen.style.setProperty('--overscroll', '0px'); void screen.scrollHeight;
+        const overflow = screen.scrollHeight > screen.clientHeight + 1;
+        if (overflow) {
+          const want = r.top - topEdge - 8;   // just under the answer, so the row above is fully behind it
+          // Room below the last row so the typed row can always sit right under the answer
+          // (the slots' auto margin absorbs the first of it, so top up until the scroll is possible).
+          let os = 0;
+          for (let i = 0; i < 4; i++) {
+            const can = screen.scrollHeight - screen.clientHeight - screen.scrollTop;
+            if (want <= can + 0.5) break;
+            os += Math.ceil(want - can);
+            screen.style.setProperty('--overscroll', os + 'px'); void screen.scrollHeight;
+          }
+          screen.scrollTop = screen.scrollTop + want;
+        }
+        else { screen.scrollTop = 0; }   // everything fits: nothing should be scrolled under the answer
         // The bottom edge wins: the value being typed must never sit under the keypad.
         // A row half-hidden under the answer looks like a glitch: scroll it fully out of the way when the slot below still fits.
         const row = el.closest('.row-2, .leg') || el;
@@ -169,7 +185,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   // The tag is re-checked whenever the slot is laid out (first paint, tab switch, resize, two-column legs).
   if ('ResizeObserver' in window) new ResizeObserver(() => { if (state.ghost && state.v !== '' && tagEl.hidden) { tagEl.hidden = false; } fitTag(); }).observe(el);
   function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
-  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && type === 'odds'; }
+  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && !(type === 'money' && ctx?.unitSize?.() > 0) && type !== 'percent'; }
 
   function setMode(mode, convert = false) {
     if (state.mode === mode) return;

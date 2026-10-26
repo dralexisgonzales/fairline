@@ -104,7 +104,7 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover your bet on the other side at ' + fmtOdds(hAm) + ' you would bet');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover it on the other side at ' + fmtOdds(hAm) + ' you would bet');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const unhedged = 'Without the hedge you end up ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' or ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + '.';
@@ -118,7 +118,7 @@ export function create(ctx) {
       setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: 'your worst case becomes $0', unitsFirst: false, leadUnits: lead });
     } else {
       aBreak.setLabel('Bet to lose nothing');
-      aBreak.set('Not possible', 'Not possible', 'no amount gets you out flat', '');
+      aBreak.set('None works', 'None works', 'no amount gets you out flat', '');
     }
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {
@@ -159,7 +159,7 @@ export function create(ctx) {
       bOnA.set(fmtProb(r.shareA, 'pct', 1), fmtProb(r.shareA, 'pct', 1), 'of your total');
       bOnB.set(fmtProb(r.shareB, 'pct', 1), fmtProb(r.shareB, 'pct', 1), 'of your total');
     } else {
-      bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Guaranteed profit on ' + fmtMoney(total) : 'Guaranteed loss on ' + fmtMoney(total));
+      bHero.setLabel(Math.abs(r.profit) < 0.005 ? 'Break even' : r.exists ? 'Guaranteed profit on ' + (lead ? fmtUnits(total / unit) : fmtMoney(total)) : 'Guaranteed loss on ' + (lead ? fmtUnits(total / unit) : fmtMoney(total)));
       setMoney(bHero, r.profit, unit, { signed: true, leadUnits: lead });
       setMoney(bOnA, sA, unit, { tone: '', sub: fmtProb(r.shareA, 'pct', 1) + ' of total', leadUnits: lead });
       setMoney(bOnB, sB, unit, { tone: '', sub: fmtProb(r.shareB, 'pct', 1) + ' of total', leadUnits: lead });

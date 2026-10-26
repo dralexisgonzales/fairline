@@ -42,9 +42,11 @@ export function create(ctx) {
     headA.textContent = 'Side A' + (Number.isFinite(a) ? ' · ' + fmtOdds(a) : '');
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
-      if (hadValid) { answer.classList.add('is-stale'); cut.setLabel('From the last full line'); return; }
+      const emptied = !state.a.v || !state.b.v;
+      if (hadValid && !emptied) { answer.classList.add('is-stale'); cut.setLabel('Last full line'); return; }
+      answer.classList.remove('is-stale');
       oddsA.set('—', null, Number.isFinite(a) ? 'waiting for side B' : 'Enter odds'); oddsB.set('—', null, Number.isFinite(b) ? 'waiting for side A' : 'Enter odds'); cut.set('—');
-      say.set('Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
+      say.set(hadValid ? 'Type the other side to see the odds without the book’s cut.' : 'Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;
     }
     answer.classList.remove('is-stale'); hadValid = true;

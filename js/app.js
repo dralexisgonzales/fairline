@@ -93,10 +93,19 @@ function placeDock(decideTight = false) {
     optional.forEach((e) => { e.hidden = true; });
     // The sentence comes back whenever it fits on its own (it steps aside again if the what-if tiles appear).
     if (open && !screen.classList.contains('roomy')) { screen.classList.add('say-fits'); if (contentSpare(screen) < 4) screen.classList.remove('say-fits'); }
-    // With a lot of room left, the answer sits just above the slots, close to the thumb, instead of leaving a void between them.
-    if (open && contentSpare(screen) >= 72) screen.classList.add('vast');
+    // With a lot of room left, the answer centres in the space instead of leaving a void between it and the slots.
+    if (open && contentSpare(screen) >= 48) screen.classList.add('vast');
+    // A stored what-if that would push the slots under the keypad folds away until that slot is typed.
+    screen.classList.remove('fold-whatif');
+    if (open && foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
   } else if (decideTight) {
     app.classList.remove('tight');
+  } else if (screen && keypad.isOpen()) {
+    // The answer grew after the sizes were decided (a book comparison, a what-if): give room back, never take more.
+    for (const cls of ['vast', 'roomy', 'say-fits', 'slack', 'keep-tiles']) { if (contentSpare(screen) >= 0) break; screen.classList.remove(cls); }
+    if (!screen.classList.contains('slack') && !screen.classList.contains('keep-tiles')) { screen.classList.add('keep-tiles'); if (contentSpare(screen) < 4) screen.classList.remove('keep-tiles'); }
+    const foldable = [...screen.querySelectorAll('.tiles-whatif:not([hidden]):not(.tiles-keep)')];
+    if (foldable.length && contentSpare(screen) < 0) screen.classList.add('fold-whatif');
   }
   document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
   if (decideTight) refitResults();
@@ -104,7 +113,7 @@ function placeDock(decideTight = false) {
 }
 keypad.onOpenChange((open) => {
   app.classList.toggle('kb-open', open);
-  if (!open) { const c = calcs.find((x) => x.id === active); if (c) c.root.scrollTop = 0; }
+  if (!open) { const c = calcs.find((x) => x.id === active); if (c) { c.root.scrollTop = 0; c.root.style.setProperty('--overscroll', '0px'); } }
   setTimeout(() => { placeDock(true); keypad.active()?.reveal?.(); }, 0);
 });
 window.addEventListener('resize', () => placeDock(true));
@@ -125,9 +134,9 @@ const GLOSSARY = [
   ['Fair odds', 'The odds with the book’s cut removed: what the line says about the real chance.'],
   ['Stake', 'The money you put on a bet.'],
   ['Parlay and legs', 'One bet on several picks; each pick is a leg. Every leg has to win. The odds multiply, and so does the risk.'],
-  ['Hedge', 'Betting the other side of a bet you already have, to lock in a result before it settles.'],
+  ['Hedge', 'Betting the other side of a bet you already have, to lock in a result before the game is decided.'],
   ['Locked profit', 'What you end up with whichever side wins, once you have hedged.'],
-  ['Locked loss', 'When the other side’s odds are too short to lock a profit: what you lose whichever side wins if you hedge anyway.'],
+  ['Locked loss', 'When the other side’s odds are too low to lock a profit: what you lose whichever side wins if you cover the bet anyway.'],
   ['Bet to lose nothing', 'The hedge size that gets your stake back if your first bet loses, so the worst case is $0.'],
   ['Both sides (arbitrage)', 'When two books disagree enough that you can bet both sides and profit whichever wins.'],
   ['Unit (u)', 'Your standard bet size. If your unit is $25, a 2u bet is $50. Set it in Settings.'],
@@ -135,8 +144,8 @@ const GLOSSARY = [
   ['Must win', 'How often a bet at those odds has to win for you to break even over time. Win more often than that and you come out ahead.'],
   ['Decimal odds', 'What $1 turns into if the bet wins, stake included. −110 is 1.91.'],
   ['Example', 'Grey numbers marked example are there to show how a screen works. Type over them; the answer is only yours once every number is.'],
-  ['Prediction market and contracts', 'Kalshi, Polymarket, Novig: you buy contracts priced in cents that pay $1 if they win. A 62¢ contract means a 62% chance.'],
-  ['Trading fee', 'What a prediction market charges when you take a price. Pregame means before the game starts; Novig charges nothing then. Pick where you trade in Settings.'],
+  ['Prediction markets', 'Novig, Kalshi and Polymarket price bets in cents: you pay the price now and get $1 back if it wins. A 62¢ price means a 62% chance.'],
+  ['Fee', 'What a prediction market charges when you place a bet, a few cents per $1 at most. Pregame means before the game starts; Novig charges nothing then. Pick where you bet in Settings.'],
 ];
 const glossarySheet = sheet({ title: 'What the words mean', body: h('dl', { class: 'glossary' }, GLOSSARY.map(([t, d]) => [h('dt', { text: t }), h('dd', { text: d })])), onOpen: () => keypad.close() });
 document.body.append(settingsSheet.root, glossarySheet.root);
@@ -174,7 +183,8 @@ media.addEventListener?.('change', () => { if (settings.theme === 'auto') applyT
 
 // If the answer block changes height while a slot is focused, keep that slot in view.
 if ('ResizeObserver' in window) {
-  const ro = new ResizeObserver(() => keypad.active()?.reveal?.());
+  let repairTimer = 0;
+  const ro = new ResizeObserver(() => { clearTimeout(repairTimer); repairTimer = setTimeout(() => { placeDock(false); keypad.active()?.reveal?.(); }, 0); });
   document.querySelectorAll('.answer').forEach((el) => ro.observe(el));
 }
 
@@ -185,7 +195,7 @@ const lastTab = store.load('tab', null);
 switchTo(calcs.some((c) => c.id === lastTab) ? lastTab : 'fairline');
 placeDock(true);
 if (!store.load('hinted2', false)) {
-  setTimeout(() => { toast('Tap a result to copy', 2600, 'tip'); store.save('hinted2', true); }, 1200);
+  setTimeout(() => { toast('Tap results to copy', 2600, 'tip'); store.save('hinted2', true); }, 1200);
 }
 window.addEventListener('scroll', () => window.scrollTo(0, 0));
 

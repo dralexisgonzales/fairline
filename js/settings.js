@@ -78,13 +78,13 @@ export function createSettings(ctx) {
     leadToggle.setAttribute('aria-checked', String(!!st.leadUnits));
     feeChips.replaceChildren(...FEE_PRESETS.map((p) => {
       const on = p.id === st.feePreset;
-      const rate = p.rate == null ? '' : (Math.round(p.rate * 1000) / 10) + '%';
+      const rate = p.rate == null ? '' : p.rate > 0 ? 'up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2 per $1' : 'no fee';
       return h('button', { type: 'button', class: 'chip' + (on ? ' is-on' : ''), role: 'radio', 'aria-checked': String(on), onclick: () => ctx.update({ feePreset: p.id }) }, p.label, rate ? h('small', { text: rate }) : null);
     }));
     customF.el.hidden = st.feePreset !== 'custom';
     const p = ctx.feePreset();
     feeNote.textContent = p.note || '';
-    feeDisc.root.querySelector('.disclosure span').textContent = p.label + (p.rate > 0 ? ' \u00B7 ' + (Math.round(p.rate * 1000) / 10) + '%' : p.id === 'custom' ? ' \u00B7 ' + (Math.round((st.feeCustom || 0) * 1000) / 10) + '%' : ' \u00B7 no fee');
+    feeDisc.root.querySelector('.disclosure span').textContent = p.label + (p.rate > 0 ? ' \u00B7 up to ' + (Math.round(p.rate * 25 * 100) / 100) + '\u00A2 per $1' : p.id === 'custom' ? ' \u00B7 ' + (Math.round((st.feeCustom || 0) * 1000) / 10) + '%' : ' \u00B7 no fee');
     themeSeg.set(st.theme);
     if (st.unit > 0 && st.bankroll > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + ', which is ' + fmtProb(st.unit / st.bankroll, 'pct', 1) + ' of your bankroll.';
     else if (st.unit > 0) unitNote.textContent = '1u = ' + fmtMoney(st.unit) + '. Add a bankroll to see what share of it a unit is.';
