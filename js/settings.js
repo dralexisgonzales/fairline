@@ -44,7 +44,7 @@ export function createSettings(ctx) {
     ),
     h('div', { class: 'section' },
       h('div', { class: 'section-title', text: 'Prediction market fee' }),
-      h('div', { class: 'note', text: 'Only used in Convert when you switch to \u00A2. Pick where you trade.' }),
+      h('div', { class: 'note', text: 'Novig, Kalshi and Polymarket are betting exchanges that charge a fee per trade. Pick the one you use. Only used in Convert, in cents mode.' }),
       feeChips,
       customF.el,
       feeNote

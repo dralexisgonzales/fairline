@@ -14,7 +14,7 @@ export function create(ctx) {
   const hero = result({ label: 'Profit if it wins', hero: true });
   const say = sentence();
   const backRes = result({ label: 'You get back' });
-  const needRes = result({ label: 'Must win this often' });
+  const needRes = result({ label: 'Must win' });
   const modeSeg = segmented({ options: [{ id: 'risk', label: 'I’m risking' }, { id: 'win', label: 'I want to win' }], value: state.mode, cls: 'seg-mini', label: 'Enter the risk or the target win',
     onChange: (m) => { state.mode = m; render(); persist(); ctx.keypad.focus(amountF, false); } });
 
@@ -51,19 +51,20 @@ export function create(ctx) {
       return;
     }
     answer.classList.remove('is-stale'); hadValid = true;
-    needRes.set(fmtProb(toImplied(am), 'pct'), fmtProb(toImplied(am), 'pct'), 'to break even at ' + fmtOdds(am));
+    needRes.set(fmtProb(toImplied(am), 'pct'), fmtProb(toImplied(am), 'pct'), 'of the time to break even at ' + fmtOdds(am));
+    const why = am < 0 ? 'At ' + fmtOdds(am) + ', you risk ' + fmtMoney(-am) + ' to win $100.' : 'At ' + fmtOdds(am) + ', you risk $100 to win ' + fmtMoney(am) + '.';
     if (state.mode === 'risk') {
       const r = payoutFromRisk(amount, am);
       hero.setLabel('Profit if it wins');
       setMoney(hero, r.profit, unit, { signed: true, tone: 'pos', leadUnits: lead });
       setMoney(backRes, r.total, unit, { tone: '', sub: 'stake included', leadUnits: lead });
-      say.set('Risk ' + fmtMoney(amount) + ' at ' + fmtOdds(am) + ': win ' + fmtMoney(r.profit) + ' and get ' + fmtMoney(r.total) + ' back in total.');
+      say.set(why + ' Win, and your stake comes back with the profit.');
     } else {
       const r = payoutFromWin(amount, am);
       hero.setLabel('You need to risk');
       setMoney(hero, r.stake, unit, { tone: '', leadUnits: lead });
       setMoney(backRes, r.total, unit, { tone: '', sub: 'stake included', leadUnits: lead });
-      say.set('To win ' + fmtMoney(amount) + ' at ' + fmtOdds(am) + ', risk ' + fmtMoney(r.stake) + '. You would get ' + fmtMoney(r.total) + ' back in total.');
+      say.set(why + ' Win, and your stake comes back with the profit.');
     }
   }
 

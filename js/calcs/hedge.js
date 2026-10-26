@@ -1,7 +1,7 @@
 // Hedge a bet you already have, or bet both sides at two books.
 import { h, field, oddsValue, stakeDollars, segmented, result, setMoney, sentence, examplePill, debounce, svg } from '../ui.js';
 import { hedge, hedgeOutcomes, arb } from '../math.js';
-import { fmtOdds, fmtMoney, fmtPctSigned, fmtProb } from '../format.js';
+import { fmtOdds, fmtMoney, fmtUnits, fmtPctSigned, fmtProb } from '../format.js';
 import * as store from '../store.js';
 
 export const ICON = '<path d="M4 8h13"/><path d="M14 5l3 3-3 3"/><path d="M20 16H7"/><path d="M10 13l-3 3 3 3"/>';
@@ -23,17 +23,18 @@ export function create(ctx) {
   const aHero = result({ label: 'Bet on the other side', hero: true, mini: 'Bet' });
   const aSay = sentence();
   const aLocked = result({ label: 'Locked result' });
-  const aBreak = result({ label: 'Break-even bet' });
-  const aHedge = field({ type: 'odds', label: 'Other side now', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
-  const aOrig = field({ type: 'odds', label: 'Your bet’s odds', value: state.A.orig, ctx, keypad: kp, onChange: (v) => { state.A.orig = v; render(); persist(); } });
+  const aBreak = result({ label: 'Bet to lose nothing' });
+  const aHedge = field({ type: 'odds', label: 'Other side', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
+  const aOrig = field({ type: 'odds', label: 'Your odds', value: state.A.orig, ctx, keypad: kp, onChange: (v) => { state.A.orig = v; render(); persist(); } });
   const aStake = field({ type: 'money', label: 'Your stake', value: state.A.stake, ctx, keypad: kp, onChange: (v) => { state.A.stake = v; render(); persist(); } });
-  const aManual = field({ type: 'money', label: 'Try another amount', value: state.A.manual, placeholder: '0', ctx, keypad: kp, onChange: (v) => { state.A.manual = v; render(); persist(); } });
+  const aManual = field({ type: 'money', label: 'Try another amount', value: state.A.manual, placeholder: '0', hint: 'optional', ctx, keypad: kp, onChange: (v) => { state.A.manual = v; render(); persist(); } });
   const aWinO = result({ label: 'If your bet wins' });
   const aWinH = result({ label: 'If the other side wins' });
   kp.onActive(() => { if (state.mode === 'A' && !root.hidden) renderA(); });
   const exA = examplePill();
   const tilesA = h('div', { class: 'tiles' }, aLocked.root, aBreak.root);
-  const tilesManual = h('div', { class: 'tiles tiles-keep', hidden: true }, aWinO.root, aWinH.root);
+  const manualCap = h('div', { class: 'tiles-cap' });
+  const tilesManual = h('div', { class: 'tiles tiles-whatif', hidden: true }, manualCap, aWinO.root, aWinH.root);
 
   const paneA = h('div', { class: 'pane-a' },
     h('div', { class: 'answer' },
@@ -41,7 +42,7 @@ export function create(ctx) {
       aHero.root, aSay.el,
       tilesA, tilesManual
     ),
-    h('div', { class: 'slots' }, h('div', { class: 'row-2' }, aHedge.el, aOrig.el), h('div', { class: 'row-2' }, aStake.el, aManual.el))
+    h('div', { class: 'slots' }, h('div', { class: 'row-2' }, aOrig.el, aStake.el), h('div', { class: 'row-2' }, aHedge.el, aManual.el))
   );
 
   // ----- B: both sides at two books -----
@@ -70,7 +71,7 @@ export function create(ctx) {
   const root = h('section', { class: 'screen', 'data-screen': id, hidden: true }, paneA, paneB);
 
   function fieldsList() {
-    if (state.mode === 'A') return [aHedge, aOrig, aStake, aManual];
+    if (state.mode === 'A') return [aOrig, aStake, aHedge, aManual];
     return [bA, bB, bTotal];
   }
 
@@ -92,7 +93,7 @@ export function create(ctx) {
     if (!Number.isFinite(stake) || !Number.isFinite(orig) || !Number.isFinite(hAm) || !(stake > 0)) {
       if (hadA) { answer.classList.add('is-stale'); return; }
       aHero.setLabel('Bet on the other side'); aHero.set('—', null, '');
-      aSay.set('Enter the other side’s odds now, your bet’s odds, and what you staked.');
+      aSay.set('Enter your bet’s odds, what you staked, and the other side’s odds now.');
       aLocked.set('—'); aBreak.set('—'); aWinO.set('—'); aWinH.set('—');
       return;
     }
@@ -100,7 +101,7 @@ export function create(ctx) {
     const r = hedge(stake, orig, hAm);
     const even = Math.abs(r.guaranteed) < 0.005;
     const profit = r.guaranteed > 0.005;
-    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To hedge fully at ' + fmtOdds(hAm) + ' you would bet');
+    aHero.setLabel(profit ? 'Bet this on the other side at ' + fmtOdds(hAm) : 'To cover your bet fully at ' + fmtOdds(hAm) + ' you would bet');
     setMoney(aHero, r.equalStake, unit, { tone: profit ? '' : 'muted', leadUnits: lead });
     const noHedge = hedgeOutcomes(stake, orig, 0, hAm);
     const unhedged = 'Without it: ' + fmtMoney(noHedge.ifOriginalWins, { signed: true }) + ' if your bet wins, ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }) + ' if it loses.';
@@ -110,16 +111,17 @@ export function create(ctx) {
     aLocked.setLabel(even ? 'Locked result' : profit ? 'Locked profit' : 'Locked loss');
     setMoney(aLocked, r.guaranteed, unit, { signed: true, leadUnits: lead });
     if (r.breakEvenPossible) {
-      aBreak.setLabel('Break-even bet');
+      aBreak.setLabel('Bet to lose nothing');
       setMoney(aBreak, r.breakEvenStake, unit, { tone: '', sub: 'worst case $0 instead of ' + fmtMoney(noHedge.ifHedgeWins, { signed: true }), unitsFirst: false, leadUnits: lead });
     } else {
-      aBreak.setLabel('Break-even bet');
+      aBreak.setLabel('Bet to lose nothing');
       aBreak.set('None', 'None', 'not possible at these odds', '');
     }
     const amount = stakeDollars(state.A.manual, unit);
     if (Number.isFinite(amount) && amount >= 0) {
       const o = hedgeOutcomes(stake, orig, amount, hAm);
-      aWinO.setLabel('If your bet wins'); aWinH.setLabel('If the other side wins');
+      manualCap.textContent = 'With ' + (lead && unit > 0 ? fmtUnits(amount / unit) : fmtMoney(amount).replace(/\.00$/, '')) + ' on the other side instead:';
+      aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins');
       setMoney(aWinO, o.ifOriginalWins, unit, { signed: true, leadUnits: lead });
       setMoney(aWinH, o.ifHedgeWins, unit, { signed: true, leadUnits: lead });
       if (manualFocused) {
@@ -127,7 +129,7 @@ export function create(ctx) {
         setMoney(aHero, amount, unit, { tone: 'muted', leadUnits: lead });
         aSay.set('Your bet wins: ' + fmtMoney(o.ifOriginalWins, { signed: true }) + '. Other side wins: ' + fmtMoney(o.ifHedgeWins, { signed: true }) + '. The full hedge is ' + fmtMoney(r.equalStake) + '.');
       }
-    } else { aWinO.setLabel('If your bet wins'); aWinH.setLabel('If the other side wins'); aWinO.set('—', null, 'enter an amount'); aWinH.set('—', null, 'enter an amount'); }
+    } else { manualCap.textContent = 'Try another amount on the other side:'; aWinO.setLabel('Your bet wins'); aWinH.setLabel('Other side wins'); aWinO.set('—', null, 'enter an amount'); aWinH.set('—', null, 'enter an amount'); }
   }
 
   function renderB() {
@@ -166,7 +168,7 @@ export function create(ctx) {
     }
     if (r.exists) {
       bSay.set(total > 0
-        ? 'Put ' + fmtMoney(sA) + ' on ' + fmtOdds(a) + ' at one book and ' + fmtMoney(sB) + ' on ' + fmtOdds(b) + ' at the other. You get back ' + fmtMoney(r.returnTotal) + ' whichever side wins (' + fmtPctSigned(r.roi, 2) + ').'
+        ? 'Put ' + fmtMoney(sA) + ' on ' + fmtOdds(a) + ' at one book and ' + fmtMoney(sB) + ' on ' + fmtOdds(b) + ' at the other. You get back ' + fmtMoney(r.returnTotal) + ' whichever side wins (' + fmtPctSigned(r.roi, 2) + '). Lines move, so place both bets quickly.'
         : 'Split your money as shown and you get back ' + fmtPctSigned(r.roi, 2) + ' whichever side wins. Add a total to see dollars.');
     } else if (Math.abs(r.roi) < 0.00005) {
       bSay.set('Betting both sides here gets exactly your money back, nothing more.');

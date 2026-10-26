@@ -66,10 +66,19 @@ function placeDock() {
   // Room between a full header (with the phone's top inset) and the dock. Independent of the tight state itself.
   const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
   const avail = app.clientHeight - dock.offsetHeight - 52 - sat;
-  app.classList.toggle('tight', avail < 400);
+  app.classList.toggle('tight', avail < 460);
   const c = calcs.find((x) => x.id === active);
   const screen = c ? c.root : null;
-  if (screen) screen.classList.toggle('fits', screen.scrollHeight <= screen.clientHeight + 1);
+  if (screen) {
+    // Content height: the answer block plus the slots (the screen itself always fills, so scrollHeight says nothing).
+    const parts = [...screen.querySelectorAll('.answer, .slots')].filter((e) => e.offsetParent !== null);
+    const used = parts.reduce((a, e) => a + e.offsetHeight, 0);
+    const slack = screen.clientHeight - used;
+    screen.classList.toggle('fits', slack >= -1);
+    // Grow the answer only when there is clearly room; keep it until the room is nearly gone (no flapping).
+    const grown = screen.classList.contains('slack');
+    screen.classList.toggle('slack', keypad.isOpen() && (grown ? slack >= 24 : slack >= 96));
+  }
 }
 keypad.onOpenChange((open) => {
   app.classList.toggle('kb-open', open);
@@ -96,13 +105,16 @@ const GLOSSARY = [
   ['Parlay and legs', 'One bet on several picks; each pick is a leg. Every leg has to win. The odds multiply, and so does the risk.'],
   ['Hedge', 'Betting the other side of a bet you already have, to lock in a result before it settles.'],
   ['Locked profit', 'What you end up with whichever side wins, once you have hedged.'],
-  ['Break-even bet', 'The hedge size that gets your stake back if your first bet loses, so the worst case is $0.'],
+  ['Locked loss', 'When the other side’s odds are too short to lock a profit: what you lose whichever side wins if you hedge anyway.'],
+  ['Bet to lose nothing', 'The hedge size that gets your stake back if your first bet loses, so the worst case is $0.'],
   ['Both sides (arbitrage)', 'When two books disagree enough that you can bet both sides and profit whichever wins.'],
   ['Unit (u)', 'Your standard bet size. If your unit is $25, a 2u bet is $50. Set it in Settings.'],
   ['Bankroll', 'The money you have set aside for betting. A unit is usually 1% to 2% of it.'],
+  ['Must win', 'How often a bet at those odds has to win for you to break even over time. Win more often than that and you come out ahead.'],
   ['Decimal odds', 'What $1 turns into if the bet wins, stake included. −110 is 1.91.'],
+  ['Example', 'Grey numbers marked example are there to show how a screen works. Type over them; the answer is only yours once every number is.'],
   ['Prediction market and contracts', 'Kalshi, Polymarket, Novig: you buy contracts priced in cents that pay $1 if they win. A 62¢ contract means a 62% chance.'],
-  ['Trading fee', 'What a prediction market charges when you take a price. Pregame means before the game starts; Novig charges nothing then.'],
+  ['Trading fee', 'What a prediction market charges when you take a price. Pregame means before the game starts; Novig charges nothing then. Pick where you trade in Settings.'],
 ];
 const glossarySheet = sheet({ title: 'What the words mean', body: h('dl', { class: 'glossary' }, GLOSSARY.map(([t, d]) => [h('dt', { text: t }), h('dd', { text: d })])), onOpen: () => keypad.close() });
 document.body.append(settingsSheet.root, glossarySheet.root);

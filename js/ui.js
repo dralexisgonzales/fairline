@@ -56,7 +56,7 @@ export function debounce(fn, ms = 80) {
 
 // ---------- Field: a tappable value edited with the built-in keypad ----------
 // type: 'odds' (sign + digits), 'money' (dollars or units), 'percent' (decimal with a suffix)
-export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false, chips = null, noAdvance = false }) {
+export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false, chips = null, noAdvance = false, hint = '' }) {
   const state = type === 'odds'
     ? { sign: value?.sign === '+' ? '+' : '-', v: value?.v ?? '', ghost: !!value?.ghost }
     : type === 'money'
@@ -76,6 +76,8 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     subEl
   );
   el.addEventListener('click', () => keypad.focus(api));
+  el.addEventListener('pointerdown', (e) => e.preventDefault());   // no stuck focus ring after Done
+  let labelText = label;
 
   let pendingUnits = false;
   const api = {
@@ -126,9 +128,10 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     else { state.v = (typeof v === 'object' && v !== null) ? (v.v ?? '') : (v ?? ''); state.ghost = !!(v && v.ghost); }
     paint();
   }
-  function setLabel(t) { labelEl.textContent = t; el.setAttribute('aria-label', t); }
+  function setLabel(t) { labelText = t; paintLabel(); el.setAttribute('aria-label', t); }
+  function paintLabel() { labelEl.textContent = labelText + (state.ghost && state.v !== '' ? ' \u00B7 example' : ''); }
   function setSuffix(s) { suffix = s; api.suffix = s; paint(); if (keypad.active?.() === api) keypad.refresh(); }
-  function setSub(t, cls = '') { subEl.textContent = t || ''; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !t; }
+  function setSub(t, cls = '') { const txt = t || (state.v === '' ? hint : '') || ''; subEl.textContent = txt; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !txt && type !== 'money'; }
 
   function setMode(mode) {
     if (state.mode === mode) return;
@@ -143,6 +146,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
     const empty = state.v === '';
     el.classList.toggle('is-empty', empty);
     el.classList.toggle('is-ghost', state.ghost && !empty);
+    paintLabel();
     valueEl.textContent = empty ? (placeholder || (type === 'odds' ? '\u2014' : '0')) : (type === 'odds' ? state.v : withCommas(state.v));
     el.classList.toggle('is-long', !empty && state.v.length >= 8);
     el.classList.toggle('is-xlong', !empty && state.v.length >= 11);
@@ -225,6 +229,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
   const valueEl = h('span', { class: 'res-value', text: '—' });
   const subEl = h('span', { class: 'res-sub', hidden: true });
   const root = h('button', { type: 'button', class: 'res ' + (hero ? 'res-hero ' : '') + cls, 'aria-label': label + ', tap to copy' }, labelEl, valueEl, subEl);
+  root.addEventListener('pointerdown', (e) => e.preventDefault());
   if (mini) root.dataset.mini = mini;
   let copy = null, currentLabel = label, flashTimer = null, fitTimer = 0;
   root.addEventListener('click', () => {
@@ -232,9 +237,8 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
     copyText(copy).then(() => {
       toast('Copied ' + copy);
       root.classList.add('is-copied');
-      labelEl.textContent = 'Copied';
       clearTimeout(flashTimer);
-      flashTimer = setTimeout(() => { root.classList.remove('is-copied'); labelEl.textContent = currentLabel; }, 700);
+      flashTimer = setTimeout(() => root.classList.remove('is-copied'), 700);
     });
   });
   let fitHeroTimer = 0;
@@ -274,7 +278,7 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
     root.classList.remove('tone-pos', 'tone-neg', 'tone-accent', 'tone-muted');
     if (tone) root.classList.add('tone-' + tone);
   }
-  function setLabel(t) { currentLabel = t; if (!root.classList.contains('is-copied')) labelEl.textContent = t; root.setAttribute('aria-label', t + ', tap to copy'); }
+  function setLabel(t) { currentLabel = t; labelEl.textContent = t; root.setAttribute('aria-label', t + ', tap to copy'); }
   set('—');
   return { root, set, setLabel, setMini: (t) => { root.dataset.mini = t; }, hide: (on) => { root.hidden = !!on; } };
 }

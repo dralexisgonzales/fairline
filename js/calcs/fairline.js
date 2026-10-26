@@ -18,8 +18,8 @@ export function create(ctx) {
   const cut = result({ label: 'Book’s cut', cls: 'res-pill' });
   const say = sentence();
 
-  const fA = field({ type: 'odds', label: 'Side A odds', value: state.a, ctx, keypad: ctx.keypad, onChange: (v) => { state.a = v; render(); persist(); } });
-  const fB = field({ type: 'odds', label: 'Side B odds', value: state.b, ctx, keypad: ctx.keypad, onChange: (v) => { state.b = v; render(); persist(); } });
+  const fA = field({ type: 'odds', label: 'Side A', value: state.a, ctx, keypad: ctx.keypad, onChange: (v) => { state.a = v; render(); persist(); } });
+  const fB = field({ type: 'odds', label: 'Side B', value: state.b, ctx, keypad: ctx.keypad, onChange: (v) => { state.b = v; render(); persist(); } });
   // A two-way line usually has a plus side: when B is started from empty and A is minus, default B to plus.
   fB.el.addEventListener('click', () => { if (fB.text() === '' && state.a.sign === '-') fB.setSign('+'); });
 
@@ -42,7 +42,7 @@ export function create(ctx) {
     headA.textContent = 'Side A' + (Number.isFinite(a) ? ' · ' + fmtOdds(a) : '');
     headB.textContent = 'Side B' + (Number.isFinite(b) ? ' · ' + fmtOdds(b) : '');
     if (!Number.isFinite(a) || !Number.isFinite(b)) {
-      if (hadValid) { answer.classList.add('is-stale'); return; }
+      if (hadValid) { answer.classList.add('is-stale'); cut.setLabel('From the last full line'); return; }
       oddsA.set('—', null, 'Enter odds'); oddsB.set('—', null, 'Enter odds'); cut.set('—');
       say.set('Type both sides of a line, like −110 and −110, to see the odds without the book’s cut.');
       return;

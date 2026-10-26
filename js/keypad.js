@@ -86,11 +86,16 @@ export function createKeypad({ haptic } = {}) {
   }
 
   function close() {
+    try { document.activeElement?.blur?.(); } catch {}
     if (active) { active.setActive(false); active.commit?.(); active = null; notifyActive(); }
     if (!root.hidden) { root.hidden = true; onOpenChange?.(false); }
   }
 
+  let lastNext = 0;
   function next() {
+    const now = Date.now();
+    if (now - lastNext < 150) return;   // a double-fired tap never skips a slot
+    lastNext = now;
     if (!active) { if (fields[0]) focus(fields[0]); return; }
     if (active.noAdvance) { close(); return; }
     const visible = fields.filter((f) => f.el.isConnected && f.el.offsetParent !== null);

@@ -16,13 +16,12 @@ export function create(ctx) {
 
   const hero = result({ label: 'Chance to win', hero: true });
   const say = sentence();
-  const modeSeg = segmented({ options: [{ id: 'pct', label: '%' }, { id: 'cents', label: '¢' }], value: ctx.probMode(), cls: 'seg-mini', label: 'Show chance as percent or cents', onChange: (m) => ctx.setProbMode(m) });
+  const modeSeg = segmented({ options: [{ id: 'pct', label: 'Percent' }, { id: 'cents', label: 'Cents' }], value: ctx.probMode(), cls: 'seg-mini', label: 'Show chance as percent or cents', onChange: (m) => { ctx.setProbMode(m); ctx.keypad.focus(probF, false); } });
 
-  const oddsF = field({ type: 'odds', label: 'American odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; state.src = 'odds'; render(); persist(); } });
-  const probF = field({ type: 'percent', label: 'Chance to win', value: state.prob, suffix: '%', placeholder: '52.4', maxLen: 6, ctx, keypad: ctx.keypad, onChange: (v) => { state.prob = v; state.src = 'prob'; render(); persist(); } });
+  const oddsF = field({ type: 'odds', label: 'Odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; if (state.src !== 'odds') { state.src = 'odds'; ctx.keypad.setFields([oddsF, probF]); } render(); persist(); } });
+  const probF = field({ type: 'percent', label: 'Chance to win', value: state.prob, suffix: '%', placeholder: '52.4', maxLen: 6, ctx, keypad: ctx.keypad, onChange: (v) => { state.prob = v; if (state.src !== 'prob') { state.src = 'prob'; ctx.keypad.setFields([probF, oddsF]); } render(); persist(); } });
   oddsF.noAdvance = true; probF.noAdvance = true;
-  oddsF.el.addEventListener('click', () => { if (state.src !== 'odds') { state.src = 'odds'; render(); persist(); ctx.keypad.setFields([oddsF, probF]); } });
-  probF.el.addEventListener('click', () => { if (state.src !== 'prob') { state.src = 'prob'; render(); persist(); ctx.keypad.setFields([probF, oddsF]); } });
+  // Tapping the calculated box does not change anything until the first key: the old answer stays until there is a new one.
 
   const ex = examplePill();
   const answer = h('div', { class: 'answer' },
@@ -76,21 +75,21 @@ export function create(ctx) {
     if (state.src === 'odds') {
       hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am));
       hero.set(fmtProb(p, cents ? 'cents' : 'pct'), fmtProb(p, cents ? 'cents' : 'pct'), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) : (cents ? '' : fmtDecimal(dec) + ' decimal'));
-      let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even. In decimal odds that is ' + fmtDecimal(dec) + '.';
-      if (cents) t = 'On a prediction market, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: you pay that to win $1. ' + feeLine(p, rate, label);
+      let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
+      if (cents) t = 'On a betting exchange, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
       hero.setLabel('Odds for a ' + tidy(fmtProb(p, cents ? 'cents' : 'pct')) + (cents ? ' price' : ' chance'));
       hero.set(fmtOdds(am), fmtOdds(am, { ascii: true }), cents && rate > 0 ? 'after fee ' + fmtProb(effectivePrice(p, rate).price, 'cents', 2) + ', like ' + fmtOdds(probToAmerican(effectivePrice(p, rate).price)) : fmtDecimal(dec) + ' decimal');
-      let t = 'A bet that wins ' + fmtProb(p, 'pct') + ' of the time is fairly priced at these odds. In decimal odds that is ' + fmtDecimal(dec) + '.';
-      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: you pay ' + tidy(fmtProb(p, 'cents')) + ' to win $1. That is the same as these odds. ' + feeLine(p, rate, label);
+      let t = 'Something that wins ' + tidy(fmtProb(p, 'pct')) + ' of the time is worth these odds, with nothing built in for the book.';
+      if (cents) t = 'A ' + tidy(fmtProb(p, 'cents')) + ' price means a ' + tidy(fmtProb(p, 'pct')) + ' chance: pay ' + tidy(fmtProb(p, 'cents')) + ' now, get $1 back if it wins. Same thing as these odds. ' + feeLine(p, rate, label);
       say.set(t);
     }
   }
   function feeLine(p, rate, label) {
-    if (!(rate > 0)) return label === 'Novig pregame' ? 'Novig charges no fee before the game starts, so that is what you pay.' : (label === 'None' ? '' : label + ' charges no fee here, so that is what you pay.');
+    if (!(rate > 0)) return label === 'Novig pregame' ? 'On Novig there is no fee before the game starts, so that is all you pay.' : (label === 'None' ? '' : 'On ' + label + ' there is no fee here, so that is all you pay.');
     const eff = effectivePrice(p, rate);
-    return label + ' adds a ' + fmtCentsExact(eff.fee) + ' fee, so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
+    return 'On ' + label + ' the fee adds ' + fmtCentsExact(eff.fee) + ', so you really pay ' + fmtProb(eff.price, 'cents', 2) + ' (like ' + fmtOdds(probToAmerican(eff.price)) + ' odds).';
   }
 
   return { id, title: 'Convert', tab: 'Convert', icon: ICON, root, render, fields: () => (state.src === 'odds' ? [oddsF, probF] : [probF, oddsF]) };
