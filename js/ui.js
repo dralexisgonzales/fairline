@@ -1,6 +1,6 @@
-// Small DOM helpers and the shared input/output components.
+// Shared UI: DOM helpers, fields (driven by the built-in keypad), results, controls.
 import { isValidAmerican } from './math.js';
-import { fmtMoney, fmtUnits, toAscii } from './format.js';
+import { fmtMoney, fmtUnits, fmtOdds, toAscii } from './format.js';
 
 export function h(tag, props = {}, ...kids) {
   const e = document.createElement(tag);
@@ -43,88 +43,125 @@ export function parseNum(str) {
   return Number.isFinite(n) ? n : NaN;
 }
 
-function selectOnFocus(input) {
-  input.addEventListener('focus', () => {
-    // iOS needs a tick before select() sticks.
-    requestAnimationFrame(() => { try { input.select(); } catch {} });
-  });
-}
-
-// Keep a decimal field to digits and at most one dot.
-function cleanDecimal(raw) {
-  let s = String(raw).replace(/[^\d.]/g, '');
-  const i = s.indexOf('.');
-  if (i !== -1) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/\./g, '');
-  return s;
-}
-
 export function trimNum(n, d = 2) {
   if (!Number.isFinite(n)) return '';
   const s = n.toFixed(d).replace(/\.?0+$/, '');
   return s === '' ? '0' : s;
 }
 
-// ---------- Odds field: ± toggle plus numeric keypad ----------
-export function oddsField({ label, value, onChange, placeholder = '110' }) {
-  const state = { sign: value?.sign === '+' ? '+' : '-', v: value?.v ?? '' };
+export function debounce(fn, ms = 80) {
+  let t = null;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
 
-  const signBtn = h('button', {
-    class: 'sign', type: 'button', 'aria-label': 'Toggle plus or minus',
-    onclick: () => { state.sign = state.sign === '-' ? '+' : '-'; paint(); onChange(get()); },
-  });
-  const input = h('input', {
-    type: 'text', inputmode: 'numeric', pattern: '[0-9]*', placeholder,
-    autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false',
-    enterkeyhint: 'done', 'aria-label': /odds/i.test(label) ? label : label + ' American odds',
-  });
-  input.value = state.v;
-  input.addEventListener('input', () => {
-    const raw = input.value;
-    // Pasted or typed sign characters flip the toggle.
-    if (/[-−]/.test(raw)) state.sign = '-';
-    else if (/\+/.test(raw)) state.sign = '+';
-    const cleaned = raw.replace(/\D/g, '').slice(0, 6);
-    if (cleaned !== raw) input.value = cleaned;
-    state.v = cleaned;
-    paint(false);
-    onChange(get());
-  });
-  input.addEventListener('blur', () => paint(true));
-  input.addEventListener('focus', () => paint(false));
-  selectOnFocus(input);
+// ---------- Field: a tappable value edited with the built-in keypad ----------
+// type: 'odds' (sign + digits), 'money' (dollars or units), 'percent' (decimal with a suffix)
+export function field({ type, label, value, ctx, keypad, onChange, placeholder = '', suffix = '', prefix = '', maxLen, compact = false }) {
+  const state = type === 'odds'
+    ? { sign: value?.sign === '+' ? '+' : '-', v: value?.v ?? '', ghost: !!value?.ghost }
+    : type === 'money'
+      ? { v: value?.v ?? '', mode: value?.mode === 'u' ? 'u' : '$', exact: null, ghost: !!value?.ghost }
+      : { v: (typeof value === 'object' && value !== null) ? (value.v ?? '') : (value ?? ''), ghost: !!(value && value.ghost) };
 
-  const subEl = h('div', { class: 'field-sub is-error', hidden: true });
-  const labelEl = h('div', { class: 'field-label', text: label });
-  const root = h('div', { class: 'field field-odds' },
+  const labelEl = h('span', { class: 'fld-label', text: label });
+  const signEl = h('span', { class: 'fld-sign' });
+  const prefixEl = h('span', { class: 'fld-affix' });
+  const valueEl = h('span', { class: 'fld-value' });
+  const suffixEl = h('span', { class: 'fld-affix fld-suffix' });
+  const caret = h('span', { class: 'fld-caret', 'aria-hidden': 'true' });
+  const subEl = h('span', { class: 'fld-sub' });
+  const el = h('button', { type: 'button', class: 'fld fld-' + type + (compact ? ' fld-compact' : ''), 'aria-label': label },
     labelEl,
-    h('div', { class: 'field-box' }, signBtn, input),
+    h('span', { class: 'fld-row' }, signEl, prefixEl, valueEl, caret, suffixEl),
     subEl
   );
+  el.addEventListener('click', () => keypad.open(api));
 
-  function get() { return { sign: state.sign, v: state.v }; }
-  // Only flag odds under 100 once the user has clearly finished (3+ digits or blur),
-  // so typing "1" on the way to "150" never flashes red.
-  function paint(final = true) {
-    signBtn.textContent = state.sign === '-' ? '−' : '+';
-    signBtn.classList.toggle('is-plus', state.sign === '+');
-    const n = parseNum(state.v);
-    const bad = state.v !== '' && Number.isFinite(n) && n < 100 && (final || state.v.length >= 3);
-    input.classList.toggle('is-long', state.v.length >= 5);
-    root.classList.toggle('is-invalid', bad);
-    subEl.textContent = bad ? 'Odds start at 100' : '';
-    subEl.hidden = !bad;
+  let pendingUnits = false;
+  const api = {
+    el, root: el, type, maxLen: maxLen || (type === 'odds' ? 6 : type === 'money' ? 10 : 6), suffix,
+    get mode() { return state.mode; },
+    text: () => state.v,
+    isGhost: () => state.ghost,
+    setText(t) { state.v = t; state.exact = null; state.ghost = false; paint(); onChange(get()); },
+    setRaw(raw) {
+      if (type === 'odds') { state.sign = raw.sign; state.v = raw.v; }
+      else { state.v = String(raw); state.exact = null; }
+      state.ghost = false;
+      paint(); onChange(get());
+    },
+    toggleMode() {
+      if (type === 'odds') { state.sign = state.sign === '-' ? '+' : '-'; state.ghost = false; paint(); onChange(get()); keypad.refresh(); }
+      else if (type === 'money') setMode(state.mode === '$' ? 'u' : '$');
+    },
+    setActive(on) { el.classList.toggle('is-active', on); },
+    commit() { paint(true); },
+    reveal() { setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 30); },
+    get, set, setLabel, paint, setSuffix, setSub,
+    value: () => (type === 'odds' ? oddsValue(get()) : type === 'money' ? stakeDollars(get(), ctx?.unitSize?.() || 0) : parseNum(state.v)),
+  };
+
+  function get() {
+    if (type === 'odds') return { sign: state.sign, v: state.v, ghost: state.ghost };
+    if (type === 'money') return { v: state.v, mode: state.mode, ghost: state.ghost };
+    return { v: state.v, ghost: state.ghost };
   }
   function set(v) {
-    state.sign = v?.sign === '+' ? '+' : '-';
-    state.v = v?.v ?? '';
-    input.value = state.v;
+    if (type === 'odds') { state.sign = v?.sign === '+' ? '+' : '-'; state.v = v?.v ?? ''; state.ghost = !!v?.ghost; }
+    else if (type === 'money') { state.v = v?.v ?? ''; state.mode = v?.mode === 'u' ? 'u' : '$'; state.ghost = !!v?.ghost; }
+    else { state.v = (typeof v === 'object' && v !== null) ? (v.v ?? '') : (v ?? ''); state.ghost = !!(v && v.ghost); }
     paint();
   }
-  function setComputed(on) { root.classList.toggle('is-computed', !!on); }
-  function setLabel(t) { labelEl.textContent = t; input.setAttribute('aria-label', /odds/i.test(t) ? t : t + ' American odds'); }
-  function setPlaceholder(t) { input.placeholder = t; }
+  function setLabel(t) { labelEl.textContent = t; el.setAttribute('aria-label', t); }
+  function setSuffix(s) { suffix = s; api.suffix = s; paint(); }
+  function setSub(t, cls = '') { subEl.textContent = t || ''; subEl.className = 'fld-sub' + (cls ? ' ' + cls : ''); subEl.hidden = !t; }
+
+  function setMode(mode) {
+    if (state.mode === mode) return;
+    const unit = ctx.unitSize();
+    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; ctx.openSettings('unit'); return; }
+    const n = parseNum(state.v);
+    if (Number.isFinite(n) && unit > 0) {
+      if (mode === 'u') { const text = state.v; state.v = trimNum(n / unit, 4); state.exact = { text, unitsText: state.v, unit }; }
+      else { const ex = state.exact; state.v = ex && ex.unitsText === state.v && ex.unit === unit ? ex.text : trimNum(n * unit, 2); state.exact = null; }
+    }
+    state.mode = mode;
+    paint(); onChange(get()); keypad.refresh();
+  }
+
+  function paint(final = false) {
+    const empty = state.v === '';
+    el.classList.toggle('is-empty', empty);
+    el.classList.toggle('is-ghost', state.ghost && !empty);
+    valueEl.textContent = empty ? (placeholder || '0') : state.v;
+    if (type === 'odds') {
+      signEl.textContent = state.sign === '-' ? '−' : '+';
+      signEl.classList.toggle('is-plus', state.sign === '+');
+      prefixEl.textContent = ''; suffixEl.textContent = '';
+      const n = parseNum(state.v);
+      const bad = !empty && Number.isFinite(n) && n < 100 && (final || state.v.length >= 3 || !el.classList.contains('is-active'));
+      el.classList.toggle('is-invalid', bad);
+      setSub(bad ? 'Odds start at 100' : '', bad ? 'is-error' : '');
+    } else if (type === 'money') {
+      const unit = ctx.unitSize();
+      if (pendingUnits && !ctx.settingsOpen()) { pendingUnits = false; if (unit > 0 && state.mode === '$') { setMode('u'); return; } }
+      signEl.textContent = '';
+      prefixEl.textContent = state.mode === '$' ? '$' : '';
+      suffixEl.textContent = state.mode === 'u' ? 'u' : '';
+      el.classList.remove('is-invalid');
+      const n = parseNum(state.v);
+      if (state.mode === 'u' && !(unit > 0)) setSub('Set a unit size', 'is-link');
+      else if (Number.isFinite(n) && unit > 0) setSub(state.mode === '$' ? '= ' + fmtUnits(n / unit) : '= ' + fmtMoney(n * unit));
+      else setSub('');
+    } else {
+      signEl.textContent = ''; prefixEl.textContent = prefix;
+      suffixEl.textContent = suffix;
+      el.classList.remove('is-invalid');
+    }
+  }
+  subEl.addEventListener('click', (e) => { if (subEl.classList.contains('is-link')) { e.stopPropagation(); ctx.openSettings('unit'); } });
   paint();
-  return { root, get, set, setComputed, setLabel, setPlaceholder, input, focus: () => input.focus() };
+  return api;
 }
 
 export function oddsValue(s) {
@@ -133,144 +170,11 @@ export function oddsValue(s) {
   const am = (s.sign === '-' ? -1 : 1) * m;
   return isValidAmerican(am) ? am : NaN;
 }
-
-// ---------- Stake field: dollars or units ----------
-export function stakeField({ label, value, ctx, onChange, placeholder = '100' }) {
-  const state = { v: value?.v ?? '', mode: value?.mode === 'u' ? 'u' : '$', exact: null };
-
-  const input = h('input', {
-    type: 'text', inputmode: 'decimal', placeholder,
-    autocomplete: 'off', autocorrect: 'off', spellcheck: 'false',
-    enterkeyhint: 'done', 'aria-label': label,
-  });
-  input.value = state.v;
-  input.addEventListener('input', () => {
-    const cleaned = cleanDecimal(input.value).slice(0, 12);
-    if (cleaned !== input.value) input.value = cleaned;
-    state.v = cleaned;
-    state.exact = null;
-    paint();
-    onChange(get());
-  });
-  selectOnFocus(input);
-
-  const adorn = h('span', { class: 'adorn' });
-  const btn$ = h('button', { type: 'button', class: 'seg-btn', text: '$', 'aria-label': 'Enter in dollars' });
-  const btnU = h('button', { type: 'button', class: 'seg-btn', text: 'u', 'aria-label': 'Enter in units' });
-  const toggle = h('div', { class: 'seg seg-field', role: 'group', 'aria-label': 'Dollars or units' }, btn$, btnU);
-  btn$.addEventListener('click', () => setMode('$'));
-  btnU.addEventListener('click', () => setMode('u'));
-
-  const subEl = h('div', { class: 'field-sub field-sub-reserved', text: '\u00A0', onclick: () => { if (subEl.classList.contains('is-link')) ctx.openSettings('unit'); } });
-  const labelEl = h('div', { class: 'field-label', text: label });
-  const root = h('div', { class: 'field field-stake' },
-    labelEl,
-    h('div', { class: 'field-box' }, adorn, input, toggle),
-    subEl
-  );
-
-  let pendingUnits = false;
-  function setMode(mode) {
-    if (mode === '$') pendingUnits = false;
-    if (state.mode === mode) return;
-    const unit = ctx.unitSize();
-    if (mode === 'u' && !(unit > 0)) {
-      // No unit size yet: keep the number as it is, send the user to set one, and finish the switch after.
-      pendingUnits = true;
-      ctx.openSettings('unit');
-      return;
-    }
-    const n = parseNum(state.v);
-    if (Number.isFinite(n) && unit > 0) {
-      if (mode === 'u') {
-        // Remember the exact dollar entry so toggling back never drifts.
-        const text = state.v;
-        state.v = trimNum(n / unit, 4);
-        state.exact = { text, dollars: n, unitsText: state.v, unit };
-      } else {
-        const ex = state.exact;
-        state.v = ex && ex.unitsText === state.v && ex.unit === unit ? ex.text : trimNum(n * unit, 2);
-        state.exact = null;
-      }
-      input.value = state.v;
-    }
-    state.mode = mode;
-    paint();
-    onChange(get());
-  }
-
-  function paint() {
-    const unit = ctx.unitSize();
-    // Finish a pending switch to units only once Settings has closed, so the stake converts at the final unit size.
-    if (pendingUnits && !ctx.settingsOpen()) {
-      pendingUnits = false;
-      if (unit > 0 && state.mode === '$') { setMode('u'); return; }
-    }
-    btn$.classList.toggle('is-on', state.mode === '$');
-    btnU.classList.toggle('is-on', state.mode === 'u');
-    btn$.setAttribute('aria-pressed', state.mode === '$');
-    btnU.setAttribute('aria-pressed', state.mode === 'u');
-    adorn.textContent = state.mode === '$' ? '$' : 'u';
-    const n = parseNum(state.v);
-    subEl.classList.remove('is-link');
-    if (state.mode === 'u' && !(unit > 0)) {
-      subEl.textContent = 'Set a unit size';
-      subEl.classList.add('is-link');
-      return;
-    }
-    if (!Number.isFinite(n) || !(unit > 0)) { subEl.textContent = '\u00A0'; return; }
-    subEl.textContent = state.mode === '$' ? '= ' + fmtUnits(n / unit) : '= ' + fmtMoney(n * unit);
-  }
-
-  function get() { return { v: state.v, mode: state.mode }; }
-  function setLabel(text) { labelEl.textContent = text; input.setAttribute('aria-label', text); }
-  paint();
-  return { root, get, paint, setLabel, input, focus: () => input.focus() };
-}
-
-// Dollar amount of a stake field state, NaN if not available.
 export function stakeDollars(s, unitSize) {
   const n = parseNum(s?.v);
   if (!Number.isFinite(n)) return NaN;
   if (s.mode === 'u') return unitSize > 0 ? n * unitSize : NaN;
   return n;
-}
-
-// ---------- Plain decimal field (probability, bankroll, rate) ----------
-export function numberField({ label, value, onChange, placeholder = '', suffix = '', prefix = '', maxLen = 10 }) {
-  const input = h('input', {
-    type: 'text', inputmode: 'decimal', placeholder,
-    autocomplete: 'off', autocorrect: 'off', spellcheck: 'false',
-    enterkeyhint: 'done', 'aria-label': label,
-  });
-  input.value = value ?? '';
-  input.addEventListener('input', () => {
-    const cleaned = cleanDecimal(input.value).slice(0, maxLen);
-    if (cleaned !== input.value) input.value = cleaned;
-    onChange(cleaned);
-  });
-  selectOnFocus(input);
-  const prefixEl = h('span', { class: 'adorn', text: prefix, hidden: !prefix });
-  const suffixEl = h('span', { class: 'adorn adorn-suffix', text: suffix, hidden: !suffix });
-  const subEl = h('div', { class: 'field-sub', hidden: true });
-  const labelEl = h('div', { class: 'field-label', text: label });
-  const root = h('div', { class: 'field field-number' },
-    labelEl,
-    h('div', { class: 'field-box' }, prefixEl, input, suffixEl),
-    subEl
-  );
-  return {
-    root, input,
-    get: () => input.value,
-    set: (v) => { input.value = v ?? ''; },
-    setSuffix: (s) => { suffixEl.textContent = s; suffixEl.hidden = !s; },
-    setSub: (t) => { subEl.textContent = t || ''; subEl.hidden = !t; },
-    setComputed: (on) => root.classList.toggle('is-computed', !!on),
-    setPlaceholder: (t) => { input.placeholder = t; },
-    setLabel: (t) => { labelEl.textContent = t; input.setAttribute('aria-label', t); },
-    setError: (on) => { root.classList.toggle('is-invalid', !!on); subEl.classList.toggle('is-error', !!on); },
-    focus: () => input.focus(),
-  };
 }
 
 // ---------- Segmented control ----------
@@ -282,29 +186,21 @@ export function segmented({ options, value, onChange, cls = '', label = '' }) {
   let current = value;
   function set(id, fire = false) {
     current = id;
-    btns.forEach((b) => {
-      const on = b.dataset.id === id;
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-pressed', on);
-    });
+    btns.forEach((b) => { const on = b.dataset.id === id; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on); });
     if (fire) onChange(id);
   }
   set(value);
   return { root, set, get: () => current };
 }
 
-// ---------- Result tile: tap to copy ----------
+// ---------- Result: tap to copy ----------
 export function result({ label, hero = false, cls = '', mini = '' }) {
   const labelEl = h('span', { class: 'res-label', text: label });
   const valueEl = h('span', { class: 'res-value', text: '—' });
   const subEl = h('span', { class: 'res-sub', hidden: true });
-  const root = h('button', { type: 'button', class: 'res ' + (hero ? 'res-hero ' : '') + cls, 'aria-label': label + ', tap to copy' },
-    labelEl, valueEl, subEl
-  );
-  if (mini) root.dataset.mini = mini;      // short label for the compact answer strip
-  let copy = null;
-  let currentLabel = label;
-  let flashTimer = null;
+  const root = h('button', { type: 'button', class: 'res ' + (hero ? 'res-hero ' : '') + cls, 'aria-label': label + ', tap to copy' }, labelEl, valueEl, subEl);
+  if (mini) root.dataset.mini = mini;
+  let copy = null, currentLabel = label, flashTimer = null, fitTimer = 0;
   root.addEventListener('click', () => {
     if (copy == null) return;
     copyText(copy).then(() => {
@@ -315,22 +211,20 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
       flashTimer = setTimeout(() => { root.classList.remove('is-copied'); labelEl.textContent = currentLabel; }, 700);
     });
   });
-  let fitTimer = 0;
-  // A sub-line shows whole or not at all: after layout, drop trailing " · " segments until it fits two lines.
   function fitSub() {
     clearTimeout(fitTimer);
     fitTimer = setTimeout(() => {
       if (subEl.hidden || !subEl.isConnected) return;
       let guard = 6;
-      while (guard-- > 0 && subEl.scrollHeight > subEl.clientHeight + 1 && subEl.textContent.includes(' \u00B7 ')) {
-        subEl.textContent = subEl.textContent.slice(0, subEl.textContent.lastIndexOf(' \u00B7 '));
+      while (guard-- > 0 && subEl.scrollHeight > subEl.clientHeight + 1 && subEl.textContent.includes(' · ')) {
+        subEl.textContent = subEl.textContent.slice(0, subEl.textContent.lastIndexOf(' · '));
       }
       if (subEl.scrollHeight > subEl.clientHeight + 1 || subEl.scrollWidth > subEl.clientWidth + 1) subEl.hidden = true;
     }, 0);
   }
   function set(display, copyValue = display, sub = '', tone = '') {
+    if (hero && valueEl.textContent !== display && display !== '—') { valueEl.classList.remove('tick'); void valueEl.offsetWidth; valueEl.classList.add('tick'); }
     valueEl.textContent = display;
-    // Long figures shrink instead of wrapping mid-number.
     root.classList.toggle('is-long', display.length >= 10);
     root.classList.toggle('is-xlong', display.length >= 13);
     root.classList.toggle('is-xxlong', display.length >= 15);
@@ -343,55 +237,53 @@ export function result({ label, hero = false, cls = '', mini = '' }) {
     root.classList.remove('tone-pos', 'tone-neg', 'tone-accent');
     if (tone) root.classList.add('tone-' + tone);
   }
-  function setLabel(t) {
-    currentLabel = t;
-    if (!root.classList.contains('is-copied')) labelEl.textContent = t;
-    root.setAttribute('aria-label', t + ', tap to copy');
-  }
+  function setLabel(t) { currentLabel = t; if (!root.classList.contains('is-copied')) labelEl.textContent = t; root.setAttribute('aria-label', t + ', tap to copy'); }
   set('—');
   return { root, set, setLabel, setMini: (t) => { root.dataset.mini = t; }, hide: (on) => { root.hidden = !!on; } };
 }
 
-// Money result with units in the sub line.
-export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto', sub = '', unitsFirst = true } = {}) {
+export function setMoney(res, dollars, unitSize, { signed = false, tone = 'auto', sub = '', unitsFirst = true, leadUnits = false } = {}) {
   if (!Number.isFinite(dollars)) { res.set('—'); return; }
-  const display = fmtMoney(dollars, { signed });
-  const copy = fmtMoney(dollars, { signed, ascii: true });
+  const lead = leadUnits && unitSize > 0;
+  const display = lead ? fmtUnits(dollars / unitSize, { signed }) : fmtMoney(dollars, { signed });
+  const copy = lead ? fmtUnits(dollars / unitSize, { signed, ascii: true }) : fmtMoney(dollars, { signed, ascii: true });
   const parts = [];
-  const u = unitSize > 0 ? fmtUnits(dollars / unitSize, { signed }) : '';
-  if (unitsFirst) { if (u) parts.push(u); if (sub) parts.push(sub); }
-  else { if (sub) parts.push(sub); if (u) parts.push(u); }
+  const u = lead ? fmtMoney(dollars, { signed }) : (unitSize > 0 ? fmtUnits(dollars / unitSize, { signed }) : '');
+  if (unitsFirst) { if (u) parts.push(u); if (sub) parts.push(sub); } else { if (sub) parts.push(sub); if (u) parts.push(u); }
   let t = tone;
   if (tone === 'auto') t = dollars > 0.005 ? 'pos' : dollars < -0.005 ? 'neg' : '';
   res.set(display, copy, parts.join(' · '), t);
 }
 
-// ---------- Collapsible section ----------
+// Plain-English line under the answer.
+export function sentence() {
+  const el = h('p', { class: 'say' });
+  return { el, set: (t) => { el.textContent = t || ''; el.hidden = !t; } };
+}
+
+// ---------- Collapsible ----------
 export function disclosure({ label, open = false }, ...body) {
   const chevron = svg('<path d="M6 9l6 6 6-6"/>', 18);
   const btn = h('button', { type: 'button', class: 'disclosure', 'aria-expanded': String(open) }, h('span', { text: label }), chevron);
   const panel = h('div', { class: 'disclosure-body', hidden: !open }, body);
+  const root = h('div', { class: 'card card-disclosure' }, btn, panel);
   btn.addEventListener('click', () => {
     const now = panel.hidden;
     panel.hidden = !now;
     btn.setAttribute('aria-expanded', String(now));
     btn.classList.toggle('is-open', now);
-    if (now) requestAnimationFrame(() => root.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+    if (now) setTimeout(() => root.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 0);
   });
   btn.classList.toggle('is-open', open);
-  const root = h('div', { class: 'card card-disclosure' }, btn, panel);
   return { root, isOpen: () => !panel.hidden };
 }
 
 // ---------- Clipboard + toast ----------
 export async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
+  try { await navigator.clipboard.writeText(text); }
+  catch {
     const ta = h('textarea', { style: 'position:fixed;opacity:0;top:0;left:0' });
-    ta.value = text;
-    document.body.append(ta);
-    ta.select();
+    ta.value = text; document.body.append(ta); ta.select();
     try { document.execCommand('copy'); } catch {}
     ta.remove();
   }
@@ -408,8 +300,37 @@ export function toast(msg, ms = 1300) {
   toastTimer = setTimeout(() => el.classList.remove('is-on'), ms);
 }
 
-// Persist helper: debounce saves so typing stays smooth.
-export function debounce(fn, ms = 80) {
-  let t = null;
-  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+export { fmtOdds };
+
+// ---------- Bottom sheet ----------
+export function sheet({ title, body, onOpen, onClose }) {
+  const doneBtn = h('button', { type: 'button', class: 'btn-done', text: 'Done', onclick: () => close() });
+  const head = h('div', { class: 'sheet-head' }, h('h2', { class: 'sheet-title', text: title }), doneBtn);
+  const bodyEl = h('div', { class: 'sheet-body' }, body);
+  const panel = h('div', { class: 'sheet-panel', role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, h('div', { class: 'sheet-grab', 'aria-hidden': 'true' }), head, bodyEl);
+  const backdrop = h('div', { class: 'sheet-backdrop', onclick: () => close() });
+  const root = h('div', { class: 'sheet', hidden: true }, backdrop, panel);
+  let openState = false;
+  let dragY = null;
+  head.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; dragY = e.clientY; try { head.setPointerCapture(e.pointerId); } catch {} panel.classList.add('is-dragging'); });
+  head.addEventListener('pointermove', (e) => { if (dragY == null) return; panel.style.transform = 'translateY(' + Math.max(0, e.clientY - dragY) + 'px)'; });
+  const endDrag = (e) => { if (dragY == null) return; const dy = e.clientY - dragY; dragY = null; panel.classList.remove('is-dragging'); panel.style.transform = ''; if (dy > 70) close(); };
+  head.addEventListener('pointerup', endDrag);
+  head.addEventListener('pointercancel', endDrag);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openState) close(); });
+  function open() {
+    openState = true;
+    root.hidden = false;
+    bodyEl.scrollTop = 0;
+    onOpen?.();
+    requestAnimationFrame(() => root.classList.add('is-open'));
+  }
+  function close() {
+    if (!openState) return;
+    openState = false;
+    root.classList.remove('is-open');
+    setTimeout(() => { if (!openState) root.hidden = true; }, 260);
+    onClose?.();
+  }
+  return { root, open, close, isOpen: () => openState, body: bodyEl };
 }
