@@ -88,7 +88,7 @@ export function createKeypad({ haptic } = {}) {
 
   function close() {
     try { document.activeElement?.blur?.(); } catch {}
-    if (active) { active.setActive(false); active.commit?.(); active = null; notifyActive(); }
+    if (active) { const a = active; active = null; a.setActive(false); a.commit?.(); notifyActive(); }   // no slot counts as active while it commits
     if (!root.hidden) { root.hidden = true; onOpenChange?.(false); }
   }
 

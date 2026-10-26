@@ -16,7 +16,7 @@ export function create(ctx) {
   const backRes = result({ label: 'You get back' });
   const needRes = result({ label: 'Must win' });
   const modeSeg = segmented({ options: [{ id: 'risk', label: 'I’m risking' }, { id: 'win', label: 'I want to win' }], value: state.mode, cls: 'seg-mini', label: 'Enter the risk or the target win',
-    onChange: (m) => { state.mode = m; render(); persist(); ctx.keypad.focus(amountF, false); } });
+    onChange: (m) => { state.mode = m; render(); persist(); if (ctx.keypad.isOpen()) ctx.keypad.focus(amountF, false); ctx.relayout?.(); } });
 
   const amountF = field({ type: 'money', label: 'Risk', value: state.amount, ctx, keypad: ctx.keypad, onChange: (v) => { state.amount = v; render(); persist(); } });
   const oddsF = field({ type: 'odds', label: 'Odds', value: state.odds, ctx, keypad: ctx.keypad, onChange: (v) => { state.odds = v; render(); persist(); } });
@@ -32,6 +32,7 @@ export function create(ctx) {
     h('div', { class: 'slots' }, h('div', { class: 'row-2' }, amountF.el, oddsF.el))
   );
 
+  ctx.keypad.onActive(() => { if (!root.hidden) render(); });
   let hadValid = false;
   function render() {
     const unit = ctx.unitSize();

@@ -386,8 +386,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .answer .tiles .res-value { font-size: 17px; }
 .kb-open .answer .tiles .res-label { font-size: 11px; }
 .kb-open .say { display: none; }
-.kb-open .answer { box-shadow: 0 1px 0 var(--hair); }
-.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--bg) 45%, transparent); pointer-events: none; }
+.kb-open .screen:not(.fits) .answer { box-shadow: 0 1px 0 var(--hair); }
+.kb-open .answer::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--bg) 45%, transparent); pointer-events: none; opacity: 0; }
+.kb-open .screen.is-scrolled .answer::after { opacity: 1; }
 /* Slack: the screen fits with room to spare while typing, so the answer sits at the top and the hero grows into it */
 .kb-open .screen.fits .answer { margin-top: 0; }
 .kb-open .screen.vast .answer { margin-top: var(--vast-top, 0px); position: static; padding-bottom: 18px; box-shadow: none; }
@@ -413,11 +414,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 .kb-open .screen.trim-answer .answer.whatif-focus.whatif-on .res-hero .res-sub, .kb-open .screen.fold-whatif.trim-answer .res-hero .res-sub { display: none; }
 .kb-open .screen.trim-cap .answer.whatif-focus.whatif-on .tiles-cap, .kb-open .screen.fold-whatif.trim-cap .tiles-whatif:not(.tiles-keep) .tiles-cap { display: none; }
 #app:not(.kb-open) .screen.trim-say .say { display: none; }
+#app:not(.kb-open) .screen.trim-say .tiles .res-sub { display: none; }
 .tight.kb-open .answer.whatif-focus.whatif-on .tiles:not(.tiles-whatif), .kb-open .screen.fold-ref .answer.whatif-focus.whatif-on .tiles:not(.tiles-whatif) { display: none; }
 @media (max-height: 740px) { .tight.kb-open .answer.whatif-focus .res-hero .res-sub, .tight.kb-open .answer.whatif-focus .tiles-cap { display: none; } }
 .fld:focus-visible, .res:focus-visible { outline: none; }
 /* Parlay with many legs on a tight screen: the tiles fold while typing so two leg rows stay on screen */
-.tight.kb-open .screen.many-legs:not(.slack):not(.keep-tiles):not(.stake-active) .tiles { display: none; }
+.tight.kb-open .screen[data-screen="parlay"]:not(.slack):not(.keep-tiles):not(.stake-active) .tiles { display: none; }
 /* Tight: little room between the header and the keypad (notched phones). Only sizes shrink; nothing folds. */
 .tight .answer { padding: 4px 20px 10px; }
 .tight .screen-head { min-height: 36px; margin-bottom: 6px; }

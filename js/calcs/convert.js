@@ -92,7 +92,9 @@ export function create(ctx) {
       hero.setLabel((cents ? 'Price for ' : 'Chance to win at ') + fmtOdds(am) + (feeOn ? ' with ' + feeName(label) + ' fee' : ''));
       hero.set(fmtProb(shownP, cents ? 'cents' : 'pct'), fmtProb(shownP, cents ? 'cents' : 'pct'), feeOn ? 'you really pay ' + fmtProb(p, 'cents', 1) + ' after the fee' : 'decimal odds ' + fmtDecimal(dec));
       let t = 'A ' + fmtOdds(am) + ' bet has to win that often just to break even.';
-      if (cents) t = 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + (feeOn ? 'With the fee, buy at ' + fmtProb(shownP, 'cents', 1) + ' to really pay ' + fmtProb(p, 'cents', 1) + '.' : feeLine(p, rate, label));
+      if (cents) t = feeOn
+        ? 'On ' + feeName(label) + ', buy at ' + fmtProb(shownP, 'cents', 1) + ': with the fee you really pay ' + fmtProb(p, 'cents', 1) + ', which is ' + fmtOdds(am) + '. You get $1 back if it wins.'
+        : 'On Novig, Kalshi or Polymarket, ' + fmtOdds(am) + ' is a ' + tidy(fmtProb(p, 'cents')) + ' price: pay that now, get $1 back if it wins. ' + feeLine(p, rate, label);
       say.set(t);
     } else {
       // With a fee, the odds you really get are the answer; the raw conversion goes underneath.

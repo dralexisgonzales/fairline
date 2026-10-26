@@ -118,7 +118,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
         // Pure function of layout: where the row sits in the content decides the scroll, never the previous scroll.
         screen.style.setProperty('--overscroll', '0px'); void screen.scrollHeight;
         const ch = screen.clientHeight;
-        if (screen.scrollHeight <= ch + 1) { screen.scrollTop = 0; return; }   // everything fits: nothing is scrolled under the answer
+        if (screen.scrollHeight <= ch + 1) { screen.scrollTop = 0; screen.classList.remove('is-scrolled'); return; }   // everything fits: nothing is scrolled under the answer
         const sr = screen.getBoundingClientRect();
         const rowTop = el.getBoundingClientRect().top - sr.top + screen.scrollTop;   // content coordinate
         const ansH = ans && getComputedStyle(ans).position === 'sticky' ? ans.offsetHeight : 0;
@@ -144,6 +144,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
           screen.style.setProperty('--overscroll', os + 'px'); void screen.scrollHeight;
         }
         screen.scrollTop = target;
+        screen.classList.toggle('is-scrolled', screen.scrollTop > 2);
       }, 40);
     },
     get, set, setLabel, paint, setSuffix, setSub,
@@ -187,7 +188,7 @@ export function field({ type, label, value, ctx, keypad, onChange, placeholder =
   function setMode(mode, convert = false) {
     if (state.mode === mode) return;
     const unit = ctx.unitSize();
-    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; toast('Set a unit size first', 2200); ctx.openSettings('unit'); return; }
+    if (mode === 'u' && !(unit > 0)) { pendingUnits = true; toast('Set a unit size first', 2200, 'tip'); ctx.openSettings('unit'); return; }
     // Digits typed just now keep their digits (2 then u is 2u). An amount that was already there keeps its money ($50 becomes 2u).
     if (convert && unit > 0) { const n = parseNum(state.v); if (Number.isFinite(n)) state.v = trimNum(mode === 'u' ? n / unit : n * unit, 2); }
     state.mode = mode;

@@ -58,7 +58,7 @@ const calcs = [convert, fairline, parlay, hedge, payout].map((m) => m.create(ctx
 const settingsSheet = createSettings(ctx);
 
 // ----- Layout -----
-calcs.forEach((c) => main.append(c.root));
+calcs.forEach((c) => { main.append(c.root); c.root.addEventListener('scroll', () => c.root.classList.toggle('is-scrolled', c.root.scrollTop > 2), { passive: true }); });
 dock.insertBefore(keypad.root, tabs);
 function contentSpare(screen) {
   // Room left after the answer block and the slots at their natural heights (idle, the answer stretches to fill).

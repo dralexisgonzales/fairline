@@ -25,13 +25,13 @@ export function create(ctx) {
   aSay.el.classList.add('pane-say');
   const aLocked = result({ label: 'Locked result' });
   const aBreak = result({ label: 'Bet to lose nothing' });
-  const aHedge = field({ type: 'odds', label: 'Other side’s odds', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
+  const aHedge = field({ type: 'odds', label: 'Other side', value: state.A.hedge, ctx, keypad: kp, onChange: (v) => { state.A.hedge = v; render(); persist(); } });
   const aOrig = field({ type: 'odds', label: 'Your odds', value: state.A.orig, ctx, keypad: kp, onChange: (v) => { state.A.orig = v; render(); persist(); } });
   const aStake = field({ type: 'money', label: 'Your stake', value: state.A.stake, ctx, keypad: kp, onChange: (v) => { state.A.stake = v; render(); persist(); } });
   const aManual = field({ type: 'money', label: 'Try another amount', value: state.A.manual, hint: 'optional', ctx, keypad: kp, onChange: (v) => { state.A.manual = v; render(); persist(); } });
   const aWinO = result({ label: 'If your bet wins' });
   const aWinH = result({ label: 'If the other side wins' });
-  kp.onActive(() => { if (state.mode === 'A' && !root.hidden) renderA(); });
+  kp.onActive(() => { if (!root.hidden) render(); });
   const exA = examplePill();
   const tilesA = h('div', { class: 'tiles' }, aLocked.root, aBreak.root);
   const capMain = h('span'); const capSum = h('span', { class: 'cap-sum' });
