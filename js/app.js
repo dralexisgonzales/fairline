@@ -251,6 +251,6 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
       });
       if (!alive) { try { const regs = await sw.getRegistrations(); await Promise.all(regs.map((r) => r.unregister().catch(() => false))); } catch {} }
     }
-    try { const reg = await sw.register('/sw.js'); reg.update?.().catch?.(() => {}); } catch {}
+    try { const reg = await sw.register('sw.js', { updateViaCache: 'none' }); reg.update?.().catch?.(() => {}); } catch {}
   });
 }

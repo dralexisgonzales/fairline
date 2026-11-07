@@ -1,41 +1,22 @@
 # Putting Fairline on your phone
 
-**Your address is https://fairline-app.pages.dev**
+**Your address is https://dralexisgonzales.github.io/fairline/**
 
 The app is already published there. Part 1 below is done and is kept only as a record of how the hosting is set up. Parts 2 and 3 are on your iPhone.
 
-The code lives in a private GitHub repository: https://github.com/dralexisgonzales/fairline
+The code lives in a public GitHub repository: https://github.com/dralexisgonzales/fairline
 
 ## Part 1: how the hosting works (already done)
 
-Fairline is hosted on Cloudflare Pages, in the Cloudflare account signed in as dralexisgonzales@gmail.com. Two Pages projects are connected to the same GitHub repository, with the same settings:
+Fairline is hosted on **GitHub Pages**, straight from the repository, at https://dralexisgonzales.github.io/fairline/ . Every push to the `main` branch is published within a minute or two. Nothing else to do.
 
-| Project | Address | Status |
-|---|---|---|
-| `fairline-app` | https://fairline-app.pages.dev | **Use this one.** Created 26 October 2026. |
-| `fairline` | https://fairline-2bi.pages.dev | The original. It still publishes every push, but the address does not load on some home networks. Safe to delete in the Cloudflare dashboard if you no longer want it. |
+It moved there on 6 November 2026 because the earlier Cloudflare addresses (`fairline-app.pages.dev` and `fairline-2bi.pages.dev`) were being blocked by home-network security filters. Those two Cloudflare projects still exist and now send every visit on to the GitHub address. They can be deleted in the Cloudflare dashboard (account dralexisgonzales@gmail.com) at any time.
 
-Settings on both projects:
-
-- **Production branch:** `main`
-- **Framework preset:** `None`
-- **Build command:** empty
-- **Build output directory:** `/` (the repository root)
-
-Every push to `main` on GitHub publishes to both addresses within about a minute. Nothing else to do.
-
-If you ever need to set this up again from scratch (a new Cloudflare account, say):
-
-1. Open https://dash.cloudflare.com and log in.
-2. In the menu on the left, click **Workers & Pages**, then **Create application**, then the **Pages** tab, then **Connect to Git**.
-3. Click **Connect GitHub**, choose the **dralexisgonzales** account, choose **Only select repositories**, tick **fairline**, and click **Install & Authorize**.
-4. Back in Cloudflare, click **fairline**, then **Begin setup**.
-5. Project name: anything you like (it becomes the address, `name.pages.dev`). Production branch `main`, framework preset `None`, build command empty, build output directory `/`.
-6. Click **Save and Deploy** and wait about a minute for **Success**.
+How it is set up, in case it ever needs redoing: repository **Settings → Pages → Build and deployment**: source **Deploy from a branch**, branch **main**, folder **/ (root)**. The repository must be public for the free plan. A `.nojekyll` file in the repository tells GitHub to publish the files exactly as they are.
 
 ## Part 2: add it to your iPhone home screen
 
-1. On your iPhone, open **Safari** (it must be Safari, not Chrome) and go to `https://fairline-app.pages.dev`.
+1. On your iPhone, open **Safari** (it must be Safari, not Chrome) and go to `https://dralexisgonzales.github.io/fairline/`.
 2. Tap the **Share** button: the square with an arrow pointing up, in the middle of the bar at the bottom of the screen.
 3. Scroll down the list and tap **Add to Home Screen**.
 4. The name is already **Fairline**. Tap **Add** in the top right.
@@ -43,7 +24,7 @@ If you ever need to set this up again from scratch (a new Cloudflare account, sa
 
 The first time you open it from the icon, leave it open for a few seconds while it saves itself for offline use. After that it works with no signal at all.
 
-If you added the old address to your home screen earlier, delete that icon (press and hold it, then **Remove App**) and add the new one. Your saved settings and numbers do not carry over between the two addresses, so enter them again once.
+If you added an old `pages.dev` address to your home screen earlier, delete that icon (press and hold it, then **Remove App**) and add the new one. Saved settings and numbers do not carry over between addresses, so enter them again once.
 
 ## Part 3: first-time settings (30 seconds)
 
@@ -54,7 +35,7 @@ If you added the old address to your home screen earlier, delete that icon (pres
 
 ## Android
 
-Open `https://fairline-app.pages.dev` in Chrome, tap the three dots in the top right, then **Add to Home screen** (or **Install app**), then **Install**.
+Open `https://dralexisgonzales.github.io/fairline/` in Chrome, tap the three dots in the top right, then **Add to Home screen** (or **Install app**), then **Install**.
 
 ## Updates
 
@@ -62,4 +43,4 @@ When the app is updated and pushed to GitHub, Cloudflare publishes it within a m
 
 ## If the app will not open ("Safari cannot open the page")
 
-Versions before 27 October 2026 had a bug in the part of the app that saves it for offline use, which could block the app from opening after an update. That is fixed, but a phone that was already stuck needs one clean start: in iPhone **Settings → Apps → Safari → Advanced → Website Data**, find **pages.dev**, swipe it left and tap **Delete**, then open the app again. This also clears your saved settings and numbers, so enter your unit size and fee once more. After that one time, updates arrive cleanly.
+Versions before 27 October 2026 had a bug in the part of the app that saves it for offline use, which could block the app from opening after an update. That is fixed, but a phone that was already stuck needs one clean start: in iPhone **Settings → Apps → Safari → Advanced → Website Data**, find **github.io** (or **pages.dev** for an old address), swipe it left and tap **Delete**, then open the app again. This also clears your saved settings and numbers, so enter your unit size and fee once more. After that one time, updates arrive cleanly.

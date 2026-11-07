@@ -1,0 +1,3 @@
+# Cloudflare Pages only (the old hosts): everything moves to GitHub Pages; the worker file stays so an installed app can fetch the self-removing version
+/sw.js /sw.js 200
+/* https://dralexisgonzales.github.io/fairline/:splat 301
